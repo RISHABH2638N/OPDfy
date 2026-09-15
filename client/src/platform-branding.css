@@ -1,89 +1,458 @@
-.premium-brand.uses-platform-logo{min-width:0;flex:0 1 auto}
-.premium-brand.uses-platform-logo .brand-mark{display:grid;place-items:center;overflow:hidden;flex:0 0 auto;height:42px;padding:3px;border:1px solid #d5e5ea;border-radius:10px;background:#fff}
-.premium-brand.uses-platform-logo .brand-mark img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;border-radius:7px}
-.premium-brand.uses-platform-logo.platform-logo-wide .brand-mark{width:clamp(92px,8vw,126px);min-width:92px}
-.premium-brand.uses-platform-logo.platform-logo-wide>span:last-child{display:none}
-.premium-brand.uses-platform-logo.platform-logo-square .brand-mark{width:42px;min-width:42px}
-.premium-brand.uses-platform-logo.platform-logo-square>span:last-child{display:grid}
-.public-mode .premium-header:not(.portal-topbar) .header-inner{gap:clamp(10px,1.35vw,20px)}
-.public-mode .premium-header:not(.portal-topbar) .header-actions{gap:8px}
-
-.platform-branding-page{width:min(1160px,100%);margin:0 auto;display:grid;gap:18px}
-.platform-branding-hero{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center;padding:24px;border:1px solid #d9e6ea;border-radius:20px;background:linear-gradient(135deg,#f2fbfc,#eef6ff);box-shadow:0 12px 34px rgba(9,48,68,.07)}
-.platform-branding-hero-icon{width:50px;height:50px;border-radius:15px;display:grid;place-items:center;color:#087f8c;background:#dff5f5}
-.platform-branding-hero h1{margin:3px 0 5px;color:#102f42;font-size:clamp(1.55rem,3vw,2.15rem)}
-.platform-branding-hero p{margin:0;color:#587180}
-.platform-branding-status{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border:1px solid #bde7d7;border-radius:999px;color:#116948;background:#edfbf5;font-size:.78rem;font-weight:800}
-.platform-branding-card{overflow:hidden;border:1px solid #d9e5ea;border-radius:20px;background:#fff;box-shadow:0 16px 42px rgba(10,44,63,.07)}
-.platform-branding-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:22px 24px;border-bottom:1px solid #e3ecef}
-.platform-branding-card-head h2{margin:0 0 5px;color:#153448;font-size:1.15rem}
-.platform-branding-card-head p{margin:0;color:#687f8c;font-size:.88rem}
-.platform-branding-loading{min-height:260px;display:flex;align-items:center;justify-content:center;gap:10px;color:#607986}
-.platform-branding-editor{display:grid;grid-template-columns:minmax(280px,1.05fr) minmax(300px,.95fr);gap:26px;padding:26px}
-.platform-branding-preview{position:relative;overflow:hidden;min-height:260px;display:grid;place-items:center;padding:28px;border:1px dashed #b9d0d9;border-radius:17px;background:linear-gradient(135deg,#f8fbfc,#f2f7f9)}
-.platform-branding-preview.has-logo{border-style:solid;background:#fff}
-.platform-branding-preview img{display:block;width:100%;max-width:560px;max-height:230px;object-fit:contain;object-position:center}
-.platform-logo-ratio-badge{position:absolute;right:12px;bottom:12px;padding:6px 9px;border:1px solid #cfe1e7;border-radius:999px;color:#315666;background:rgba(255,255,255,.94);box-shadow:0 4px 14px rgba(10,44,63,.08);font-size:.7rem;font-weight:800}
-.platform-branding-fallback{display:flex;align-items:center;gap:12px;color:#0b8390}
-.platform-branding-fallback strong{font-size:2rem;color:#0e3f63}
-.platform-branding-controls{display:flex;flex-direction:column;justify-content:center;gap:18px}
-.platform-branding-guidance{display:grid;gap:6px}
-.platform-branding-guidance strong{color:#17364a;font-size:1rem}
-.platform-branding-guidance span,.platform-branding-guidance small{color:#6b818d;line-height:1.55}
-.platform-branding-actions{display:flex;flex-wrap:wrap;gap:10px}
-.platform-logo-upload{display:inline-flex!important;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 15px;border-radius:10px;color:#fff!important;background:#078994;font-size:.86rem;font-weight:800;cursor:pointer}
-.platform-logo-upload:hover{background:#05737c}
-.platform-logo-upload input{display:none}
-.danger-outline{color:#b4232d!important;border-color:#f0b6bb!important;background:#fff6f7!important}
-.platform-branding-safety{margin:0;padding:12px 14px;border-left:3px solid #24a4ae;border-radius:8px;color:#526e7b;background:#f0f9fa;font-size:.82rem;line-height:1.55}
-.platform-branding-feedback{margin:0 26px 18px;padding:11px 13px;border-radius:10px;font-size:.86rem}
-.platform-branding-feedback.success{display:flex;align-items:center;gap:7px;color:#12633f;background:#eafaf2;border:1px solid #bce6d0}
-.platform-branding-feedback.error{color:#98252c;background:#fff0f1;border:1px solid #f2bec2}
-.platform-branding-savebar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:17px 24px;border-top:1px solid #e3ecef;background:#f8fbfc}
-.platform-branding-savebar span{color:#607785;font-size:.84rem}
-.platform-branding-savebar button{display:inline-flex;align-items:center;gap:8px}
-.platform-branding-savebar button:disabled{opacity:.55;cursor:not-allowed}
-.spin{animation:platform-brand-spin 1s linear infinite}
-@keyframes platform-brand-spin{to{transform:rotate(360deg)}}
-
-html[data-theme="dark"] .platform-branding-hero{border-color:#284653;background:linear-gradient(135deg,#0c2430,#0b1f2d)}
-html[data-theme="dark"] .platform-branding-hero h1,html[data-theme="dark"] .platform-branding-card-head h2,html[data-theme="dark"] .platform-branding-guidance strong{color:#edf7fa}
-html[data-theme="dark"] .platform-branding-hero p,html[data-theme="dark"] .platform-branding-card-head p,html[data-theme="dark"] .platform-branding-guidance span,html[data-theme="dark"] .platform-branding-guidance small,html[data-theme="dark"] .platform-branding-savebar span{color:#a7bdc7}
-html[data-theme="dark"] .platform-branding-card{border-color:#294652;background:#0b202b}
-html[data-theme="dark"] .platform-branding-card-head,html[data-theme="dark"] .platform-branding-savebar{border-color:#294652;background:#0d2632}
-html[data-theme="dark"] .platform-branding-preview{border-color:#365663;background:#102b36}
-html[data-theme="dark"] .platform-branding-preview.has-logo{background:#fff}
-html[data-theme="dark"] .platform-branding-safety{color:#b9d2da;background:#12313c}
-html[data-theme="dark"] .danger-outline{background:#351b22!important}
-
-@media(max-width:1500px){
-  .public-mode .premium-header:not(.portal-topbar) .header-actions :is(a,button){padding-inline:10px}
-  .public-mode .premium-header:not(.portal-topbar) .language-selector{min-width:0}
+.premium-brand.uses-platform-logo {
+  min-width: 0;
+  flex: 0 1 auto;
 }
-@media(max-width:760px){
-  .premium-brand.uses-platform-logo.platform-logo-wide .brand-mark{width:104px;min-width:104px;height:40px}
-  .premium-brand.uses-platform-logo.platform-logo-square .brand-mark{width:40px;min-width:40px;height:40px}
-  .platform-branding-hero{grid-template-columns:auto minmax(0,1fr);padding:18px}
-  .platform-branding-status{grid-column:1/-1;width:max-content}
-  .platform-branding-editor{grid-template-columns:1fr;padding:18px}
-  .platform-branding-preview{min-height:190px;padding:18px}
-  .platform-logo-ratio-badge{right:8px;bottom:8px}
-  .platform-branding-card-head{padding:18px}
-  .platform-branding-savebar{position:sticky;bottom:0;flex-direction:column;align-items:stretch;padding:14px 18px}
-  .platform-branding-savebar button{justify-content:center;width:100%}
-  .platform-branding-actions>*{flex:1 1 180px}
+
+.premium-brand.uses-platform-logo .brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 118px;
+  height: 42px;
+
+  padding: 0;
+  margin: 0;
+
+  border: none;
+  background: transparent;
+  box-shadow: none;
+
+  overflow: hidden;
+  border-radius: 12px;
+  flex: 0 0 auto;
 }
-@media(max-width:420px){
-  .portal-mode .portal-brand.uses-platform-logo .brand-mark{display:grid}
-  .portal-mode .portal-brand.uses-platform-logo.platform-logo-wide .brand-mark{width:96px;min-width:96px;height:38px}
-  .portal-mode .portal-brand.uses-platform-logo.platform-logo-square .brand-mark{width:38px;min-width:38px;height:38px}
-  .portal-mode .portal-brand.uses-platform-logo.platform-logo-square>span:last-child{display:grid;min-width:0}
-  .platform-branding-hero-icon{width:43px;height:43px}
-  .platform-branding-hero{gap:11px}
-  .platform-branding-card-head{align-items:stretch;flex-direction:column}
-  .platform-branding-card-head button{width:100%;justify-content:center}
-  .platform-branding-preview{min-height:160px;padding:14px}
-  .platform-logo-ratio-badge{max-width:calc(100% - 16px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .platform-branding-actions{display:grid}
-  .platform-branding-status{width:100%;justify-content:center}
+
+.premium-brand.uses-platform-logo .brand-mark img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center;
+
+  border: none;
+  border-radius: 12px;
+
+  image-rendering: auto;
+}
+
+.premium-brand.uses-platform-logo.platform-logo-wide .brand-mark {
+  width: auto;
+  min-width: 0;
+}
+
+.premium-brand.uses-platform-logo.platform-logo-wide > span:last-child {
+  display: none;
+}
+.premium-brand.uses-platform-logo.platform-logo-square .brand-mark {
+  width: 42px;
+  min-width: 42px;
+}
+.premium-brand.uses-platform-logo.platform-logo-square > span:last-child {
+  display: grid;
+}
+.public-mode .premium-header:not(.portal-topbar) .header-inner {
+  gap: clamp(10px, 1.35vw, 20px);
+}
+.public-mode .premium-header:not(.portal-topbar) .header-actions {
+  gap: 8px;
+}
+
+.platform-branding-page {
+  width: min(1160px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+}
+.platform-branding-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 24px;
+  border: 1px solid #d9e6ea;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #f2fbfc, #eef6ff);
+  box-shadow: 0 12px 34px rgba(9, 48, 68, 0.07);
+}
+.platform-branding-hero-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  color: #087f8c;
+  background: #dff5f5;
+}
+.platform-branding-hero h1 {
+  margin: 3px 0 5px;
+  color: #102f42;
+  font-size: clamp(1.55rem, 3vw, 2.15rem);
+}
+.platform-branding-hero p {
+  margin: 0;
+  color: #587180;
+}
+.platform-branding-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px solid #bde7d7;
+  border-radius: 999px;
+  color: #116948;
+  background: #edfbf5;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+.platform-branding-card {
+  overflow: hidden;
+  border: 1px solid #d9e5ea;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 16px 42px rgba(10, 44, 63, 0.07);
+}
+.platform-branding-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 22px 24px;
+  border-bottom: 1px solid #e3ecef;
+}
+.platform-branding-card-head h2 {
+  margin: 0 0 5px;
+  color: #153448;
+  font-size: 1.15rem;
+}
+.platform-branding-card-head p {
+  margin: 0;
+  color: #687f8c;
+  font-size: 0.88rem;
+}
+.platform-branding-loading {
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #607986;
+}
+.platform-branding-editor {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.05fr) minmax(300px, 0.95fr);
+  gap: 26px;
+  padding: 26px;
+}
+.platform-branding-preview {
+  position: relative;
+  overflow: hidden;
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  border: 1px dashed #b9d0d9;
+  border-radius: 17px;
+  background: linear-gradient(135deg, #f8fbfc, #f2f7f9);
+}
+.platform-branding-preview.has-logo {
+  border-style: solid;
+  background: #fff;
+}
+.platform-branding-preview img {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  max-height: 230px;
+  object-fit: contain;
+  object-position: center;
+}
+.platform-logo-ratio-badge {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 6px 9px;
+  border: 1px solid #cfe1e7;
+  border-radius: 999px;
+  color: #315666;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 14px rgba(10, 44, 63, 0.08);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+.platform-branding-fallback {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #0b8390;
+}
+.platform-branding-fallback strong {
+  font-size: 2rem;
+  color: #0e3f63;
+}
+.platform-branding-controls {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+}
+.platform-branding-guidance {
+  display: grid;
+  gap: 6px;
+}
+.platform-branding-guidance strong {
+  color: #17364a;
+  font-size: 1rem;
+}
+.platform-branding-guidance span,
+.platform-branding-guidance small {
+  color: #6b818d;
+  line-height: 1.55;
+}
+.platform-branding-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.platform-logo-upload {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 15px;
+  border-radius: 10px;
+  color: #fff !important;
+  background: #078994;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.platform-logo-upload:hover {
+  background: #05737c;
+}
+.platform-logo-upload input {
+  display: none;
+}
+.danger-outline {
+  color: #b4232d !important;
+  border-color: #f0b6bb !important;
+  background: #fff6f7 !important;
+}
+.platform-branding-safety {
+  margin: 0;
+  padding: 12px 14px;
+  border-left: 3px solid #24a4ae;
+  border-radius: 8px;
+  color: #526e7b;
+  background: #f0f9fa;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.platform-branding-feedback {
+  margin: 0 26px 18px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  font-size: 0.86rem;
+}
+.platform-branding-feedback.success {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #12633f;
+  background: #eafaf2;
+  border: 1px solid #bce6d0;
+}
+.platform-branding-feedback.error {
+  color: #98252c;
+  background: #fff0f1;
+  border: 1px solid #f2bec2;
+}
+.platform-branding-savebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 17px 24px;
+  border-top: 1px solid #e3ecef;
+  background: #f8fbfc;
+}
+.platform-branding-savebar span {
+  color: #607785;
+  font-size: 0.84rem;
+}
+.platform-branding-savebar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.platform-branding-savebar button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.spin {
+  animation: platform-brand-spin 1s linear infinite;
+}
+@keyframes platform-brand-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+html[data-theme="dark"] .platform-branding-hero {
+  border-color: #284653;
+  background: linear-gradient(135deg, #0c2430, #0b1f2d);
+}
+html[data-theme="dark"] .platform-branding-hero h1,
+html[data-theme="dark"] .platform-branding-card-head h2,
+html[data-theme="dark"] .platform-branding-guidance strong {
+  color: #edf7fa;
+}
+html[data-theme="dark"] .platform-branding-hero p,
+html[data-theme="dark"] .platform-branding-card-head p,
+html[data-theme="dark"] .platform-branding-guidance span,
+html[data-theme="dark"] .platform-branding-guidance small,
+html[data-theme="dark"] .platform-branding-savebar span {
+  color: #a7bdc7;
+}
+html[data-theme="dark"] .platform-branding-card {
+  border-color: #294652;
+  background: #0b202b;
+}
+html[data-theme="dark"] .platform-branding-card-head,
+html[data-theme="dark"] .platform-branding-savebar {
+  border-color: #294652;
+  background: #0d2632;
+}
+html[data-theme="dark"] .platform-branding-preview {
+  border-color: #365663;
+  background: #102b36;
+}
+html[data-theme="dark"] .platform-branding-preview.has-logo {
+  background: #fff;
+}
+html[data-theme="dark"] .platform-branding-safety {
+  color: #b9d2da;
+  background: #12313c;
+}
+html[data-theme="dark"] .danger-outline {
+  background: #351b22 !important;
+}
+
+@media (max-width: 1500px) {
+  .public-mode
+    .premium-header:not(.portal-topbar)
+    .header-actions
+    :is(a, button) {
+    padding-inline: 10px;
+  }
+  .public-mode .premium-header:not(.portal-topbar) .language-selector {
+    min-width: 0;
+  }
+}
+@media (max-width: 760px) {
+  .premium-brand.uses-platform-logo.platform-logo-wide .brand-mark {
+    width: 104px;
+    min-width: 104px;
+    height: 40px;
+  }
+  .premium-brand.uses-platform-logo.platform-logo-square .brand-mark {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+  }
+  .platform-branding-hero {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 18px;
+  }
+  .platform-branding-status {
+    grid-column: 1/-1;
+    width: max-content;
+  }
+  .platform-branding-editor {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+  .platform-branding-preview {
+    min-height: 190px;
+    padding: 18px;
+  }
+  .platform-logo-ratio-badge {
+    right: 8px;
+    bottom: 8px;
+  }
+  .platform-branding-card-head {
+    padding: 18px;
+  }
+  .platform-branding-savebar {
+    position: sticky;
+    bottom: 0;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 18px;
+  }
+  .platform-branding-savebar button {
+    justify-content: center;
+    width: 100%;
+  }
+  .platform-branding-actions > * {
+    flex: 1 1 180px;
+  }
+}
+@media (max-width: 420px) {
+  .portal-mode .portal-brand.uses-platform-logo .brand-mark {
+    display: grid;
+  }
+  .portal-mode .portal-brand.uses-platform-logo.platform-logo-wide .brand-mark {
+    width: 96px;
+    min-width: 96px;
+    height: 38px;
+  }
+  .portal-mode
+    .portal-brand.uses-platform-logo.platform-logo-square
+    .brand-mark {
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+  }
+  .portal-mode
+    .portal-brand.uses-platform-logo.platform-logo-square
+    > span:last-child {
+    display: grid;
+    min-width: 0;
+  }
+  .platform-branding-hero-icon {
+    width: 43px;
+    height: 43px;
+  }
+  .platform-branding-hero {
+    gap: 11px;
+  }
+  .platform-branding-card-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .platform-branding-card-head button {
+    width: 100%;
+    justify-content: center;
+  }
+  .platform-branding-preview {
+    min-height: 160px;
+    padding: 14px;
+  }
+  .platform-logo-ratio-badge {
+    max-width: calc(100% - 16px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .platform-branding-actions {
+    display: grid;
+  }
+  .platform-branding-status {
+    width: 100%;
+    justify-content: center;
+  }
 }
