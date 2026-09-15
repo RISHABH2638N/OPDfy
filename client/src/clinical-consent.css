@@ -1,0 +1,91 @@
+.clinical-consent-page { display: grid; gap: 18px; }
+.consent-banner > svg { color: var(--clinic-primary, #0f8f96); opacity: .75; }
+.consent-disclaimer { display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; border: 1px solid #efcf8c; border-radius: 13px; background: #fff9e9; color: #72551b; font-size: 13px; line-height: 1.55; }
+.consent-disclaimer svg { flex: 0 0 auto; margin-top: 2px; }
+.consent-create { padding: 20px; }
+.consent-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.consent-section-head small { display: block; color: #12878f; font-size: 10px; font-weight: 900; letter-spacing: .13em; }
+.consent-section-head h2 { margin: 3px 0 0; color: #163c4d; font-size: 20px; }
+.consent-patient-search label { display: grid; gap: 7px; color: #2a4a59; font-size: 13px; font-weight: 800; }
+.consent-patient-search label > div { display: grid; grid-template-columns: 1fr auto; gap: 9px; }
+.consent-patient-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; margin: 10px 0; }
+.consent-patient-results button { display: flex; align-items: center; gap: 9px; padding: 10px; border: 1px solid #d3e0e5; border-radius: 11px; background: #fff; color: #244453; text-align: left; }
+.consent-patient-results button.selected { border-color: #1d9aa1; box-shadow: 0 0 0 2px #bce7e8; }
+.consent-patient-results span { display: grid; gap: 2px; }
+.consent-patient-results small { color: #6b7d87; overflow-wrap: anywhere; }
+.selected-consent-patient { display: flex; align-items: center; gap: 8px; margin: 10px 0 14px; padding: 10px 12px; border-radius: 10px; background: #eaf9f4; color: #0b704e; font-size: 13px; }
+.consent-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+.consent-form-grid label, .consent-modal > label { display: grid; align-content: start; gap: 6px; color: #294a59; font-size: 12px; font-weight: 800; }
+.consent-form-grid .wide { grid-column: 1 / -1; }
+.consent-form-grid input, .consent-form-grid select, .consent-form-grid textarea, .consent-modal input, .consent-modal textarea { width: 100%; }
+.consent-form-grid textarea, .consent-modal textarea { resize: vertical; }
+.consent-send { display: inline-flex; align-items: center; gap: 7px; margin-top: 15px; }
+.consent-list-section { display: grid; gap: 10px; }
+.consent-list-section > .consent-section-head { margin-bottom: 0; }
+.consent-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+.consent-card { display: flex; flex-direction: column; gap: 11px; padding: 17px; min-width: 0; }
+.consent-card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.consent-card-head > small { color: #607681; font-weight: 700; }
+.consent-status { display: inline-flex; align-items: center; gap: 5px; width: fit-content; padding: 5px 9px; border-radius: 999px; background: #edf3f5; color: #506773; font-size: 11px; font-weight: 900; }
+.consent-status.status-active { background: #e5f8ef; color: #087149; }
+.consent-status.status-pending, .consent-status.status-patient_acknowledged { background: #edf8fc; color: #12627b; }
+.consent-status.status-declined, .consent-status.status-withdrawn, .consent-status.status-cancelled, .consent-status.status-expired { background: #fff0f0; color: #a12b31; }
+.consent-card h3 { margin: 0; color: #143b4c; font-size: 17px; }
+.consent-explanation { margin: 0; color: #425f6e; line-height: 1.55; white-space: pre-wrap; }
+.consent-card details { border-top: 1px solid #e2eaed; border-bottom: 1px solid #e2eaed; padding: 9px 0; }
+.consent-card summary { cursor: pointer; color: #087d84; font-weight: 800; font-size: 12px; }
+.consent-details { display: grid; gap: 7px; margin-top: 9px; }
+.consent-details p { margin: 0; color: #506975; font-size: 12px; line-height: 1.55; white-space: pre-wrap; }
+.consent-meta { display: grid; gap: 6px; color: #657985; font-size: 11px; }
+.consent-meta span { display: flex; align-items: center; gap: 5px; }
+.consent-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.consent-empty { display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 130px; color: #667d88; }
+.consent-modal-backdrop { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 18px; background: rgba(5, 24, 33, .72); backdrop-filter: blur(5px); }
+.consent-modal { position: relative; width: min(620px, 100%); max-height: 88vh; overflow: auto; display: grid; gap: 13px; padding: 23px; }
+.consent-modal h2 { margin: 0; color: #163c4d; }
+.consent-modal > p { margin: 0; color: #4a6572; line-height: 1.55; white-space: pre-wrap; }
+.consent-modal-close { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border: 1px solid #d4e0e5; border-radius: 50%; background: #f7fafb; color: #375564; font-size: 20px; }
+.consent-actor { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.consent-actor label, .consent-check { display: flex !important; align-items: flex-start !important; flex-direction: row !important; gap: 9px !important; padding: 11px; border: 1px solid #d4e2e6; border-radius: 10px; color: #345361; font-size: 12px; line-height: 1.45; }
+.consent-actor input, .consent-check input { flex: 0 0 auto; width: auto !important; margin-top: 2px; accent-color: #0b8c94; }
+.consent-declarations { display: grid; gap: 7px; }
+.consent-decision-error { display: grid; gap: .65rem; margin: .25rem 0; }
+.consent-decision-error .ghost { justify-self: start; background: color-mix(in srgb, var(--surface, #fff) 82%, transparent); }
+.consent-decision-error { display: grid; gap: .65rem; margin: .25rem 0; }
+.consent-decision-error .ghost { justify-self: start; background: color-mix(in srgb, var(--surface, #fff) 82%, transparent); }
+
+html[data-theme="dark"] .consent-disclaimer { border-color: #745c2b; background: #342b18; color: #ffe2a0; }
+html[data-theme="dark"] .consent-section-head h2,
+html[data-theme="dark"] .consent-card h3,
+html[data-theme="dark"] .consent-modal h2,
+html[data-theme="dark"] .consent-patient-search label,
+html[data-theme="dark"] .consent-form-grid label,
+html[data-theme="dark"] .consent-modal > label { color: #e7f3f6; }
+html[data-theme="dark"] .consent-patient-results button,
+html[data-theme="dark"] .consent-modal-close { border-color: #345766; background: #15303b; color: #e0eef2; }
+html[data-theme="dark"] .consent-patient-results small,
+html[data-theme="dark"] .consent-card-head > small,
+html[data-theme="dark"] .consent-explanation,
+html[data-theme="dark"] .consent-details p,
+html[data-theme="dark"] .consent-meta,
+html[data-theme="dark"] .consent-modal > p { color: #bdd0d8; }
+html[data-theme="dark"] .selected-consent-patient { background: #123b31; color: #9defca; }
+html[data-theme="dark"] .consent-card details { border-color: #31505d; }
+html[data-theme="dark"] .consent-actor label,
+html[data-theme="dark"] .consent-check { border-color: #355765; color: #d9e9ed; background: #122d38; }
+html[data-theme="dark"] .consent-status { background: #19333e; color: #d6e6ea; }
+html[data-theme="dark"] .consent-status.status-active { background: #123b30; color: #9aefca; }
+html[data-theme="dark"] .consent-status.status-pending,
+html[data-theme="dark"] .consent-status.status-patient_acknowledged { background: #143743; color: #a9e4f6; }
+html[data-theme="dark"] .consent-status.status-declined,
+html[data-theme="dark"] .consent-status.status-withdrawn,
+html[data-theme="dark"] .consent-status.status-cancelled,
+html[data-theme="dark"] .consent-status.status-expired { background: #3a2023; color: #ffb7ba; }
+
+@media (max-width: 720px) {
+  .consent-form-grid, .consent-actor { grid-template-columns: 1fr; }
+  .consent-form-grid .wide { grid-column: auto; }
+  .consent-patient-search label > div { grid-template-columns: 1fr; }
+  .consent-grid { grid-template-columns: 1fr; }
+  .consent-modal { padding: 20px 16px; }
+}

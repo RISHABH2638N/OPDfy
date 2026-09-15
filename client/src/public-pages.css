@@ -1,0 +1,31 @@
+.public-info,.info-footer,.info-consent,.info-policy-notice { --info-ink:#183848;--info-muted:#476474;--info-bg:#fff;--info-soft:#eff8fa;--info-line:#cbdfe5;--info-link:#076976; }
+html[data-theme="dark"] :is(.public-info,.info-footer,.info-consent,.info-policy-notice) { --info-ink:#e5f2f7;--info-muted:#bfd2dc;--info-bg:#102633;--info-soft:#16323e;--info-line:#3d5d6b;--info-link:#8ce4e6; }
+.public-mode .public-info { width:min(100% - 40px,1000px);margin:32px auto 64px;color:var(--info-ink);line-height:1.8; }
+.public-mode .public-info .info-hero { background:var(--info-soft)!important;border:1px solid var(--info-line);padding:clamp(24px,5vw,52px);border-radius:24px; }
+.public-mode .public-info h1 { font-size:clamp(1.8rem,4vw,3rem);line-height:1.3;letter-spacing:-.025em;margin:16px 0;color:var(--info-ink)!important; }
+.public-mode .public-info :is(h2,summary) { color:var(--info-ink)!important;font-size:1.1rem;line-height:1.6; }
+.public-mode .public-info :is(p,small) { color:var(--info-muted)!important; }
+.public-mode .public-info p { margin:10px 0 0;line-height:1.85; }
+.info-kicker { display:inline-flex;align-items:center;gap:8px;font-weight:700;color:var(--info-link); }
+.info-tabs { display:flex;flex-wrap:wrap;gap:10px;margin:24px 0; }
+.public-mode .public-info .info-tabs a { color:var(--info-link)!important;border:1px solid var(--info-line);padding:9px 15px;border-radius:12px;text-decoration:none;background:var(--info-bg)!important; }
+.public-mode .public-info .info-tabs a[aria-current="page"] { background:var(--info-soft)!important;box-shadow:inset 0 -3px var(--info-link);font-weight:700; }
+.info-search { display:flex;align-items:center;gap:12px;margin-bottom:20px;color:var(--info-link); }
+.info-search input { width:100%;min-width:0; }
+.info-sections { display:grid;gap:14px; }
+.public-mode .public-info .info-section { padding:22px 26px;border:1px solid var(--info-line);border-radius:16px;background:var(--info-bg)!important; }
+.info-section h2 { margin:0; }.info-section summary { cursor:pointer;font-weight:650; }.info-section summary::marker { color:var(--info-link); }
+.info-contact { display:flex;align-items:flex-start;gap:18px;padding:26px;background:var(--info-soft);border:1px solid var(--info-line);border-radius:18px;margin-top:24px;color:var(--info-link); }
+.info-contact>svg { flex-shrink:0; }.info-contact h2 { margin:0; }.info-contact a { display:inline-flex;align-items:center;gap:8px;margin-top:10px;overflow-wrap:anywhere;word-break:break-word; }
+.info-footer { display:flex;justify-content:space-between;flex-wrap:wrap;gap:24px;padding:26px clamp(20px,4vw,56px);border-top:1px solid var(--info-line);background:var(--info-bg);color:var(--info-ink); }
+.info-footer>div { display:grid;gap:4px; }.info-footer span { font-size:.85rem;color:var(--info-muted); }.info-footer nav { display:flex;align-items:center;flex-wrap:wrap;gap:12px 22px; }
+.info-footer a,.public-mode .public-info a,.info-consent a,.info-policy-notice a { color:var(--info-link)!important;text-underline-offset:4px; }
+.public-mode .info-policy-notice { font-size:.8rem;line-height:1.8;color:var(--info-muted)!important;margin:14px 0; }
+.info-consent { margin:18px 0;padding:16px;border:1px solid var(--info-line);border-radius:12px;background:var(--info-soft); }
+.public-mode .info-consent label { display:flex;align-items:flex-start;gap:12px;color:var(--info-ink)!important;font-size:.875rem;line-height:1.7; }
+.public-mode .info-consent input[type="checkbox"] { width:20px;height:20px;min-height:20px;flex:0 0 20px;margin:3px 0 0;accent-color:#087e8b; }
+.info-consent p { margin:10px 0 0;font-size:.8rem; }.info-consent small { display:block;margin-top:5px; }
+.info-sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
+.public-info :is(a,summary):focus-visible,.info-footer a:focus-visible { outline:3px solid var(--info-link)!important;outline-offset:4px; }
+@media(max-width:560px){ .public-mode .public-info{width:calc(100% - 24px);margin-top:16px}.public-mode .public-info .info-section{padding:18px}.info-contact{padding:18px;gap:10px}.info-tabs a{flex:1 1 40%;text-align:center}.info-footer{flex-direction:column}.info-footer nav{align-items:flex-start;flex-direction:column}.info-contact a{font-size:.875rem} }
+@media print { .info-tabs,.info-footer,.info-search{display:none}.public-mode .public-info{width:100%;margin:0}.public-mode .public-info .info-section{break-inside:avoid} }

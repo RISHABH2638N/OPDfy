@@ -1,0 +1,32 @@
+/* Queue intervention visibility fix.
+   Keep the intervention panel in normal table flow so it cannot be clipped by
+   the horizontally scrollable reception queue container. No workflow/API logic
+   is changed here. */
+
+.queue-intervention[open] {
+  min-width: 280px;
+}
+
+.queue-intervention-panel {
+  position: static;
+  width: 100%;
+  min-width: 260px;
+  margin-top: 8px;
+  max-height: none;
+  overflow: visible;
+}
+
+@media (max-width: 768px) {
+  .queue-intervention[open] {
+    min-width: 0;
+    width: min(290px, 100%);
+  }
+
+  .queue-intervention-panel {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    max-height: none;
+    overflow: visible;
+  }
+}

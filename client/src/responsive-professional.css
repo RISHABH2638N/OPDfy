@@ -1,0 +1,636 @@
+/* =========================================================
+   OPDfy — PROFESSIONAL RESPONSIVE SHELL
+   Final cascade layer for the shared public and portal chrome.
+   Keeps workflows untouched while making every screen usable
+   from 320px phones through wide desktop workstations.
+========================================================= */
+
+:root {
+  --responsive-gutter: clamp(12px, 2.2vw, 28px);
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 320px;
+  max-width: 100%;
+}
+
+html { overflow-x: clip; }
+body { overflow-x: hidden; }
+
+body.portal-nav-open { overscroll-behavior: none; }
+
+.app-shell,
+.app-content,
+.portal-workspace,
+.portal-content,
+.portal-content > *,
+.portal-mode main,
+.portal-mode section,
+.portal-mode article,
+.portal-mode form,
+.portal-mode fieldset,
+.portal-mode details,
+.portal-mode .card,
+.portal-mode .panel {
+  min-width: 0;
+}
+
+.portal-mode :is(img, video, canvas, iframe) {
+  max-width: 100%;
+  height: auto;
+}
+
+.portal-mode :is(h1, h2, h3, h4, p, small, label, b, strong, td, th),
+.public-mode :is(h1, h2, h3, h4, p, small, label, b, strong) {
+  overflow-wrap: anywhere;
+}
+
+.portal-mode :is(input, select, textarea),
+.public-mode :is(input, select, textarea) {
+  max-width: 100%;
+}
+
+/* ---------- Authenticated portal topbar ---------- */
+
+.portal-mode {
+  --portal-topbar-h: 68px;
+}
+
+.portal-mode .portal-topbar {
+  width: 100%;
+  height: var(--portal-topbar-h);
+  min-height: var(--portal-topbar-h);
+}
+
+.portal-mode .portal-header-inner {
+  display: grid;
+  grid-template-columns: minmax(205px, var(--portal-sidebar-w)) minmax(180px, 1fr) auto;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 20px;
+  gap: 18px;
+}
+
+.portal-mode .portal-menu-toggle { display: none; }
+
+.portal-mode .portal-brand,
+.portal-mode .portal-topbar-context,
+.portal-mode .portal-header-actions {
+  min-width: 0;
+}
+
+.portal-mode .portal-brand > span:last-child,
+.portal-mode .portal-topbar-context {
+  overflow: hidden;
+}
+
+.portal-mode .portal-brand strong,
+.portal-mode .portal-brand small,
+.portal-mode .portal-topbar-context > * {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portal-mode .portal-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  width: auto;
+}
+
+.portal-mode .portal-header-actions > * { flex: 0 0 auto; }
+
+/* ---------- Sidebar preferences for every portal ---------- */
+
+.portal-sidebar-preferences {
+  display: grid;
+  gap: 7px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(164, 215, 222, .16);
+}
+
+.portal-sidebar-language {
+  display: grid;
+  gap: 9px;
+  padding: 11px;
+  border: 1px solid rgba(169, 222, 228, .17);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .055);
+}
+
+.portal-sidebar-language .platform-preference-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #d9edf1;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.portal-sidebar-language .platform-preference-title svg {
+  flex: 0 0 auto;
+  color: #81dfe3;
+}
+
+.portal-sidebar-language .language-switcher {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 5px 6px;
+  justify-content: space-between;
+  color: #edfafa;
+  background: rgba(3, 23, 34, .34);
+  border-color: rgba(171, 226, 231, .2);
+}
+
+.portal-sidebar-language .language-switcher > svg,
+.portal-sidebar-language .language-switcher-label { display: none; }
+
+.portal-sidebar-language .language-switcher select {
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  padding: 4px 30px 4px 9px;
+  color: #f4ffff;
+  background-color: #123d4b;
+  border-color: rgba(169, 226, 231, .22);
+}
+
+.portal-sidebar-language .language-switcher select option {
+  color: #102f3c;
+  background: #fff;
+}
+
+.portal-sidebar-nav a > span {
+  min-width: 0;
+  line-height: 1.4;
+}
+
+html[lang="hi"] .portal-sidebar-nav a {
+  min-height: 50px;
+  line-height: 1.5;
+}
+
+html[lang="hi"] .portal-sidebar-nav a > span {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+/* ---------- Public header ---------- */
+
+.public-mode .premium-header:not(.portal-topbar) {
+  height: auto;
+}
+
+.public-mode .premium-header:not(.portal-topbar) .header-inner {
+  min-width: 0;
+}
+
+.public-mode .premium-header:not(.portal-topbar) .header-actions {
+  min-width: 0;
+}
+
+/* ---------- Universal responsive content guardrails ---------- */
+
+.portal-mode :is(.actions, .card-actions, .form-actions, .dashboard-actions, .operations-actions) {
+  max-width: 100%;
+}
+
+.portal-mode :is(.table-wrap, .analytics-table-wrap, .queue-table-wrap, .responsive-table, .backup-table-wrap) {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.portal-mode :is(.modal, .modal-card, .dialog-card, [role="dialog"]) {
+  max-width: min(94vw, 760px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.portal-mode button,
+.public-mode button,
+.portal-mode a,
+.public-mode a {
+  text-underline-offset: 3px;
+}
+
+/* ---------- Tablet and compact workstation ---------- */
+
+@media (max-width: 1120px) {
+  .public-mode .premium-header:not(.portal-topbar) .header-inner {
+    display: grid;
+    grid-template-columns: minmax(170px, 1fr) auto;
+    width: calc(100% - 32px);
+    padding: 11px 0;
+    gap: 10px 16px;
+  }
+
+  .public-mode .premium-nav {
+    justify-self: end;
+    margin: 0;
+  }
+
+  .public-mode .premium-header:not(.portal-topbar) .header-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 900px) {
+  body.portal-nav-open { overflow: hidden; }
+
+  .portal-mode {
+    --portal-topbar-h: 64px;
+  }
+
+  .portal-mode .portal-header-inner {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .portal-mode .portal-menu-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+
+  .portal-mode .portal-topbar-context,
+  .portal-mode .portal-role-chip { display: none !important; }
+
+  .portal-mode .portal-header-actions {
+    display: flex !important;
+  }
+
+  .portal-mode .portal-brand {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .portal-mode .portal-brand > span:last-child {
+    display: grid !important;
+  }
+
+  .portal-mode .portal-brand strong { font-size: 14px; }
+  .portal-mode .portal-brand small { display: none; }
+
+  .portal-mode .portal-sidebar {
+    top: var(--portal-topbar-h);
+    width: min(330px, 90vw);
+    height: calc(100dvh - var(--portal-topbar-h));
+    max-height: calc(100dvh - var(--portal-topbar-h));
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .portal-sidebar-backdrop {
+    inset: var(--portal-topbar-h) 0 0 0;
+    width: 100%;
+    min-height: 0;
+    margin-left: 0;
+  }
+
+  .portal-mode .portal-content {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .portal-mode .page,
+  .portal-mode .premium-page,
+  .portal-platform .platform-page,
+  .portal-platform main.page {
+    width: min(100% - (var(--responsive-gutter) * 2), 1320px);
+  }
+}
+
+/* ---------- Patient-first phone layout ---------- */
+
+@media (max-width: 700px) {
+  .public-mode .premium-header:not(.portal-topbar) .header-inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: calc(100% - 24px);
+    padding: 10px 0;
+    gap: 9px 10px;
+  }
+
+  .public-mode .premium-brand { min-width: 0; }
+  .public-mode .premium-brand strong { font-size: 14px; }
+  .public-mode .premium-brand small { display: none; }
+
+  .public-mode .premium-nav {
+    display: flex !important;
+    min-width: 0;
+  }
+
+  .public-mode .premium-nav a {
+    min-height: 40px;
+    padding: 8px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .public-mode .premium-header:not(.portal-topbar) .header-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 1px 0 3px;
+    scrollbar-width: none;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .public-mode .premium-header:not(.portal-topbar) .header-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .public-mode .premium-header:not(.portal-topbar) .header-actions > * {
+    flex: 0 0 auto;
+  }
+
+  .public-mode .premium-header:not(.portal-topbar) .header-actions :is(a, button, .language-switcher) {
+    min-height: 42px;
+  }
+
+  .public-mode .app-content {
+    min-height: calc(100svh - 116px);
+  }
+
+  .portal-mode .portal-header-actions {
+    display: flex !important;
+  }
+
+  .portal-mode .portal-header-actions .system-status {
+    display: none !important;
+  }
+
+  .portal-mode .theme-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    min-height: 42px;
+    padding: 0;
+  }
+
+  .portal-mode .theme-toggle span { display: none; }
+
+  .portal-mode .portal-brand .brand-mark {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+
+  .portal-mode .portal-brand > span:last-child {
+    max-width: min(45vw, 210px);
+  }
+
+  .portal-mode .portal-content {
+    padding-inline: 0;
+  }
+
+  .portal-mode .page,
+  .portal-mode .premium-page,
+  .portal-platform .platform-page,
+  .portal-platform main.page {
+    width: calc(100% - 24px);
+    padding-top: 14px;
+    padding-bottom: max(44px, env(safe-area-inset-bottom));
+  }
+
+  .portal-mode :is(.card, .command-panel, .reception-command-card, .privacy-workspace-card) {
+    border-radius: 15px;
+  }
+
+  .portal-mode .card { padding: 15px; }
+
+  .portal-mode :is(.head, .card-head, .panel-head, .section-head, .dashboard-banner) {
+    min-width: 0;
+  }
+
+  .portal-mode :is(.actions, .card-actions, .form-actions, .operations-actions) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .portal-mode :is(.actions, .card-actions, .form-actions, .operations-actions) > :is(button, a) {
+    flex: 1 1 150px;
+    justify-content: center;
+  }
+
+  .portal-mode :is(input:not([type="checkbox"]):not([type="radio"]), select, button, .button, .primary, .ghost) {
+    min-height: 44px;
+  }
+
+  .portal-mode textarea { min-height: 104px; }
+
+  .portal-mode table { min-width: 640px; }
+
+  .portal-mode .card:has(> table),
+  .portal-mode .card:has(.analytics-table) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .portal-mode :is(.two-column, .two-col, .form-grid, .settings-grid, .consent-grid, .privacy-grid, .monitoring-grid) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .portal-mode :is(.modal, .modal-card, .dialog-card, [role="dialog"]) {
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .portal-mode .portal-header-inner {
+    grid-template-columns: 42px minmax(0, 1fr) 42px;
+    padding-inline: 8px;
+    gap: 6px;
+  }
+
+  .portal-mode .portal-menu-toggle,
+  .portal-mode .theme-toggle {
+    width: 42px;
+    min-width: 42px;
+  }
+
+  .portal-mode .portal-brand { gap: 7px; }
+  .portal-mode .portal-brand .brand-mark { display: none; }
+  .portal-mode .portal-brand > span:last-child { max-width: 100%; }
+
+  .portal-mode .page,
+  .portal-mode .premium-page,
+  .portal-platform .platform-page,
+  .portal-platform main.page {
+    width: calc(100% - 18px);
+  }
+
+  .portal-mode .card { padding: 13px; }
+
+  .public-mode .premium-header:not(.portal-topbar) .header-inner {
+    width: calc(100% - 18px);
+  }
+
+  .public-mode .premium-nav a { padding-inline: 8px; }
+}
+
+/* Dark mode keeps the new shared language card legible. */
+html[data-theme="dark"] .portal-sidebar-language {
+  background: rgba(255, 255, 255, .055) !important;
+  border-color: rgba(163, 224, 230, .18) !important;
+}
+
+html[data-theme="dark"] .portal-sidebar-language .platform-preference-title,
+html[data-theme="dark"] .portal-sidebar-language .language-switcher {
+  color: #e9fbfc !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-sidebar,
+  .portal-sidebar-backdrop,
+  .premium-header * {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/*
+ * Guaranteed persistent navigation. JavaScript measures the rendered topbar
+ * (including a two-row mobile/public header) and updates the spacer/sidebar
+ * offset, preventing content from being covered at every language and width.
+ */
+.premium-header,
+.portal-mode .portal-topbar {
+  position: fixed !important;
+  top: 0;
+  right: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1200;
+}
+
+.app-shell {
+  --active-topbar-height: 72px;
+}
+
+.public-mode {
+  --active-topbar-height: 76px;
+}
+
+.portal-mode {
+  --active-topbar-height: var(--portal-topbar-h);
+}
+
+.premium-header-spacer {
+  width: 100%;
+  height: var(--active-topbar-height);
+  flex: 0 0 var(--active-topbar-height);
+  pointer-events: none;
+}
+
+.portal-mode .portal-sidebar {
+  top: var(--active-topbar-height);
+  height: calc(100dvh - var(--active-topbar-height));
+  max-height: calc(100dvh - var(--active-topbar-height));
+}
+
+.portal-mode .portal-sidebar-backdrop {
+  inset: var(--active-topbar-height) 0 0 0;
+}
+
+
+/* Day24: dialogs must cover the persistent topbar; keep content scrollable. */
+.platform-modal-backdrop,
+.consent-modal-backdrop,
+.modal-backdrop {
+  z-index: 2000 !important;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.platform-modal, .platform-review-modal, .consent-modal {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  min-width: 0;
+  max-width: calc(100vw - 32px);
+}
+.backup-confirmation-hint {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  padding: 8px 0;
+  color: inherit;
+}
+.portal-content { min-width: 0; }
+.portal-mode .backup-table-wrap { max-width: 100%; overflow-x: auto; }
+@media (max-width: 680px) {
+  .portal-mode .incident-inline { flex-wrap: wrap; }
+  .portal-mode .incident-inline > input { min-width: 0; flex: 1 1 100%; width: 100%; }
+  .portal-mode .patient-notification-toast { right: 16px; top: calc(var(--active-topbar-height, 72px) + 12px); }
+}
+
+/* Public mobile actions remain visible instead of clipping the sign-in button. */
+@media (max-width: 1120px) {
+  .public-mode .premium-header:not(.portal-topbar) .header-actions {
+    flex-wrap: wrap;
+    overflow: visible;
+    gap: 8px;
+  }
+  .public-mode .premium-header:not(.portal-topbar) .header-actions > * {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .public-mode .premium-header:not(.portal-topbar) .header-actions :is(a, button) {
+    padding-inline: 10px;
+    font-size: 12px;
+  }
+  .public-mode .premium-header:not(.portal-topbar) .language-switcher select {
+    min-width: 0;
+    max-width: 130px;
+  }
+}
+
+@font-face {
+  font-family: "OPD Devanagari";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./assets/fonts/noto-devanagari-400.woff2") format("woff2");
+  unicode-range: U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF,U+11B00-11B09;
+}
+
+@font-face {
+  font-family: "OPD Devanagari";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./assets/fonts/noto-devanagari-700.woff2") format("woff2");
+  unicode-range: U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF,U+11B00-11B09;
+}

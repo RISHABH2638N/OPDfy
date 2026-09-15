@@ -1,0 +1,138 @@
+.legal-verification-note,
+.legal-review-disclaimer,
+.legal-review-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #b9e4e5;
+  border-radius: 12px;
+  background: #effafa;
+  color: #244b58;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.legal-verification-note { margin: 0 0 16px; }
+.legal-verification-note svg,
+.legal-review-disclaimer svg { flex: 0 0 auto; margin-top: 2px; color: #078a91; }
+
+.verification-status,
+.doctor-registration-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid #cbd8df;
+  border-radius: 999px;
+  background: #f5f8fa;
+  color: #526672;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.verification-platform_reviewed,
+.verification-clinic_reviewed {
+  border-color: #9cd9c1 !important;
+  background: #eafaf2 !important;
+  color: #08744b !important;
+}
+
+.verification-submitted {
+  border-color: #a9d7e7 !important;
+  background: #edf8fc !important;
+  color: #12647d !important;
+}
+
+.verification-not_submitted {
+  border-color: #cbd8df !important;
+  background: #f5f8fa !important;
+  color: #526672 !important;
+}
+
+.verification-rejected,
+.verification-expired {
+  border-color: #f4b8b8 !important;
+  background: #fff1f1 !important;
+  color: #a72d2d !important;
+}
+
+.legal-review-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px 12px;
+  margin-top: 10px;
+  color: #566d79;
+  font-size: 12px;
+}
+
+.platform-review-registration {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #8acfd1;
+  background: #effafa;
+  color: #08747a;
+}
+
+.legal-review-modal { width: min(560px, calc(100vw - 28px)); }
+.legal-review-modal > label { display: grid; gap: 6px; margin-top: 12px; color: #304d5b; font-weight: 750; font-size: 13px; }
+.legal-review-modal input,
+.legal-review-modal select,
+.legal-review-modal textarea { width: 100%; }
+.legal-review-modal textarea { min-height: 92px; resize: vertical; }
+.legal-review-sensitive {
+  display: grid;
+  grid-template-columns: 145px 1fr;
+  gap: 8px 12px;
+  margin: 14px 0;
+  padding: 13px;
+  border-radius: 12px;
+  background: #f4f8fa;
+  color: #49616e;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.legal-review-sensitive b { color: #173c4c; }
+.legal-review-disclaimer { margin-top: 14px; border-color: #f0d5a5; background: #fff8e9; color: #6e5424; }
+
+.legal-verification-card summary { flex-wrap: wrap; }
+.legal-verification-card summary .verification-status { margin-left: auto; }
+.legal-review-result { margin-top: 14px; flex-direction: column; gap: 3px; }
+.doctor-verification-panel { margin-top: 22px; padding: 18px; border: 1px solid #cce2e6; border-radius: 14px; background: #f8fbfc; }
+.doctor-verification-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.doctor-verification-head > div { display: grid; gap: 3px; }
+.doctor-verification-head small { color: #657985; }
+.legal-review-confirm { display: flex !important; align-items: flex-start; flex-direction: row !important; gap: 9px !important; margin: 12px 0; padding: 11px; border-radius: 10px; background: #ecf8f8; }
+.legal-review-confirm input { width: auto !important; margin-top: 3px; }
+.booking-doctor-rating .doctor-registration-badge { margin-top: 2px; }
+
+html[data-theme="dark"] .legal-verification-note,
+html[data-theme="dark"] .legal-review-result,
+html[data-theme="dark"] .doctor-verification-panel,
+html[data-theme="dark"] .legal-review-sensitive {
+  border-color: #28505d;
+  background: #102b35;
+  color: #d8e9ee;
+}
+html[data-theme="dark"] .legal-review-sensitive b,
+html[data-theme="dark"] .legal-review-modal > label { color: #edf8fa; }
+html[data-theme="dark"] .legal-review-disclaimer { border-color: #6c542b; background: #342b18; color: #ffe3a5; }
+html[data-theme="dark"] .verification-status,
+html[data-theme="dark"] .doctor-registration-badge { border-color: #47616b; background: #17313b; color: #dcebef; }
+html[data-theme="dark"] .verification-platform_reviewed,
+html[data-theme="dark"] .verification-clinic_reviewed { border-color: #287e64 !important; background: #123b31 !important; color: #9df2ce !important; }
+html[data-theme="dark"] .verification-submitted { border-color: #31748a !important; background: #143743 !important; color: #a9e4f6 !important; }
+html[data-theme="dark"] .verification-not_submitted { border-color: #47616b !important; background: #17313b !important; color: #dcebef !important; }
+html[data-theme="dark"] .verification-rejected,
+html[data-theme="dark"] .verification-expired { border-color: #854447 !important; background: #3a2023 !important; color: #ffb7ba !important; }
+
+@media (max-width: 720px) {
+  .doctor-verification-head { flex-direction: column; }
+  .legal-review-sensitive { grid-template-columns: 1fr; }
+  .legal-verification-card summary .verification-status { margin-left: 0; }
+}

@@ -1,0 +1,25 @@
+
+.referral-workspace { margin: 18px 0; }
+.referral-workspace > summary { cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.referral-workspace > summary::marker { color: #64748b; }
+.referral-content { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+.referral-panel { min-width: 0; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-top: 12px; }
+.referral-panel h3 { margin: 0 0 10px; font-size: 1rem; color: #0f172a; }
+.referral-form { display: flex; flex-direction: column; gap: 12px; }
+.referral-form label { display: flex; flex-direction: column; gap: 5px; font-weight: 600; font-size: .9rem; }
+.referral-form input, .referral-form select, .referral-form textarea { box-sizing: border-box; width: 100%; min-width: 0; border: 1px solid #cbd5e1; background: #fff; color: #0f172a; border-radius: 8px; padding: 10px; font: inherit; }
+.referral-form textarea { resize: vertical; }
+.referral-form button { align-self: flex-start; }
+.referral-list { display: grid; gap: 10px; margin-top: 12px; }
+.referral-entry { padding: 12px; border: 1px solid #e2e8f0; border-radius: 9px; background: #fff; overflow-wrap: anywhere; }
+.referral-entry p { margin: 7px 0; }
+.referral-entry small { color: #64748b; }
+.referral-entry-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.referral-status { display: inline-block; padding: 3px 9px; border-radius: 20px; background: #e2e8f0; color: #334155; font-size: .75rem; font-weight: 700; text-transform: capitalize; }
+.referral-status-pending { background: #fef3c7; color: #92400e; }
+.referral-status-accepted { background: #dbeafe; color: #1d4ed8; }
+.referral-status-completed { background: #dcfce7; color: #166534; }
+.referral-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.referral-clinical { margin-top: 14px; padding: 14px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; overflow-wrap: anywhere; }
+.referral-notice { margin: 14px 0 0; padding: 12px; border-radius: 8px; background: #f0fdf4; color: #166534; overflow-wrap: anywhere; }
+@media (max-width: 768px) { .referral-content { grid-template-columns: 1fr; } .referral-panel { padding: 12px; } .referral-workspace > summary { align-items: flex-start; flex-direction: column; } }

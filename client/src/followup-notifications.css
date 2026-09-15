@@ -1,0 +1,8 @@
+.followup-notification-filters{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.followup-notification-filters button{border:1px solid var(--border,#dbe3ec);border-radius:999px;padding:7px 12px;background:transparent;color:inherit;cursor:pointer}
+.followup-notification-filters button.active{background:var(--primary,#0f7889);color:#fff;border-color:transparent}
+.followup-notification-content{min-width:0;flex:1;overflow-wrap:anywhere}
+.followup-notification-message{white-space:pre-line;overflow-wrap:anywhere}
+.followup-notification-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.followup-notification-actions button{display:inline-flex;align-items:center;gap:6px}
+@media(max-width:600px){.followup-notification-filters button{flex:1 1 auto}.followup-notification-actions button{max-width:100%;white-space:normal}}

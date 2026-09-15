@@ -1,0 +1,152 @@
+/* Day21.5 appearance layer. Loaded last so both legacy and premium portals share one dark palette. */
+.theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: 38px; padding: 7px 11px; border: 1px solid #d4e2e8; border-radius: 12px;
+  background: #f7fbfc; color: #27485a; font-size: 12px; font-weight: 800; white-space: nowrap;
+}
+.theme-toggle:hover { background: #eaf7f7; color: #087e8b; }
+.theme-toggle:focus-visible { outline: 2px solid #0f9ca5 !important; outline-offset: 2px; }
+
+html[data-theme="dark"] {
+  --primary: #35c1c7; --primary-hover: #58d2d7; --primary-light: #14343e; --primary-border: #285765;
+  --navy: #e8f2f6; --text: #e5eff3; --text-2: #bfd0d8; --muted: #9bb1bd; --soft: #7f99a7;
+  --bg: #07141e; --surface: #0f2230; --surface-2: #142a38; --border: #294352; --border-strong: #3b5b6b;
+  --portal-ink: #e5eff3; --portal-muted: #9bb1bd; --portal-canvas: #07141e; --portal-sidebar: #091a25;
+  --portal-teal-soft: #12343c; --portal-teal-border: #285b64;
+  --shadow: 0 8px 28px rgba(0,0,0,.26); --shadow-sm: 0 2px 10px rgba(0,0,0,.22); --portal-shadow: 0 8px 28px rgba(0,0,0,.28);
+}
+html[data-theme="dark"] body,
+html[data-theme="dark"] .app-shell,
+html[data-theme="dark"] .portal-mode,
+html[data-theme="dark"] .portal-mode .portal-content { background: var(--bg) !important; color: var(--text); }
+html[data-theme="dark"] .public-mode .premium-header,
+html[data-theme="dark"] .public-mode .login-page,
+html[data-theme="dark"] .public-mode .premium-login { background: var(--bg) !important; color: var(--text); border-color: var(--border) !important; }
+html[data-theme="dark"] .public-mode :is(.login-card,.loginbox,.signin-context,.patient-clinic-card) {
+  background: var(--surface) !important; color: var(--text) !important; border-color: var(--border) !important;
+}
+html[data-theme="dark"] .public-mode :is(h1,h2,h3,strong,label,.premium-brand strong) { color: var(--text) !important; }
+html[data-theme="dark"] .public-mode :is(p,small,.muted,.login-sub) { color: var(--muted) !important; }
+
+html[data-theme="dark"] .portal-mode .portal-topbar {
+  background: linear-gradient(105deg, #0b3540 0%, #0b4650 55%, #075361 100%) !important;
+  border-bottom: 1px solid #31606c !important; box-shadow: 0 5px 22px rgba(0,0,0,.35) !important;
+}
+html[data-theme="dark"] .portal-mode .portal-sidebar { background: #081b27 !important; border-right: 1px solid #203b49 !important; }
+html[data-theme="dark"] .portal-mode .portal-sidebar-nav a:hover { background: #143441 !important; }
+html[data-theme="dark"] .portal-mode .portal-sidebar-nav a.active { background: #17505c !important; border-color: #29717c !important; }
+html[data-theme="dark"] .portal-mode .portal-logout { background: #102f3d !important; border-color: #31505e !important; }
+
+html[data-theme="dark"] .language-switcher,
+html[data-theme="dark"] .theme-toggle { color: #d5e8ed; background: rgba(7,20,30,.58); border-color: rgba(190,232,235,.28); }
+html[data-theme="dark"] .language-switcher select { color: #dcf2f3; background-color: #153b45; }
+html[data-theme="dark"] .theme-toggle:hover { color: #7ce1e4; background: #16404a; }
+
+html[data-theme="dark"] .portal-content :is(h1,h2,h3,h4,h5,h6,strong,label,legend),
+html[data-theme="dark"] .portal-mode .head h1,
+html[data-theme="dark"] .portal-mode .card h2,
+html[data-theme="dark"] .portal-mode .card-title h2 { color: var(--text); }
+html[data-theme="dark"] .portal-content :is(p,span,small,li,td,th) { border-color: var(--border); }
+html[data-theme="dark"] .muted,
+html[data-theme="dark"] .page-subtitle,
+html[data-theme="dark"] .portal-content small { color: var(--muted) !important; }
+
+html[data-theme="dark"] :is(.card,.metric,.analytics-panel,.consultation-history-card,.patient-clinic-card,.platform-clinic-row,
+  .patient-dashboard-section,.patient-live-summary-card,.patient-premium-snapshot,.doctor-workspace-panel,.doctor-consultation-panel,
+  .reception-workspace-panel,.admin-dashboard-section,.admin-command-card,.queue-card,.appointment-row,.history-token-item,
+  .referral-workspace,.referral-panel,.referral-entry,.referral-clinical,.payment-modal,.modal-card,.print-confirmation-panel) {
+  background: var(--surface) !important; color: var(--text) !important; border-color: var(--border) !important;
+  box-shadow: var(--shadow) !important;
+}
+html[data-theme="dark"] :is(.patient-live-metrics,.patient-snapshot-grid,.history-detail-meta,.doctor-history-grid,
+  .reception-summary-grid,.analytics-stat,.admin-section-tabs,.patient-command-tabs,.referral-notice,.payment-free-visit) {
+  background-color: var(--surface-2) !important; border-color: var(--border) !important; color: var(--text) !important;
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  color: #e8f2f6 !important; background-color: #0b1d29 !important; border-color: #365362 !important;
+}
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder { color: #7894a2 !important; opacity: 1; }
+html[data-theme="dark"] input:focus,
+html[data-theme="dark"] select:focus,
+html[data-theme="dark"] textarea:focus { border-color: #35c1c7 !important; box-shadow: 0 0 0 3px rgba(53,193,199,.16) !important; }
+html[data-theme="dark"] select option { color: #e8f2f6; background: #0b1d29; }
+
+html[data-theme="dark"] .ghost { color: #bcd3dc !important; background: #132936 !important; border-color: #355261 !important; }
+html[data-theme="dark"] .ghost:hover { color: #e7f7f8 !important; background: #1a3947 !important; border-color: #4c7180 !important; }
+html[data-theme="dark"] .primary { color: #fff !important; background: var(--clinic-primary, #087e8b) !important; }
+html[data-theme="dark"] .danger { background: #351b25 !important; color: #ff9cae !important; border-color: #713445 !important; }
+
+html[data-theme="dark"] table { color: var(--text); background: var(--surface); }
+html[data-theme="dark"] :is(th,td) { border-color: var(--border) !important; }
+html[data-theme="dark"] th { color: #9eb8c4 !important; background: #112835 !important; }
+html[data-theme="dark"] tbody tr:hover { background: #142c38 !important; }
+html[data-theme="dark"] hr { border-color: var(--border); }
+html[data-theme="dark"] .portal-sidebar-backdrop,
+html[data-theme="dark"] .payment-modal-backdrop { background: rgba(0,8,13,.72) !important; }
+
+html[data-theme="dark"] .referral-status { background: #293d48; color: #d4e3e9; }
+html[data-theme="dark"] .referral-status-pending { background: #4b3b15; color: #ffe08a; }
+html[data-theme="dark"] .referral-status-accepted { background: #173b62; color: #9bc9ff; }
+html[data-theme="dark"] .referral-status-completed { background: #143f32; color: #8ce0b8; }
+html[data-theme="dark"] .login-error { background: #351b25 !important; color: #ffb2bf !important; border-color: #713445 !important; }
+
+@media (max-width: 760px) {
+  .theme-toggle { min-height: 32px; width: 34px; padding: 4px; }
+  .theme-toggle span { display: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body, .app-shell, .portal-content, .card, input, select, textarea { transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
+}
+
+/* Day 22 platform-admin contrast refinements. */
+html[data-theme="dark"] .portal-platform .platform-sidebar-language,
+html[data-theme="dark"] .portal-platform .portal-security-note {
+  background: rgba(255,255,255,.045) !important;
+  border-color: rgba(145,220,224,.18) !important;
+}
+html[data-theme="dark"] .portal-platform .platform-sidebar-language .language-switcher {
+  background: #0b2633 !important;
+  border-color: #315260 !important;
+}
+html[data-theme="dark"] .portal-platform .portal-content {
+  background:
+    radial-gradient(circle at 96% 2%, rgba(24,184,189,.08), transparent 28%),
+    #07141e !important;
+}
+html[data-theme="dark"] .portal-platform .platform-hero-v2 {
+  background:
+    radial-gradient(circle at 91% 2%, rgba(90,213,211,.2), transparent 30%),
+    linear-gradient(120deg,#062331,#083e50 56%,#07685f) !important;
+  border-color: #286071 !important;
+}
+html[data-theme="dark"] .portal-platform .platform-kicker {
+  color: #062d3a !important;
+  background: #a9f0e8 !important;
+  border-color: #d9fffb !important;
+}
+html[data-theme="dark"] .portal-platform :is(.platform-stat-card,.platform-panel,.approval-clinic-row) {
+  color: var(--text) !important;
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow) !important;
+}
+html[data-theme="dark"] .portal-platform .platform-stat-icon,
+html[data-theme="dark"] .portal-platform .approval-clinic-avatar {
+  color: #7ce1df !important;
+  background: #123741 !important;
+  border-color: #285762 !important;
+}
+html[data-theme="dark"] .portal-platform .privacy-workspace-links > button,
+html[data-theme="dark"] .portal-platform .privacy-summary-grid > div,
+html[data-theme="dark"] .portal-platform .privacy-review-card,
+html[data-theme="dark"] .portal-platform .privacy-request-details,
+html[data-theme="dark"] .portal-platform .privacy-resolution {
+  color: var(--text) !important;
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}

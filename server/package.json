@@ -1,0 +1,50 @@
+{
+  "name": "opd-smart-queue-server",
+  "version": "2.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "seed": "node src/seed.js",
+    "tenant:bootstrap": "node scripts/bootstrapTenant.js",
+    "tenant:create": "node scripts/createTenant.js",
+    "superadmin:seed": "node scripts/seedSuperAdmin.js",
+    "smtp:check": "node scripts/checkSmtp.js",
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "test:integration": "node --test --test-concurrency=1 test/integration/*.test.js",
+    "db:check": "node scripts/migrateDatabase.js",
+    "db:migrate": "node scripts/migrateDatabase.js --apply",
+    "privacy:identity-report": "node scripts/privacyIdentityReport.js",
+    "test:privacy": "node --experimental-vm-modules --test test/privacyPhase1.test.mjs && node --experimental-vm-modules --test test/privacyPhase2.test.mjs && node --experimental-vm-modules --test test/privacyPhase3.test.mjs && node --experimental-vm-modules --test test/privacyAiBoundary.test.mjs && node --experimental-vm-modules --test test/privacyPhase4.test.mjs",
+    "privacy:retention-check": "node scripts/privacyRetentionMigration.js",
+    "privacy:retention-migrate": "node scripts/privacyRetentionMigration.js --apply --acknowledge-retention-review",
+    "privacy:backup": "node scripts/privacyBackup.mjs",
+    "privacy:restore-drill": "node scripts/privacyRestoreDrill.mjs",
+    "source:check": "node scripts/checkSourceFiles.mjs",
+    "test:audit": "node --experimental-vm-modules --test --test-concurrency=1 test/realtimeAudit.test.mjs test/httpAudit.test.mjs test/followUpReminders.test.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1131.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.22.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "nodemailer": "^9.1.1",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.2.0",
+    "nodemon": "^3.1.14",
+    "socket.io-client": "^4.8.3"
+  },
+  "overrides": {
+    "qs": "^6.16.0"
+  },
+  "engines": {
+    "node": ">=22.16.0"
+  }
+}
