@@ -99,6 +99,7 @@ import {
   saveOnboardingToken,
   getOnboardingToken,
   clearOnboardingToken,
+  restorePatientSession,
 } from "./api";
 
 import { socket } from "./socket";
@@ -1338,6 +1339,37 @@ function PatientLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  const [rememberDevice, setRememberDevice] = useState(false);
+  const [isCheckingRememberedSession, setIsCheckingRememberedSession] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const restoreRememberedDevice = async () => {
+      const existingPatient = getStoredPatient();
+      if (getPatientToken() && existingPatient) {
+        if (!mounted) return;
+        const destination = requestedReturnTo ||
+          (existingPatient.profileCompleted ? "/patient/clinics" : "/patient/profile");
+        navigate(destination, { replace: true });
+        return;
+      }
+
+      const patient = await restorePatientSession();
+      if (!mounted) return;
+      if (patient) {
+        const destination = requestedReturnTo ||
+          (patient.profileCompleted ? "/patient/clinics" : "/patient/profile");
+        navigate(destination, { replace: true });
+        return;
+      }
+
+      setIsCheckingRememberedSession(false);
+    };
+
+    restoreRememberedDevice();
+    return () => { mounted = false; };
+  }, [navigate, requestedReturnTo]);
 
   const handleSendVerificationCode = async (event) => {
     event.preventDefault();
@@ -1387,6 +1419,7 @@ function PatientLoginPage() {
       const { data } = await patientPlatformApi.post("/patient-auth/verify-otp", {
         email: patientEmail.trim().toLowerCase(),
         otp: formattedCode,
+        rememberDevice,
       });
 
       savePatientAuth(data);
@@ -1434,6 +1467,18 @@ function PatientLoginPage() {
       setIsLoading(false);
     }
   };
+
+  if (isCheckingRememberedSession) {
+    return (
+      <main className="login-page">
+        <section className="login-card secure-session-check">
+          <RefreshCw className="animate-spin" size={24} />
+          <h1><Trans text={"Checking secure session"} /></h1>
+          <p className="login-sub"><Trans text={"Restoring a trusted device session if one is available."} /></p>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="login-page">
@@ -1494,6 +1539,19 @@ function PatientLoginPage() {
                   required
                   autoFocus
                 />
+              </label>
+
+              <label className="remember-device-option">
+                <input
+                  type="checkbox"
+                  checked={rememberDevice}
+                  onChange={(event) => setRememberDevice(event.target.checked)}
+                  disabled={isLoading}
+                />
+                <span>
+                  <strong><Trans text={"Remember this device for 30 days"} /></strong>
+                  <small><Trans text={"Use only on your personal phone or computer. Sensitive privacy actions will still require fresh verification."} /></small>
+                </span>
               </label>
 
               {statusMessage && <p className="success">{t(statusMessage)}</p>}

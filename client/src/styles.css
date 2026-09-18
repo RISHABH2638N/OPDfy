@@ -10219,3 +10219,56 @@ body { overflow-x: hidden; }
   .portal-patient .patient-ehr-summary-card .patient-profile-grid { grid-template-columns:1fr 1fr; }
   .portal-patient .patient-command-tabs button { padding:8px 10px; }
 }
+
+/* =========================================================
+   PATIENT REMEMBERED-DEVICE AUTH
+========================================================= */
+.remember-device-option {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 4px 0 18px !important;
+  padding: 12px 13px;
+  border: 1px solid var(--border, #d8e0eb);
+  border-radius: 12px;
+  background: var(--surface-2, #f8fafc);
+  cursor: pointer;
+}
+
+.login-card .remember-device-option input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  margin: 2px 0 0;
+  padding: 0;
+  accent-color: var(--primary, #2563eb);
+  box-shadow: none;
+}
+
+.remember-device-option span {
+  display: grid;
+  gap: 4px;
+  line-height: 1.35;
+}
+
+.remember-device-option strong {
+  color: var(--navy, #0f172a);
+  font-size: 13px;
+}
+
+.remember-device-option small {
+  color: var(--muted, #64748b);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.secure-session-check {
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.secure-session-check > svg {
+  margin-bottom: 14px;
+  color: var(--primary, #2563eb);
+}

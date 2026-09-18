@@ -108,7 +108,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Clinic-Slug"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Clinic-Slug", "X-OPD-Client"],
 };
 
 app.use(cors(corsOptions));

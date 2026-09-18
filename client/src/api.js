@@ -13,6 +13,7 @@ export const api = axios.create({
   baseURL:
     import.meta.env.VITE_API_URL ||
     defaultApiBase,
+  withCredentials: true,
 });
 
 
@@ -23,14 +24,17 @@ export const api = axios.create({
 
 export const platformApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL || defaultApiBase,
+  withCredentials: true,
 });
 
 export const onboardingApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL || defaultApiBase,
+  withCredentials: true,
 });
 
 export const patientPlatformApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL || defaultApiBase,
+  withCredentials: true,
 });
 
 // Logout must use the captured credential even after local session storage is cleared.
@@ -38,6 +42,7 @@ export const patientPlatformApi = axios.create({
 const revocationApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL || defaultApiBase,
   timeout: 20000,
+  withCredentials: true,
 });
 
 const ONBOARDING_TOKEN_KEY = "opd_clinic_onboarding_token";
@@ -189,10 +194,11 @@ const PATIENT_TOKEN_KEY =
 const PATIENT_USER_KEY =
   "opd_patient_user";
 
-export function savePatientAuth(data) {
+function persistPatientAuth(data, { resetClinicContext = false } = {}) {
   sessionStorage.removeItem("opd_token");
   sessionStorage.removeItem("opd_user");
-  clearActiveClinicSlug();
+  if (resetClinicContext) clearActiveClinicSlug();
+
   if (data?.token) {
     sessionStorage.setItem(PATIENT_TOKEN_KEY, data.token);
     socket.auth = { ...(socket.auth || {}), patientToken: data.token, staffToken: "" };
@@ -201,11 +207,13 @@ export function savePatientAuth(data) {
   }
 
   if (data?.patient) {
-    sessionStorage.setItem(
-      PATIENT_USER_KEY,
-      JSON.stringify(data.patient)
-    );
+    sessionStorage.setItem(PATIENT_USER_KEY, JSON.stringify(data.patient));
   }
+}
+
+export function savePatientAuth(data) {
+  // A fresh OTP login starts with no inherited clinic context.
+  persistPatientAuth(data, { resetClinicContext: true });
 }
 
 export function updateStoredPatient(patient) {
@@ -238,9 +246,43 @@ export function getStoredPatient() {
   }
 }
 
+let patientRefreshPromise = null;
+
+export async function restorePatientSession() {
+  if (patientRefreshPromise) return patientRefreshPromise;
+
+  patientRefreshPromise = (async () => {
+    try {
+      const { data } = await revocationApi.post(
+        "/patient-auth/refresh",
+        {},
+        { headers: { "X-OPD-Client": "web" }, withCredentials: true }
+      );
+      if (!data?.token || !data?.patient) return null;
+      // Refreshing a 30-minute access token must not throw the patient out of
+      // the clinic they are actively using in this tab.
+      persistPatientAuth(data, { resetClinicContext: false });
+      return data.patient;
+    } catch {
+      return null;
+    } finally {
+      patientRefreshPromise = null;
+    }
+  })();
+
+  return patientRefreshPromise;
+}
+
 export function logoutPatient() {
   const token = sessionStorage.getItem(PATIENT_TOKEN_KEY);
   if (token) revocationApi.post("/patient-auth/logout", {}, { headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+  // Also clear/revoke this browser's persistent HttpOnly remembered credential.
+  // This still works if the short-lived access JWT has already expired.
+  revocationApi.post(
+    "/patient-auth/forget-device",
+    {},
+    { headers: { "X-OPD-Client": "web" }, withCredentials: true }
+  ).catch(() => {});
   socket.emit("patient:logout");
 
   sessionStorage.removeItem(PATIENT_TOKEN_KEY);
@@ -302,18 +344,38 @@ function expireLocalSession(kind) {
 
 for (const [client, kind] of [[platformApi, "platform"], [patientPlatformApi, "patient"], [api, null]]) {
   client.defaults.timeout = 20000;
-  client.interceptors.response.use((response) => response, (error) => {
+  client.interceptors.response.use((response) => response, async (error) => {
     const identity = kind || sessionKindForRequest(error.config?.url);
-    const token = identity === "patient" ? getPatientToken() :
+    const tokenAtFailure = identity === "patient" ? getPatientToken() :
       identity === "platform" ? sessionStorage.getItem(PLATFORM_TOKEN_KEY) :
       sessionStorage.getItem(STAFF_TOKEN_KEY);
+    const currentSessionFailed = shouldExpireSession(error, tokenAtFailure);
+
+    // A remembered patient may transparently exchange the HttpOnly refresh
+    // credential for a new short-lived access token. Retry at most once.
+    if (identity === "patient" && currentSessionFailed && !error.config?._opdPatientRefreshRetried) {
+      const patient = await restorePatientSession();
+      const refreshedToken = getPatientToken();
+      if (patient && refreshedToken) {
+        const retryConfig = { ...error.config, _opdPatientRefreshRetried: true };
+        retryConfig.headers = { ...(error.config?.headers || {}), Authorization: `Bearer ${refreshedToken}` };
+        return client.request(retryConfig);
+      }
+    }
+
     // A 401 is meaningful only for the identity and exact token sent.
     // Old requests must not sign out a newly authenticated session.
-    if (shouldExpireSession(error, token)) expireLocalSession(identity);
+    if (currentSessionFailed) expireLocalSession(identity);
     return Promise.reject(error);
   });
 }
 onboardingApi.defaults.timeout = 20000;
-socket.on("session:expired", ({ kind } = {}) => {
-  if (["patient", "staff", "platform"].includes(kind)) expireLocalSession(kind);
+socket.on("session:expired", async ({ kind } = {}) => {
+  if (kind === "patient") {
+    const patient = await restorePatientSession();
+    if (patient) return;
+    expireLocalSession("patient");
+    return;
+  }
+  if (["staff", "platform"].includes(kind)) expireLocalSession(kind);
 });

@@ -8,6 +8,7 @@ import rateLimit from "express-rate-limit";
 import mongoose from "mongoose";
 import GlobalPatient from "../models/GlobalPatient.js";
 import GlobalPatientOtp from "../models/GlobalPatientOtp.js";
+import PatientSession from "../models/PatientSession.js";
 import { sendOtpEmail } from "../utils/sendEmail.js";
 import { protectGlobalPatient } from "../middleware/globalPatientAuth.js";
 import { logSecurityEvent } from "../utils/securityEvents.js";
@@ -16,6 +17,11 @@ import { createRateLimitStore } from "../utils/rateLimitStore.js";
 const router = asyncRouter();
 const OTP_EXPIRY_MINUTES = 5;
 const MAX_OTP_ATTEMPTS = 5;
+const REMEMBER_DEVICE_DAYS = Math.min(30, Math.max(1, Number(process.env.PATIENT_REMEMBER_DAYS || 30)));
+const MAX_REMEMBERED_DEVICES = Math.min(10, Math.max(1, Number(process.env.PATIENT_MAX_REMEMBERED_DEVICES || 5)));
+const PATIENT_REFRESH_COOKIE = process.env.NODE_ENV === "production"
+  ? "__Secure-opdfy_patient_refresh"
+  : "opdfy_patient_refresh";
 
 const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -26,6 +32,101 @@ const normalizeList = (value) => {
   if (typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
   return [];
 };
+
+const hashRefreshToken = (token) => crypto.createHash("sha256").update(String(token || "")).digest("hex");
+const generateRefreshToken = () => crypto.randomBytes(48).toString("base64url");
+
+function patientRefreshCookieOptions({ clear = false } = {}) {
+  const sameSite = String(
+    process.env.PATIENT_REMEMBER_COOKIE_SAMESITE ||
+    (process.env.NODE_ENV === "production" ? "none" : "lax")
+  ).trim().toLowerCase();
+  const normalizedSameSite = ["lax", "strict", "none"].includes(sameSite) ? sameSite : "none";
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: normalizedSameSite,
+    path: "/api/patient-auth",
+  };
+  const configuredDomain = String(process.env.PATIENT_REMEMBER_COOKIE_DOMAIN || "").trim();
+  if (configuredDomain) options.domain = configuredDomain;
+  if (!clear) options.maxAge = REMEMBER_DEVICE_DAYS * 24 * 60 * 60 * 1000;
+  return options;
+}
+
+function parseCookies(req) {
+  const output = {};
+  const header = String(req.headers.cookie || "");
+  for (const part of header.split(";")) {
+    const index = part.indexOf("=");
+    if (index <= 0) continue;
+    const key = part.slice(0, index).trim();
+    const value = part.slice(index + 1).trim();
+    try { output[key] = decodeURIComponent(value); } catch { output[key] = value; }
+  }
+  return output;
+}
+
+function getPresentedRefreshToken(req) {
+  return parseCookies(req)[PATIENT_REFRESH_COOKIE] || "";
+}
+
+function clearPatientRefreshCookie(res) {
+  res.clearCookie(PATIENT_REFRESH_COOKIE, patientRefreshCookieOptions({ clear: true }));
+}
+
+function setAuthNoStore(res) {
+  res.set("Cache-Control", "private, no-store, max-age=0");
+  res.set("Pragma", "no-cache");
+}
+
+function requireTrustedRememberClient(req, res, next) {
+  // Refresh is authorized by an HttpOnly cookie, so require a custom header.
+  // Cross-site HTML forms cannot set this header, and hostile browser origins
+  // fail the app-level CORS preflight before reaching this route.
+  if (String(req.get("X-OPD-Client") || "") !== "web") {
+    return res.status(403).json({ message: "Remembered-session request was rejected." });
+  }
+  next();
+}
+
+async function createRememberedSession(req, res, patient) {
+  const refreshToken = generateRefreshToken();
+  const expiresAt = new Date(Date.now() + REMEMBER_DEVICE_DAYS * 24 * 60 * 60 * 1000);
+  await PatientSession.create({
+    patientId: patient._id,
+    tokenHash: hashRefreshToken(refreshToken),
+    tokenVersionAtIssue: Number(patient.tokenVersion || 0),
+    expiresAt,
+    userAgent: String(req.headers["user-agent"] || "").slice(0, 300),
+  });
+
+  // Keep the number of persistent devices bounded. Older sessions are revoked,
+  // not deleted immediately, so attempted reuse still cannot become valid again.
+  const overflow = await PatientSession.find({
+    patientId: patient._id, revokedAt: null, expiresAt: { $gt: new Date() },
+  }).sort({ createdAt: -1 }).skip(MAX_REMEMBERED_DEVICES).select("_id");
+  if (overflow.length) {
+    await PatientSession.updateMany(
+      { _id: { $in: overflow.map((entry) => entry._id) } },
+      { $set: { revokedAt: new Date() } }
+    );
+  }
+
+  res.cookie(PATIENT_REFRESH_COOKIE, refreshToken, patientRefreshCookieOptions());
+  return expiresAt;
+}
+
+async function revokePresentedRememberedSession(req, res) {
+  const refreshToken = getPresentedRefreshToken(req);
+  if (refreshToken) {
+    await PatientSession.updateOne(
+      { tokenHash: hashRefreshToken(refreshToken), revokedAt: null },
+      { $set: { revokedAt: new Date() } }
+    );
+  }
+  clearPatientRefreshCookie(res);
+}
 
 function publicGlobalPatient(patient) {
   return {
@@ -71,6 +172,10 @@ const otpVerifyEmailLimiter = rateLimit({
   keyGenerator: (req) => normalizeEmail(req.body?.email) || "invalid-email",
   message: { message: "Too many OTP verification attempts for this email. Please try again later." },
 });
+const rememberedRefreshLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, max: 30, store: createRateLimitStore("patient-remember-refresh-ip"), standardHeaders: true, legacyHeaders: false,
+  message: { message: "Too many remembered-session refresh attempts. Please try again later." },
+});
 
 router.post("/send-otp", otpSendIpLimiter, otpSendEmailLimiter, async (req, res) => {
   try {
@@ -110,6 +215,7 @@ router.post("/verify-otp", otpVerifyIpLimiter, otpVerifyEmailLimiter, async (req
   try {
     const email = normalizeEmail(req.body?.email);
     const otp = String(req.body?.otp || "").trim();
+    const rememberDevice = req.body?.rememberDevice === true;
     if (!isValidEmail(email)) return res.status(400).json({ message: "Invalid email address." });
     if (!/^\d{6}$/.test(otp)) return res.status(400).json({ message: "OTP must contain 6 digits." });
 
@@ -151,11 +257,24 @@ router.post("/verify-otp", otpVerifyIpLimiter, otpVerifyEmailLimiter, async (req
       { expiresIn: process.env.NODE_ENV === "production" ? "30m" : "7d" }
     );
 
-    logSecurityEvent(req, { event: "patient_otp_login", outcome: "success", actorType: "patient", actorId: patient._id, metadata: { email } });
+    let rememberedUntil = null;
+    if (rememberDevice) {
+      // Replace a previously presented device credential only after the fresh OTP
+      // succeeds. This prevents a stale cookie from silently extending itself.
+      await revokePresentedRememberedSession(req, res);
+      rememberedUntil = await createRememberedSession(req, res, patient);
+    } else {
+      // An explicit unchecked choice means this browser must not stay remembered.
+      await revokePresentedRememberedSession(req, res);
+    }
+
+    setAuthNoStore(res);
+    logSecurityEvent(req, { event: "patient_otp_login", outcome: "success", actorType: "patient", actorId: patient._id, metadata: { email, rememberDevice } });
     return res.json({
       message: "Global patient authentication successful.",
       token,
       isNewPatient,
+      rememberedUntil,
       patient: publicGlobalPatient(patient),
     });
   } catch (error) {
@@ -165,10 +284,80 @@ router.post("/verify-otp", otpVerifyIpLimiter, otpVerifyEmailLimiter, async (req
   }
 });
 
+router.post("/refresh", rememberedRefreshLimiter, requireTrustedRememberClient, async (req, res) => {
+  try {
+    setAuthNoStore(res);
+    const presented = getPresentedRefreshToken(req);
+    if (!presented) return res.status(401).json({ message: "No remembered patient session." });
+
+    const currentHash = hashRefreshToken(presented);
+    const nextRefreshToken = generateRefreshToken();
+    const nextHash = hashRefreshToken(nextRefreshToken);
+    const now = new Date();
+
+    // Atomic hash rotation makes a captured old refresh credential single-use.
+    // Concurrent/replayed use of the previous token loses the race and is denied.
+    const remembered = await PatientSession.findOneAndUpdate(
+      { tokenHash: currentHash, revokedAt: null, expiresAt: { $gt: now } },
+      { $set: { tokenHash: nextHash, lastUsedAt: now } },
+      { new: true }
+    ).select("+tokenVersionAtIssue");
+
+    if (!remembered) {
+      clearPatientRefreshCookie(res);
+      return res.status(401).json({ message: "Remembered patient session expired or was revoked." });
+    }
+
+    const patient = await GlobalPatient.findOne({ _id: remembered.patientId, status: "active" }).select("+tokenVersion");
+    if (!patient || Number(patient.tokenVersion || 0) !== Number(remembered.tokenVersionAtIssue || 0)) {
+      await PatientSession.updateOne({ _id: remembered._id }, { $set: { revokedAt: now } });
+      clearPatientRefreshCookie(res);
+      return res.status(401).json({ message: "Remembered patient session is no longer valid." });
+    }
+
+    const token = jwt.sign(
+      { id: String(patient._id), role: "patient-global", ver: Number(patient.tokenVersion || 0) },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.NODE_ENV === "production" ? "30m" : "7d" }
+    );
+
+    // Keep the original absolute expiration; refresh cannot extend 30 days forever.
+    const cookieOptions = patientRefreshCookieOptions();
+    cookieOptions.maxAge = Math.max(0, remembered.expiresAt.getTime() - Date.now());
+    res.cookie(PATIENT_REFRESH_COOKIE, nextRefreshToken, cookieOptions);
+    logSecurityEvent(req, { event: "patient_remembered_session_refresh", outcome: "success", actorType: "patient", actorId: patient._id });
+    return res.json({ token, patient: publicGlobalPatient(patient), rememberedUntil: remembered.expiresAt });
+  } catch (error) {
+    logSecurityEvent(req, { event: "patient_remembered_session_refresh", outcome: "failure" });
+    console.error("Patient remembered-session refresh error:", safeDiagnostic(error));
+    clearPatientRefreshCookie(res);
+    return res.status(500).json({ message: "Unable to restore patient session." });
+  }
+});
+
+router.post("/forget-device", rememberedRefreshLimiter, requireTrustedRememberClient, async (req, res) => {
+  try {
+    setAuthNoStore(res);
+    await revokePresentedRememberedSession(req, res);
+    return res.json({ message: "This device is no longer remembered." });
+  } catch (error) {
+    console.error("Patient remembered-device revoke error:", safeDiagnostic(error));
+    clearPatientRefreshCookie(res);
+    return res.status(500).json({ message: "Unable to forget this device." });
+  }
+});
+
 router.post("/logout", protectGlobalPatient, async (req, res) => {
-  await GlobalPatient.updateOne({ _id: req.globalPatient._id }, { $inc: { tokenVersion: 1 } });
-  revokeSocketSessions(req.app.get("io"), "patient", req.globalPatient._id);
-  return res.json({ message: "Logged out securely." });
+  const patientId = req.globalPatient._id;
+  await GlobalPatient.updateOne({ _id: patientId }, { $inc: { tokenVersion: 1 } });
+  await PatientSession.updateMany(
+    { patientId, revokedAt: null },
+    { $set: { revokedAt: new Date() } }
+  );
+  clearPatientRefreshCookie(res);
+  setAuthNoStore(res);
+  revokeSocketSessions(req.app.get("io"), "patient", patientId);
+  return res.json({ message: "Logged out securely from all remembered patient sessions." });
 });
 
 router.get("/me", protectGlobalPatient, async (req, res) => {

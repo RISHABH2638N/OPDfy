@@ -10,6 +10,7 @@ import User from "../../src/models/User.js";
 import Patient from "../../src/models/Patient.js";
 import GlobalPatient from "../../src/models/GlobalPatient.js";
 import GlobalPatientOtp from "../../src/models/GlobalPatientOtp.js";
+import PatientSession from "../../src/models/PatientSession.js";
 import Appointment from "../../src/models/Appointment.js";
 import Token from "../../src/models/Token.js";
 import { runWithTenant } from "../../src/services/tenantExecutionContext.js";
@@ -117,4 +118,66 @@ test("revoked patient token is denied by the clinic API", async () => {
   const token = jwt.sign({ id: String(account._id), role: "patient-global", ver: 1 }, process.env.JWT_SECRET, { expiresIn: "1h" });
   const response = await fetch(`http://127.0.0.1:${app.server.address().port}/api/patients/me`, { headers: { Authorization: `Bearer ${token}`, "X-Clinic-Slug": clinic.slug } });
   assert.equal(response.status, 401);
+});
+
+
+test("remembered patient session rotates refresh credentials and logout revokes them", async () => {
+  const email = `remember-${crypto.randomBytes(5).toString("hex")}@example.invalid`;
+  const otp = "271828";
+  await GlobalPatientOtp.create({
+    email,
+    otpHash: crypto.createHmac("sha256", process.env.JWT_SECRET).update(otp).digest("hex"),
+    expiresAt: new Date(Date.now() + 60000),
+    attempts: 0,
+  });
+
+  const base = `http://127.0.0.1:${app.server.address().port}/api/patient-auth`;
+  const verified = await fetch(`${base}/verify-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, otp, rememberDevice: true }),
+  });
+  assert.equal(verified.status, 200);
+  const verifiedData = await verified.json();
+  assert.ok(verifiedData.token);
+  const firstSetCookie = verified.headers.getSetCookie?.()[0] || verified.headers.get("set-cookie") || "";
+  const firstCookie = firstSetCookie.split(";", 1)[0];
+  assert.match(firstCookie, /^opdfy_patient_refresh=/);
+  assert.equal(await PatientSession.countDocuments({ patientId: verifiedData.patient.id, revokedAt: null }), 1);
+
+  const refreshed = await fetch(`${base}/refresh`, {
+    method: "POST",
+    headers: { Cookie: firstCookie, "X-OPD-Client": "web" },
+  });
+  assert.equal(refreshed.status, 200);
+  const refreshedData = await refreshed.json();
+  assert.ok(refreshedData.token);
+  const secondSetCookie = refreshed.headers.getSetCookie?.()[0] || refreshed.headers.get("set-cookie") || "";
+  const secondCookie = secondSetCookie.split(";", 1)[0];
+  assert.notEqual(secondCookie, firstCookie);
+
+  const replay = await fetch(`${base}/refresh`, {
+    method: "POST",
+    headers: { Cookie: firstCookie, "X-OPD-Client": "web" },
+  });
+  assert.equal(replay.status, 401);
+
+  const csrfStyleAttempt = await fetch(`${base}/refresh`, {
+    method: "POST",
+    headers: { Cookie: secondCookie },
+  });
+  assert.equal(csrfStyleAttempt.status, 403);
+
+  const logout = await fetch(`${base}/logout`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${refreshedData.token}`, Cookie: secondCookie },
+  });
+  assert.equal(logout.status, 200);
+  assert.equal(await PatientSession.countDocuments({ patientId: verifiedData.patient.id, revokedAt: null }), 0);
+
+  const afterLogout = await fetch(`${base}/refresh`, {
+    method: "POST",
+    headers: { Cookie: secondCookie, "X-OPD-Client": "web" },
+  });
+  assert.equal(afterLogout.status, 401);
 });

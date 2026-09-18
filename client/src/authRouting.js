@@ -1,7 +1,7 @@
 // Session identity is determined from the API route, never from whichever
 // account happens to have a token in browser storage.
 const PATIENT_PATHS = /^\/(?:patients(?:\/|$)|feedback\/patient(?:\/|$)|ai\/(?:chat|triage)(?:\/|$)|referrals\/patient(?:\/|$))/;
-const PUBLIC_AUTH_PATHS = /^\/(?:auth\/(?:login|logout)|patient-auth\/(?:send-otp|verify-otp|logout)|platform\/auth\/(?:login|logout))(?:\/|$)/;
+const PUBLIC_AUTH_PATHS = /^\/(?:auth\/(?:login|logout)|patient-auth\/(?:send-otp|verify-otp|refresh|forget-device|logout)|platform\/auth\/(?:login|logout))(?:\/|$)/;
 
 export function sessionKindForRequest(url) {
   const path = String(url || "").split(/[?#]/, 1)[0];
