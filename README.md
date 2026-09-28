@@ -481,7 +481,7 @@ Support
 For project support or deployment questions:
 
 Rishabh Mishra
-Email: rishabhmishra263800@gmail.com
+Email: opdfysupport@gmail.com
 
 Please do not include patient records, passwords, OTPs, database URIs or other sensitive information in support messages.
 
