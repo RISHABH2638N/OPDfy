@@ -16,6 +16,7 @@ import ActivityLog from "../models/ActivityLog.js";
 import Tenant from "../models/Tenant.js";
 import Feedback from "../models/Feedback.js";
 import QueueReservation from "../models/QueueReservation.js";
+import FollowUpPlan from "../models/FollowUpPlan.js";
 import { getClinicOperations, getClinicOperationsSnapshot, hospitalLocalDateTime, validateClinicOperationsInput } from "../utils/clinicOperations.js";
 import { cleanDoctorBillingProfile, getClinicBilling, validateClinicBillingInput } from "../utils/billing.js";
 import { validateImageDataUrl, externalAssetUrlAllowed } from "../utils/imageValidation.js";
@@ -817,9 +818,9 @@ router.delete("/users/:id", async (req, res) => {
 
 const ANALYTICS_TIMEZONE = process.env.HOSPITAL_TIMEZONE || "Asia/Kolkata";
 
-function hospitalDateKey(date = new Date()) {
+function hospitalDateKey(date = new Date(), timezone = ANALYTICS_TIMEZONE) {
   const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: ANALYTICS_TIMEZONE,
+    timeZone: timezone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -828,10 +829,10 @@ function hospitalDateKey(date = new Date()) {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
-function dateKeyDaysAgo(daysAgo) {
-  const date = new Date();
+function dateKeyDaysAgo(daysAgo, todayKey = hospitalDateKey()) {
+  const date = new Date(`${todayKey}T00:00:00.000Z`);
   date.setUTCDate(date.getUTCDate() - daysAgo);
-  return hospitalDateKey(date);
+  return date.toISOString().slice(0, 10);
 }
 
 function minutesBetween(start, end) {
@@ -848,6 +849,14 @@ function roundedAverage(values) {
   return Number((valid.reduce((sum, value) => sum + value, 0) / valid.length).toFixed(1));
 }
 
+function waitPercentile(values, percentile) {
+  const sorted = values.filter((value) => Number.isFinite(value) && value >= 0 && value <= 360).sort((a, b) => a - b);
+  if (!sorted.length) return 0;
+  const rank = (sorted.length - 1) * percentile;
+  const low = Math.floor(rank);
+  return Number((sorted[low] + (sorted[Math.ceil(rank)] - sorted[low]) * (rank - low)).toFixed(1));
+}
+
 /* =========================================================
    ADMIN ANALYTICS + DRILL-DOWN
    GET /api/admin/analytics
@@ -860,20 +869,29 @@ function roundedAverage(values) {
 ========================================================= */
 router.get("/analytics", async (req, res) => {
   try {
-    const todayKey = hospitalDateKey();
-    const validDateKey = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+    const tenant = await Tenant.findById(req.tenantId).select("timezone").lean();
+    const timezone = tenant?.timezone || ANALYTICS_TIMEZONE;
+    const localDateKey = (date) => hospitalDateKey(date, timezone);
+    const todayKey = localDateKey(new Date());
+    const validDateKey = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))
+      && !Number.isNaN(Date.parse(`${value}T00:00:00.000Z`))
+      && new Date(`${value}T00:00:00.000Z`).toISOString().slice(0, 10) === value;
     const presetDays = [1, 7, 30, 90, 180, 365];
     const requestedRange = Number(req.query.range || 7);
     let rangeDays = presetDays.includes(requestedRange) ? requestedRange : 7;
-    let startKey = dateKeyDaysAgo(rangeDays - 1);
+    let startKey = dateKeyDaysAgo(rangeDays - 1, todayKey);
     let endKey = todayKey;
 
-    if (validDateKey(req.query.startDate) && validDateKey(req.query.endDate)) {
+    if (req.query.startDate || req.query.endDate) {
+      if (!validDateKey(req.query.startDate) || !validDateKey(req.query.endDate)) {
+        return res.status(400).json({ message: "Enter valid start and end dates." });
+      }
       startKey = String(req.query.startDate);
       endKey = String(req.query.endDate);
       if (startKey > endKey) {
         return res.status(400).json({ message: "Analytics start date must be on or before the end date." });
       }
+      if (startKey > todayKey) return res.status(400).json({ message: "Analytics start date cannot be in the future." });
       if (endKey > todayKey) endKey = todayKey;
       const startDate = new Date(`${startKey}T00:00:00.000Z`);
       const endDate = new Date(`${endKey}T00:00:00.000Z`);
@@ -885,6 +903,9 @@ router.get("/analytics", async (req, res) => {
 
     const departmentFilter = String(req.query.department || "").trim();
     const doctorIdFilter = String(req.query.doctorId || "").trim();
+    if (doctorIdFilter && !/^[a-f\d]{24}$/i.test(doctorIdFilter)) {
+      return res.status(400).json({ message: "Invalid doctor selection." });
+    }
     const selectedDoctor = doctorIdFilter
       ? await User.findOne({ _id: doctorIdFilter, role: "doctor" }).select("name department doctorSchedule").lean()
       : null;
@@ -902,13 +923,13 @@ router.get("/analytics", async (req, res) => {
     const utcSafetyEnd = new Date(`${endKey}T23:59:59.999Z`);
     utcSafetyEnd.setUTCDate(utcSafetyEnd.getUTCDate() + 2);
 
-    const [tokensRaw, appointmentsRaw, consultationsRaw, doctorsRaw, feedbackRaw, reservationsRaw] = await Promise.all([
+    const [tokensRaw, appointmentsRaw, consultationsRaw, doctorsRaw, feedbackRaw, reservationsRaw, followUpsRaw, paymentsRaw, liveTokensRaw] = await Promise.all([
       Token.find({ createdAt: { $gte: utcSafetyStart, $lte: utcSafetyEnd } })
         .select("department assignedDoctor queueSource status urgency arrivalStatus calledAt completedAt createdAt")
         .populate("assignedDoctor", "name department")
         .lean(),
       Appointment.find({ appointmentDate: { $gte: startKey, $lte: endKey } })
-        .select("appointmentDate department doctor doctorName bookingSource status checkedInAt createdAt")
+        .select("appointmentDate department doctor doctorName bookingSource status checkedInAt rescheduleCount createdAt")
         .lean(),
       Consultation.find({ createdAt: { $gte: utcSafetyStart, $lte: utcSafetyEnd } })
         .select("doctor department createdAt")
@@ -918,6 +939,12 @@ router.get("/analytics", async (req, res) => {
       Feedback.find({ createdAt: { $gte: utcSafetyStart, $lte: utcSafetyEnd } }).select("doctor department rating createdAt").lean(),
       QueueReservation.find({ reservationDate: { $gte: startKey, $lte: endKey } })
         .select("reservationDate department doctor status checkedInAt createdAt").lean(),
+      FollowUpPlan.find({ dueDate: { $gte: startKey, $lte: endKey } })
+        .select("dueDate doctor department status").lean(),
+      Token.find({ "billing.paidAt": { $gte: utcSafetyStart, $lte: utcSafetyEnd }, "billing.status": { $in: ["paid", "refunded"] } })
+        .select("department assignedDoctor billing.paidAt billing.paidAmount billing.method billing.status").lean(),
+      Token.find({ createdAt: { $gte: new Date(new Date(`${todayKey}T00:00:00.000Z`).getTime() - 172800000), $lte: new Date(new Date(`${todayKey}T23:59:59.999Z`).getTime() + 172800000) }, status: { $in: ["waiting", "called"] } })
+        .select("department assignedDoctor status urgency createdAt").lean(),
     ]);
 
     const doctorIdOf = (value) => value?._id ? String(value._id) : value ? String(value) : "";
@@ -928,19 +955,24 @@ router.get("/analytics", async (req, res) => {
     };
 
     const tokens = tokensRaw.filter((token) => {
-      const key = hospitalDateKey(token.createdAt);
+      const key = localDateKey(token.createdAt);
       return key >= startKey && key <= endKey && matchesScope(token.department, token.assignedDoctor);
     });
     const appointments = appointmentsRaw.filter((item) => matchesScope(item.department, item.doctor));
     const consultations = consultationsRaw.filter((item) => {
-      const key = hospitalDateKey(item.createdAt);
+      const key = localDateKey(item.createdAt);
       return key >= startKey && key <= endKey && matchesScope(item.department, item.doctor);
     });
     const feedbackRows = feedbackRaw.filter((item) => {
-      const key = hospitalDateKey(item.createdAt);
+      const key = localDateKey(item.createdAt);
       return key >= startKey && key <= endKey && matchesScope(item.department, item.doctor);
     });
     const reservations = reservationsRaw.filter((item) => matchesScope(item.department, item.doctor));
+    const followUps = followUpsRaw.filter((item) => matchesScope(item.department, item.doctor));
+    const payments = paymentsRaw.filter((item) => localDateKey(item.billing.paidAt) >= startKey
+      && localDateKey(item.billing.paidAt) <= endKey && matchesScope(item.department, item.assignedDoctor));
+    const liveTokens = liveTokensRaw.filter((item) => localDateKey(item.createdAt) === todayKey
+      && matchesScope(item.department, item.assignedDoctor));
     const doctors = doctorsRaw.filter((doctor) => {
       if (departmentFilter && doctor.department !== departmentFilter) return false;
       if (doctorIdFilter && String(doctor._id) !== doctorIdFilter) return false;
@@ -951,7 +983,7 @@ router.get("/analytics", async (req, res) => {
     const skippedCount = tokens.filter((token) => token.status === "skipped").length;
     const waitDurations = tokens
       .map((token) => minutesBetween(token.createdAt, token.calledAt))
-      .filter((value) => value !== null);
+      .filter((value) => value !== null && value <= 360);
     const consultationDurations = completedTokens
       .map((token) => minutesBetween(token.calledAt, token.completedAt))
       .filter((value) => value !== null);
@@ -976,12 +1008,13 @@ router.get("/analytics", async (req, res) => {
         appointments: 0,
         online: 0,
         walkIns: 0,
+        revenue: 0,
       });
       cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
 
     tokens.forEach((token) => {
-      const key = hospitalDateKey(token.createdAt);
+      const key = localDateKey(token.createdAt);
       const row = dailyMap.get(key);
       if (!row) return;
       row.patients += 1;
@@ -992,6 +1025,30 @@ router.get("/analytics", async (req, res) => {
       else if (token.queueSource === "reservation") row.online += 1;
       else row.walkIns += 1;
     });
+
+    const collectionByMethod = { cash: 0, upi: 0, card: 0, other: 0 };
+    let collected = 0;
+    let refunded = 0;
+    payments.forEach((item) => {
+      const amount = Number(item.billing?.paidAmount || 0);
+      if (!Number.isFinite(amount) || amount < 0) return;
+      collected += amount;
+      if (item.billing.status === "refunded") refunded += amount;
+      else if (Object.hasOwn(collectionByMethod, item.billing.method)) collectionByMethod[item.billing.method] += amount;
+      const day = dailyMap.get(localDateKey(item.billing.paidAt));
+      if (day && item.billing.status === "paid") day.revenue += amount;
+    });
+
+    const followUpStatus = {
+      total: followUps.length,
+      pending: followUps.filter((item) => item.status === "pending").length,
+      scheduled: followUps.filter((item) => item.status === "scheduled").length,
+      completed: followUps.filter((item) => item.status === "completed").length,
+      cancelled: followUps.filter((item) => item.status === "cancelled").length,
+      overdue: followUps.filter((item) => item.status === "pending" && item.dueDate < todayKey).length,
+    };
+    followUpStatus.conversionRate = followUpStatus.total
+      ? Number((((followUpStatus.scheduled + followUpStatus.completed) / followUpStatus.total) * 100).toFixed(1)) : 0;
 
     const departmentMap = new Map();
     tokens.forEach((token) => {
@@ -1121,6 +1178,7 @@ router.get("/analytics", async (req, res) => {
       skipped: appointments.filter((item) => item.status === "skipped").length,
       missed: appointments.filter((item) => item.status === "missed").length,
       cancelled: appointments.filter((item) => item.status === "cancelled").length,
+      rescheduled: appointments.reduce((sum, item) => sum + Number(item.rescheduleCount || 0), 0),
     };
 
     const averageRating = feedbackRows.length
@@ -1140,13 +1198,13 @@ router.get("/analytics", async (req, res) => {
 
     // Peak hour is calculated across the selected period, not only today.
     const hourlyMap = new Map(Array.from({ length: 24 }, (_, hour) => [hour, 0]));
+    const hourlyFormatter = new Intl.DateTimeFormat("en-US", { timeZone: timezone, hour: "2-digit", hour12: false });
+    const heatmap = Array.from({ length: 7 }, (_, weekday) => ({ weekday, slots: Array(8).fill(0) }));
     tokens.forEach((token) => {
-      const hour = Number(new Intl.DateTimeFormat("en-US", {
-        timeZone: ANALYTICS_TIMEZONE,
-        hour: "2-digit",
-        hour12: false,
-      }).format(new Date(token.createdAt))) % 24;
+      const hour = Number(hourlyFormatter.format(new Date(token.createdAt))) % 24;
       hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + 1);
+      const weekday = (new Date(`${localDateKey(token.createdAt)}T00:00:00.000Z`).getUTCDay() + 6) % 7;
+      heatmap[weekday].slots[Math.floor(hour / 3)] += 1;
     });
     const hourlyTrend = [...hourlyMap.entries()].map(([hour, patients]) => ({
       hour,
@@ -1156,16 +1214,21 @@ router.get("/analytics", async (req, res) => {
     const peakHourRow = [...hourlyTrend].sort((a, b) => b.patients - a.patients)[0] || { label: "—", patients: 0 };
 
     const now = new Date();
-    const waitingTokens = tokens.filter((token) => token.status === "waiting");
+    const waitingTokens = liveTokens.filter((token) => token.status === "waiting");
     const slaBreachCount = waitingTokens.filter((token) => (now.getTime() - new Date(token.createdAt).getTime()) / 60000 > 30).length;
     const emergencyWaiting = waitingTokens.filter((token) => token.urgency === "emergency").length;
-    const overloadedDoctors = doctorPerformance.filter((doctor) => doctor.waiting >= 5).length;
+    const liveWaitingByDoctor = new Map();
+    waitingTokens.forEach((token) => {
+      const id = doctorIdOf(token.assignedDoctor);
+      if (id) liveWaitingByDoctor.set(id, (liveWaitingByDoctor.get(id) || 0) + 1);
+    });
+    const overloadedDoctors = [...liveWaitingByDoctor.values()].filter((count) => count >= 5).length;
     const busiestDepartment = departments[0] || null;
     const peakDay = [...dailyMap.values()].sort((a, b) => b.patients - a.patients)[0] || null;
 
     return res.json({
       rangeDays,
-      period: { startDate: startKey, endDate: endKey, timezone: ANALYTICS_TIMEZONE },
+      period: { startDate: startKey, endDate: endKey, timezone },
       filters: {
         department: departmentFilter || "",
         doctorId: doctorIdFilter || "",
@@ -1178,13 +1241,18 @@ router.get("/analytics", async (req, res) => {
         totalPatients: tokens.length,
         completedPatients: completedTokens.length,
         skippedPatients: skippedCount,
-        waitingPatients: tokens.filter((token) => token.status === "waiting").length,
-        calledPatients: tokens.filter((token) => token.status === "called").length,
+        waitingPatients: waitingTokens.length,
+        calledPatients: liveTokens.filter((token) => token.status === "called").length,
         noShowCount,
         noShowRate: tokens.length ? Number(((noShowCount / tokens.length) * 100).toFixed(1)) : 0,
         completionRate: tokens.length ? Number(((completedTokens.length / tokens.length) * 100).toFixed(1)) : 0,
         skipRate: tokens.length ? Number(((skippedCount / tokens.length) * 100).toFixed(1)) : 0,
         averageWaitMinutes: roundedAverage(waitDurations),
+        medianWaitMinutes: waitPercentile(waitDurations, 0.5),
+        p90WaitMinutes: waitPercentile(waitDurations, 0.9),
+        p95WaitMinutes: waitPercentile(waitDurations, 0.95),
+        under30WaitRate: waitDurations.length ? Number((waitDurations.filter((value) => value <= 30).length / waitDurations.length * 100).toFixed(1)) : 0,
+        measuredWaits: waitDurations.length,
         averageConsultationMinutes: roundedAverage(consultationDurations),
         appointmentPatients: appointmentTokens,
         onlinePatients: onlineReservationTokens,
@@ -1198,8 +1266,11 @@ router.get("/analytics", async (req, res) => {
         feedbackCount: feedbackRows.length,
       },
       appointmentStatus,
+      followUpStatus,
+      collections: { collected, refunded, net: collected - refunded, paidVisits: payments.filter((item) => item.billing.status === "paid").length, methods: collectionByMethod },
       reservationStats,
       hourlyTrend,
+      heatmap,
       dailyTrend: [...dailyMap.values()],
       departments,
       doctorPerformance,
@@ -1214,7 +1285,7 @@ router.get("/analytics", async (req, res) => {
     });
   } catch (error) {
     console.error("ADMIN ANALYTICS:", safeDiagnostic(error));
-    return res.status(500).json({ message: "Unable to load hospital analytics." });
+    return res.status(500).json({ message: "Unable to load clinic analytics." });
   }
 });
 

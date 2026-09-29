@@ -9223,6 +9223,7 @@ function AdminDashboardPage() {
   const [analyticsCustomStart, setAnalyticsCustomStart] = useState("");
   const [analyticsCustomEnd, setAnalyticsCustomEnd] = useState("");
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState("");
   const [revenue, setRevenue] = useState(null);
   const [revenueLoading, setRevenueLoading] = useState(false);
   const [revenueRange, setRevenueRange] = useState({ from: new Date().toISOString().slice(0,10), to: new Date().toISOString().slice(0,10) });
@@ -9257,6 +9258,7 @@ function AdminDashboardPage() {
 
   const fetchAnalytics = async (range = analyticsRange, overrides = {}) => {
     setAnalyticsLoading(true);
+    setAnalyticsError("");
     try {
       const params = new URLSearchParams();
       const department = overrides.department ?? analyticsDepartment;
@@ -9278,7 +9280,7 @@ function AdminDashboardPage() {
       setAnalytics(data);
     } catch (error) {
       setAnalytics(null);
-      if (error.response?.data?.message) alert(localizeUi(error.response.data.message));
+      setAnalyticsError(error.response?.data?.message || "Unable to load clinic analytics. Please retry.");
     } finally {
       setAnalyticsLoading(false);
     }
@@ -10042,9 +10044,9 @@ function AdminDashboardPage() {
         )}
 
         {analyticsLoading && !analytics ? (
-          <div className="analytics-empty"><Trans text={"Calculating hospital analytics..."} /></div>
+          <div className="analytics-empty" role="status"><Trans text={"Calculating clinic analytics..."} /></div>
         ) : !analytics ? (
-          <div className="analytics-empty"><Trans text={"Analytics are temporarily unavailable."} /></div>
+          <div className="analytics-empty" role={analyticsError ? "alert" : "status"}>{analyticsError ? localizeUi(analyticsError) : t("Analytics are temporarily unavailable.")} <button type="button" className="ghost" onClick={() => fetchAnalytics(analyticsRange)}><Trans text={"Retry"} /></button></div>
         ) : (
           <>
             <div className="analytics-kpi-grid">
@@ -10055,12 +10057,58 @@ function AdminDashboardPage() {
               <article><span><Trans text={"No-show Rate"} /></span><b>{analytics.overview.noShowRate}%</b><small>{analytics.overview.noShowCount} <Trans text={"no-shows"} /></small></article>
               <article><span><Trans text={"Emergency Cases"} /></span><b>{analytics.overview.emergencyPatients}</b><small><Trans text={"Priority-marked tokens"} /></small></article>
               <article><span><Trans text={"Skipped"} /></span><b>{analytics.overview.skippedPatients ?? 0}</b><small>{analytics.overview.skipRate ?? 0}<Trans text={"% of arrivals"} /></small></article>
+              <article><span><Trans text={"Net Collections"} /></span><b>{formatInr(analytics.collections?.net ?? 0)}</b><small>{analytics.collections?.paidVisits ?? 0} <Trans text={"paid OPD visits"} /></small></article>
+              <article><span><Trans text={"Follow-up Conversion"} /></span><b>{analytics.followUpStatus?.conversionRate ?? 0}%</b><small>{analytics.followUpStatus?.scheduled ?? 0} <Trans text={"scheduled · "} />{analytics.followUpStatus?.completed ?? 0} <Trans text={"completed"} /></small></article>
             </div>
 
             <div className="analytics-insight-strip">
               <span><b><Trans text={"Busiest department:"} /></b> {analytics.insights.busiestDepartment} ({analytics.insights.busiestDepartmentPatients})</span>
               <span><b><Trans text={"Peak day:"} /></b> {analytics.insights.peakDay} ({analytics.insights.peakDayPatients} <Trans text={"patients)"} /></span>
               <span><b><Trans text={"Patient source:"} /></b> {analytics.overview.onlinePatients ?? 0} <Trans text={"online · "} />{analytics.overview.walkInPatients} <Trans text={"walk-in · "} />{analytics.overview.appointmentPatients} <Trans text={"appointment"} /></span>
+            </div>
+
+            <div className="analytics-two-column analytics-detail-grid">
+              <article className="analytics-panel">
+                <div className="analytics-panel-title"><div><b><Trans text={"Waiting Experience"} /></b><small><Trans text={"Arrival to doctor call · completed measurements only"} /></small></div></div>
+                <div className="analytics-stat-grid">
+                  <div><span><Trans text={"Median wait"} /></span><b>{analytics.overview.medianWaitMinutes ?? 0}m</b></div>
+                  <div><span><Trans text={"90th percentile"} /></span><b>{analytics.overview.p90WaitMinutes ?? 0}m</b></div>
+                  <div><span><Trans text={"95th percentile"} /></span><b>{analytics.overview.p95WaitMinutes ?? 0}m</b></div>
+                  <div><span><Trans text={"Called within 30m"} /></span><b>{analytics.overview.under30WaitRate ?? 0}%</b></div>
+                </div>
+                <p className="analytics-method-note">{analytics.overview.measuredWaits ?? 0} <Trans text={"measured waits in selected period. Today: "} />{analytics.overview.waitingPatients} <Trans text={"waiting, "} />{analytics.overview.slaBreachCount} <Trans text={"waiting over 30 minutes."} /></p>
+              </article>
+              <article className="analytics-panel">
+                <div className="analytics-panel-title"><div><b><Trans text={"Appointment & Follow-up Outcomes"} /></b><small><Trans text={"Appointments by visit date · follow-ups by due date"} /></small></div></div>
+                <div className="analytics-stat-grid">
+                  <div><span><Trans text={"Appointments"} /></span><b>{analytics.appointmentStatus.total}</b><small>{analytics.appointmentStatus.checkedIn + analytics.appointmentStatus.completed} <Trans text={"checked in / completed"} /></small></div>
+                  <div><span><Trans text={"Missed"} /></span><b>{analytics.appointmentStatus.missed}</b><small>{analytics.appointmentStatus.cancelled} <Trans text={"cancelled"} /></small></div>
+                  <div><span><Trans text={"Follow-ups due"} /></span><b>{analytics.followUpStatus?.total ?? 0}</b><small>{analytics.followUpStatus?.pending ?? 0} <Trans text={"pending"} /></small></div>
+                  <div><span><Trans text={"Overdue"} /></span><b>{analytics.followUpStatus?.overdue ?? 0}</b><small>{analytics.appointmentStatus.rescheduled ?? 0} <Trans text={"reschedules"} /></small></div>
+                </div>
+                <p className="analytics-method-note"><Trans text={"Conversion = scheduled or completed follow-up plans ÷ plans due in this period."} /></p>
+              </article>
+            </div>
+
+            <div className="analytics-two-column analytics-detail-grid">
+              <article className="analytics-panel">
+                <div className="analytics-panel-title"><div><b><Trans text={"Collections"} /></b><small><Trans text={"OPD token payments by payment date · current refund status"} /></small></div></div>
+                <div className="analytics-stat-grid">
+                  <div><span><Trans text={"Gross collected"} /></span><b>{formatInr(analytics.collections?.collected ?? 0)}</b></div>
+                  <div><span><Trans text={"Refunded"} /></span><b>{formatInr(analytics.collections?.refunded ?? 0)}</b></div>
+                  <div><span><Trans text={"UPI"} /></span><b>{formatInr(analytics.collections?.methods?.upi ?? 0)}</b></div>
+                  <div><span><Trans text={"Cash · Card · Other"} /></span><b>{formatInr((analytics.collections?.methods?.cash ?? 0) + (analytics.collections?.methods?.card ?? 0) + (analytics.collections?.methods?.other ?? 0))}</b></div>
+                </div>
+                <p className="analytics-method-note"><Trans text={"Net excludes payments currently marked refunded. Appointment and reservation billing snapshots are not counted again."} /></p>
+              </article>
+              <article className="analytics-panel">
+                <div className="analytics-panel-title"><div><b><Trans text={"Arrival Heatmap"} /></b><small><Trans text={"Local clinic time · three-hour blocks"} /></small></div></div>
+                <div className="analytics-heatmap-wrap"><div className="analytics-heatmap" role="img" aria-label={t("Patient arrivals by weekday and time of day")}>
+                  <span className="analytics-heatmap-label" />{Array.from({ length: 8 }, (_, slot) => <span className="analytics-heatmap-label" key={slot}>{String(slot * 3).padStart(2, "0")}:00</span>)}
+                  {(analytics.heatmap || []).map((day, index) => <React.Fragment key={day.weekday}><span className="analytics-heatmap-label">{["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index]}</span>{day.slots.map((count, slot) => <span key={slot} className="analytics-heatmap-cell" style={{ opacity: count ? Math.max(.3, count / Math.max(1, ...analytics.heatmap.flatMap((row) => row.slots))) : .1 }} title={`${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index]} ${String(slot * 3).padStart(2, "0")}:00–${String((slot + 1) * 3).padStart(2, "0")}:00: ${count} arrivals`} />)}</React.Fragment>)}
+                </div></div>
+                <p className="analytics-method-note"><Trans text={"Peak hour: "} />{analytics.insights.peakHour} · {analytics.insights.peakHourPatients} <Trans text={"arrivals"} /></p>
+              </article>
             </div>
 
             <div className="analytics-two-column">

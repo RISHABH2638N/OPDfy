@@ -4606,6 +4606,18 @@ textarea {
 .analytics-table tr:last-child td { border-bottom:0; }
 .analytics-break { display:block; color:#b26a00; margin-top:2px; }
 .analytics-empty { padding:34px; text-align:center; color:var(--muted); border:1px dashed var(--border); border-radius:14px; }
+.analytics-detail-grid { align-items:stretch; }
+.analytics-stat-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.analytics-stat-grid > div { min-width:0; padding:13px; border:1px solid var(--border); border-radius:12px; background:rgba(127,127,127,.035); }
+.analytics-stat-grid span,.analytics-stat-grid small { display:block; color:var(--muted); font-size:.76rem; }
+.analytics-stat-grid b { display:block; overflow-wrap:anywhere; font-size:clamp(1rem,2vw,1.4rem); line-height:1.3; margin:5px 0; }
+.analytics-method-note { margin:13px 0 0; color:var(--muted); font-size:.78rem; line-height:1.5; }
+.analytics-heatmap-wrap { width:100%; overflow-x:auto; }
+.analytics-heatmap { min-width:490px; display:grid; grid-template-columns:44px repeat(8,minmax(0,1fr)); gap:6px; align-items:center; }
+.analytics-heatmap-label { color:var(--muted); font-size:.69rem; text-align:center; }
+.analytics-heatmap-cell { height:26px; background:var(--clinic-accent,#14b8a6); border-radius:6px; border:1px solid var(--border); }
+.analytics-heatmap-cell:hover { outline:2px solid var(--clinic-accent,#14b8a6); outline-offset:2px; }
+@media(max-width:540px) { .analytics-stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .analytics-stat-grid > div { padding:10px; } }
 .spin { animation:analytics-spin 1s linear infinite; }
 @keyframes analytics-spin { to { transform:rotate(360deg); } }
 @media (max-width:1100px) {
