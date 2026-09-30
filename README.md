@@ -429,6 +429,8 @@ Set NODE_ENV=production and the exact HTTPS frontend URL in CLIENT_URL.
 
 Confirm the readiness endpoint at /health/ready.
 
+External uptime monitors can use `GET https://<your-backend-host>/api/health`. This public endpoint needs no clinic header or login and returns HTTP 200 while the backend process is responding. Use `/health/ready` when you also need MongoDB readiness (HTTP 503 while disconnected).
+
 Frontend second
 
 Set Vercel production environment variables to the real backend origin:
@@ -481,7 +483,7 @@ Support
 For project support or deployment questions:
 
 Rishabh Mishra
-Email: opdfysupport@gmail.com
+Email: rishabhmishra263800@gmail.com
 
 Please do not include patient records, passwords, OTPs, database URIs or other sensitive information in support messages.
 

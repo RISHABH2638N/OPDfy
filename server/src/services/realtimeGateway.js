@@ -2,9 +2,10 @@ import Tenant from "../models/Tenant.js";
 import User from "../models/User.js";
 import GlobalPatient from "../models/GlobalPatient.js";
 import Token from "../models/Token.js";
+import Patient from "../models/Patient.js";
 import { verifySessionToken } from "../utils/sessionTokens.js";
 import { runWithTenant } from "./tenantExecutionContext.js";
-import { resolvePatientMembership } from "./patientMembershipService.js";
+import { resolvePatientMembership, assertVerifiedMembership } from "./patientMembershipService.js";
 
 export function tenantIsAvailable(tenant, now = Date.now()) {
   return Boolean(tenant && tenant.status === "active" &&
@@ -44,6 +45,7 @@ export function installRealtimeGateway(io) {
       // Load the complete authorized profile before membership synchronization.
       const member = await resolvePatientMembership({ tenantId, globalPatient: account });
       if (!member) throw new Error();
+      assertVerifiedMembership(member);
       patientId = String(member._id);
     }
     return { patientId, session: { id: decoded.id, kind: staff ? "staff" : "patient", ver: Number(decoded.ver || 0), exp: decoded.exp, role: decoded.role } };
@@ -99,6 +101,12 @@ export function installRealtimeGateway(io) {
           : await GlobalPatient.findOne({ _id: session.id, status: "active" }).select("+tokenVersion").lean();
         if (!account || session.ver !== Number(account.tokenVersion || 0) ||
             (session.kind === "staff" && account.role !== session.role)) expire(socket);
+        if (session.kind === "patient") {
+          const member = await runWithTenant(tenantId, () => Patient.findOne({
+            _id: socket.data.patientId, globalPatientId: session.id,
+          }).select("identityLink.method").lean());
+          assertVerifiedMembership(member);
+        }
       } catch { expire(socket); } finally { checking = false; }
     }, 15000);
     timer.unref?.();

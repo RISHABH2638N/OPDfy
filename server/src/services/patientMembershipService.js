@@ -2,6 +2,14 @@ import Patient from "../models/Patient.js";
 import GlobalPatient from "../models/GlobalPatient.js";
 import { runWithTenant } from "./tenantExecutionContext.js";
 
+export function assertVerifiedMembership(patient) {
+  if (!["verified_global_registration", "clinic_verified_claim"].includes(patient?.identityLink?.method)) {
+    throw Object.assign(new Error("This clinic record needs identity verification. Request an identity review in Privacy Centre or contact the clinic."), {
+      status: 409, code: "PATIENT_IDENTITY_REVIEW_REQUIRED",
+    });
+  }
+}
+
 function globalProfilePatch(globalPatient) {
   return {
     name: globalPatient.name || "",

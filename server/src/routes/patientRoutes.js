@@ -1212,43 +1212,32 @@ router.post("/me/appointments", protectPatient, async (req, res) => {
 
 router.patch("/me/appointments/:id/cancel", protectPatient, async (req, res) => {
   try {
-    const appointment = await Appointment.findOne({
+    const today = hospitalToday();
+    const cancellationReason = String(req.body?.reason || "Cancelled by patient").trim().slice(0, 300) || "Cancelled by patient";
+    const appointment = await Appointment.findOneAndUpdate({
       _id: req.params.id,
       patient: req.patient._id,
-    });
+      status: "booked",
+      appointmentDate: { $gte: today },
+    }, {
+      $set: {
+        status: "cancelled",
+        cancelledAt: new Date(),
+        cancellationReason,
+        cancelledByRole: "patient",
+      },
+      $unset: { slotKey: 1 },
+    }, { new: true, runValidators: true });
 
     if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found." });
-    }
-
-    if (appointment.status === "cancelled") {
-      return res.status(409).json({ message: "This appointment is already cancelled." });
-    }
-
-    if (appointment.status !== "booked") {
+      const existing = await Appointment.findOne({ _id: req.params.id, patient: req.patient._id }).lean();
+      if (!existing) return res.status(404).json({ message: "Appointment not found." });
+      if (existing.status === "cancelled") return res.status(409).json({ message: "This appointment is already cancelled." });
+      if (existing.appointmentDate < today) return res.status(409).json({ message: "Past appointments cannot be cancelled." });
       return res.status(409).json({
         message: "Only a booked appointment can be cancelled before check-in.",
       });
     }
-
-    const today = hospitalToday();
-
-    if (appointment.appointmentDate < today) {
-      return res.status(409).json({
-        message: "Past appointments cannot be cancelled.",
-      });
-    }
-
-    const cancellationReason = String(req.body?.reason || "Cancelled by patient").trim().slice(0, 300);
-    appointment.status = "cancelled";
-    appointment.cancelledAt = new Date();
-    appointment.cancellationReason = cancellationReason || "Cancelled by patient";
-    appointment.cancelledByRole = "patient";
-
-    // Release the doctor's unique slot so another patient can book it.
-    appointment.slotKey = undefined;
-
-    await appointment.save();
     emitOperationalUpdate(req.app.get("io"), ["appointments", "analytics"]);
 
     return res.json({

@@ -118,3 +118,12 @@ desktop.ini
 *.7z
 *.tar
 *.tar.gz
+
+# Allow only selected items at repository root
+/*
+!/client/
+!/server/
+!/.gitignore
+!/DEPLOYMENT.md
+!/README.md
+!/SECURITY_REVIEW.md

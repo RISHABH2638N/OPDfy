@@ -2,7 +2,7 @@
 
 ## Release gate
 
-Before live use, run the included database integration suite on a supported machine and complete the staging checklist below. The packaged build and 76 security regression tests passed; actual MongoDB transaction/index execution, browser interaction, real mobile sync, SMTP delivery and hosting configuration were not verified here.
+See `SECURITY_AUDIT_REPORT.md` for this release's executed checks and remaining risks. The client production build, server startup against a disposable MongoDB replica set, and local HTTP/Socket.IO/database regression checks were verified. Complete the staging checklist below: your actual Render/Atlas settings, SMTP delivery, external Gemini service and real-device/browser workflows were not verified against a live deployment.
 
 ## Existing database upgrade
 
@@ -18,6 +18,10 @@ Keep the appointment `slotKey` partial string index. Do not replace it with a un
 ## Backend: Render or your Node host
 
 Use the `server` directory as the service root. Build/install command: `npm ci --omit=dev`; start command: `npm start`; readiness path: `/health/ready`. Use one application instance initially: Mongo-backed rate limits are shared, but Socket.IO rooms and background job coordination need additional infrastructure before running multiple backend instances.
+
+For UptimeRobot, monitor `https://YOUR-BACKEND-HOST/health/live` using an HTTP(S) monitor (GET, expected HTTP 200). `/api/health` is an existing liveness alias. Both return only `{"ok":true}`, require no authentication/clinic header, and bypass the database-backed API limiter. Keep Render's own health check path as `/health/ready`, which returns 503 when the MongoDB connection is unavailable. The real backend hostname was not supplied in this source release; replace the placeholder with the deployed service URL. External monitoring does not guarantee free-tier uptime or bypass hosting quotas. Render's free services block outbound SMTP ports 25, 465 and 587; this SMTP-based OTP implementation needs a host/plan/provider connection that permits delivery. See https://render.com/docs/free and https://render.com/docs/health-checks.
+
+This security update requires no database reset, reseeding or new schema/index migration. Existing links without verified identity provenance now require the clinic's existing identity-review workflow before patient access to clinic records. Use `npm run privacy:identity-report` on a staging/backup copy to count affected links. Do not bulk-mark historical links verified or delete medical records. Fresh verified memberships continue working normally.
 
 Set these private server variables:
 

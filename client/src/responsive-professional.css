@@ -214,7 +214,7 @@ html[lang="hi"] .portal-sidebar-nav a > span {
   -webkit-overflow-scrolling: touch;
 }
 
-.portal-mode :is(.modal, .modal-card, .dialog-card, [role="dialog"]) {
+.portal-mode :is(.modal, .modal-card, .dialog-card, .history-detail-modal, [role="dialog"]:not(.history-detail-overlay)) {
   max-width: min(94vw, 760px);
   max-height: calc(100dvh - 32px);
   overflow-y: auto;
@@ -460,7 +460,7 @@ html[lang="hi"] .portal-sidebar-nav a > span {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
-  .portal-mode :is(.modal, .modal-card, .dialog-card, [role="dialog"]) {
+  .portal-mode :is(.modal, .modal-card, .dialog-card, .history-detail-modal, [role="dialog"]:not(.history-detail-overlay)) {
     width: calc(100vw - 24px);
     max-width: calc(100vw - 24px);
     max-height: calc(100dvh - 24px);
@@ -569,10 +569,18 @@ html[data-theme="dark"] .portal-sidebar-language .language-switcher {
 /* Day24: dialogs must cover the persistent topbar; keep content scrollable. */
 .platform-modal-backdrop,
 .consent-modal-backdrop,
-.modal-backdrop {
+.modal-backdrop,
+.payment-modal-backdrop,
+.history-detail-overlay {
   z-index: 2000 !important;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+.portal-mode .history-detail-overlay { width: 100%; max-width: none; max-height: none; padding: 16px; }
+.portal-mode .history-detail-modal { min-width: 0; }
+@media (max-width: 700px) {
+  .portal-mode :is(.payment-modal-actions, .history-detail-actions) { flex-wrap: wrap; }
+  .portal-mode .payment-modal-actions > button { flex: 1 1 100%; white-space: normal; }
 }
 .platform-modal, .platform-review-modal, .consent-modal {
   max-height: calc(100dvh - 32px);

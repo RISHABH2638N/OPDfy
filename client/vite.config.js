@@ -16,6 +16,9 @@ export default defineConfig(({ command, mode }) => {
     plugins: [react(), { name: "opd-content-security-policy", transformIndexHtml() {
       return [{ tag: "meta", attrs: { "http-equiv": "Content-Security-Policy", content: csp }, injectTo: "head-prepend" }];
     } }],
+    // Axios errors include request headers and bodies; omit console/debugger
+    // statements from production assets rather than logging patient data/tokens.
+    esbuild: production ? { drop: ["console", "debugger"] } : {},
     build: { sourcemap: false, rollupOptions: { output: { manualChunks(id) {
       if (id.includes("node_modules/html5-qrcode")) return "qr-scanner";
       if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)) return "react-vendor";

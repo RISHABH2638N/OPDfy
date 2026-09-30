@@ -1,0 +1,183 @@
+/* OPDfy Super Admin: original clinic SaaS interface. */
+.portal-platform {
+  --sp-ink: #203c4e;
+  --sp-muted: #637b88;
+  --sp-line: #dbe7eb;
+  --sp-teal: #087e86;
+  --sp-canvas: #f3f7f9;
+  --sp-shadow: 0 7px 24px rgba(20, 55, 72, .045);
+  --portal-sidebar-w: 262px;
+  --portal-topbar-h: 72px;
+}
+.portal-platform .portal-topbar { height: 72px; background: #fff; border-bottom: 1px solid var(--sp-line); box-shadow: 0 2px 12px rgba(17, 53, 70, .04); }
+.portal-platform .portal-header-inner { grid-template-columns: minmax(214px, 262px) minmax(0, 1fr) auto; padding-inline: 24px; }
+.portal-platform .portal-brand, .portal-platform .portal-brand strong { color: var(--sp-ink); }
+.portal-platform .portal-topbar .brand-mark { background: #e8f5f3; color: var(--sp-teal); border-color: #cde7e3; border-radius: 11px; }
+.portal-platform .portal-topbar-context { border-left: 1px solid #e5edef; padding-left: 20px; }
+.portal-platform .portal-topbar-context > span { color: #718d98; font-size: .66rem; letter-spacing: .1em; }
+.portal-platform .portal-topbar-context b { color: #24485a; }
+.portal-platform .portal-role-chip { background: #f1f7f8; border-color: var(--sp-line); color: #3e5d6b; }
+.portal-platform .portal-sidebar { padding: 18px 12px; background: #102b3d; border-right: 1px solid #193b4c; box-shadow: none; scrollbar-width: thin; scrollbar-color: #476879 transparent; }
+.portal-platform .portal-sidebar-profile { margin: 0 5px 10px; padding: 10px 7px 17px; border-bottom: 1px solid rgba(226, 242, 246, .14); }
+.portal-platform .portal-avatar { width: 40px; height: 40px; background: #174258; color: #81e0dc; border-color: #2a5a67; }
+.portal-platform .portal-sidebar-profile b { color: #f2fafb; font-size: .85rem; }
+.portal-platform .portal-sidebar-profile span:not(.portal-avatar) { color: #abc3cd; }
+.portal-platform .portal-nav-label { margin: 19px 12px 7px; color: #a8c0cb; font-size: .64rem; font-weight: 800; letter-spacing: .12em; }
+.portal-platform .portal-sidebar-nav { gap: 2px; }
+.portal-platform .portal-sidebar-nav a { min-height: 41px; gap: 11px; padding: 8px 11px; border: 1px solid transparent; border-radius: 9px; color: #cbdde4; font-size: .8rem; font-weight: 640; transition: background .16s, color .16s; }
+.portal-platform .portal-sidebar-nav a svg:first-child { color: #96b5c2; flex: 0 0 auto; }
+.portal-platform .portal-sidebar-nav a:hover { transform: none; color: #fff; background: #1a4153; }
+.portal-platform .portal-sidebar-nav a.active { color: #086d75; background: #e9f6f4; border-color: #d4eae7; box-shadow: inset 3px 0 0 #0b9195; }
+.portal-platform .portal-sidebar-nav a.active svg:first-child, .portal-platform .portal-sidebar-nav a.active .portal-nav-arrow { color: #087f86; }
+.portal-platform .portal-sidebar-preferences { border-color: rgba(230, 245, 249, .14); }
+.portal-platform .portal-sidebar-language .platform-preference-title, .portal-platform .portal-security-note b { color: #e7f4f7; }
+.portal-platform .portal-sidebar-language .language-switcher, .portal-platform .portal-security-note, .portal-platform .portal-logout { background: #18394b; color: #e3f1f5; border-color: #315365; }
+.portal-platform .portal-sidebar-language .language-switcher select { background: #193f50; color: #e9f5f7; border-color: #416270; }
+.portal-platform .portal-security-note span { color: #aac2cc; }
+.portal-platform .portal-content { min-width: 0; background: var(--sp-canvas); }
+.portal-platform :is(.platform-shell, .privacy-center, .platform-branding-page) { width: min(1480px, calc(100% - 60px)); max-width: none; margin-inline: auto; padding-top: 30px; padding-bottom: 70px; }
+/* Base page rules use viewport width; nested portal pages must use their available content width. */
+.portal-platform main.privacy-center { width: min(1480px, calc(100% - 60px)); }
+.portal-platform .privacy-center :is(.governance-form, .privacy-form) { min-width: 0; }
+.portal-platform .privacy-center :is(.governance-form, .privacy-form) > label { min-width: 0; }
+.portal-platform .privacy-center .privacy-form :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { width: 100%; min-width: 0; }
+.portal-platform :is(button, a, input, select, textarea):focus-visible { outline: 3px solid #20b2b4; outline-offset: 2px; }
+.portal-platform :is(.platform-panel, .platform-stat-card, .platform-priority-card, .privacy-center .card, .platform-branding-card) { border: 1px solid var(--sp-line); border-radius: 13px; background: #fff; box-shadow: var(--sp-shadow); }
+
+/* Command center */
+.portal-platform .platform-hero-v2 { display: flex; align-items: center; min-height: 128px; margin: 0 0 20px; padding: 0 0 22px; border: 0; border-bottom: 1px solid var(--sp-line); border-radius: 0; background: transparent; box-shadow: none; color: var(--sp-ink); }
+.portal-platform .platform-hero-v2 h1 { margin: 7px 0 6px; color: var(--sp-ink); font-size: clamp(1.85rem, 2.3vw, 2.45rem); line-height: 1.14; letter-spacing: -.035em; }
+.portal-platform .platform-hero-v2 p { max-width: 720px; color: var(--sp-muted); font-size: .87rem; line-height: 1.55; opacity: 1; }
+.portal-platform .platform-kicker, .portal-platform .platform-section-label { padding: 0; border: 0; background: transparent; color: var(--sp-teal); font-size: .68rem; font-weight: 820; letter-spacing: .12em; }
+.portal-platform .platform-owner-actions { align-self: flex-start; align-items: center; }
+.portal-platform .platform-notification { width: 40px; height: 40px; border: 1px solid #cbdfe2; border-radius: 10px; color: var(--sp-teal); background: #ecf7f5; cursor: pointer; }
+.portal-platform .platform-notification b { background: #be3545; border-color: var(--sp-canvas); }
+.portal-platform .platform-owner-chip { min-height: 40px; border: 1px solid var(--sp-line); border-radius: 10px; color: #365b68; background: #fff; }
+.portal-platform .platform-stats { gap: 14px; margin: 0 0 18px; }
+.portal-platform .platform-stat-card { min-height: 128px; gap: 14px; padding: 19px; }
+.portal-platform .platform-stat-card.urgent { background: #fffaf0; border-color: #f3dfb3; }
+.portal-platform .platform-stat-icon { width: 42px; height: 42px; border-radius: 10px; color: var(--sp-teal); background: #eaf7f4; }
+.portal-platform .platform-stat-card strong { margin-top: 9px; color: var(--sp-ink); font-size: 1.8rem; letter-spacing: -.04em; }
+.portal-platform .platform-stat-card span { color: var(--sp-muted); font-size: .76rem; }
+.portal-platform .platform-stat-card small { color: #718a95; font-size: .72rem; }
+.portal-platform .platform-overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin-bottom: 18px; }
+.portal-platform .platform-priority-card { padding: 19px; min-width: 0; }
+.portal-platform .platform-priority-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid #e8eff0; }
+.portal-platform .platform-priority-heading > span { display: flex; align-items: center; gap: 9px; color: var(--sp-ink); font-size: .92rem; font-weight: 790; }
+.portal-platform .platform-priority-heading svg { color: var(--sp-teal); }
+.portal-platform .platform-priority-heading button { display: inline-flex; align-items: center; gap: 5px; border: 0; background: none; color: var(--sp-teal); font-size: .75rem; font-weight: 750; cursor: pointer; white-space: nowrap; }
+.portal-platform .platform-priority-row { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 11px 0; border-bottom: 1px solid #edf2f3; }
+.portal-platform .platform-priority-row:last-child { border-bottom: 0; }
+.portal-platform .platform-priority-avatar { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border-radius: 9px; color: var(--sp-teal); background: #eaf7f5; font-weight: 800; }
+.portal-platform .platform-priority-row > div { display: grid; gap: 3px; flex: 1; min-width: 0; }
+.portal-platform .platform-priority-row b { overflow: hidden; color: var(--sp-ink); font-size: .8rem; text-overflow: ellipsis; white-space: nowrap; }
+.portal-platform .platform-priority-row small, .portal-platform .platform-priority-row time { color: var(--sp-muted); font-size: .7rem; }
+.portal-platform .platform-priority-empty { display: flex; align-items: center; gap: 8px; margin: 15px 0 0; color: var(--sp-muted); font-size: .77rem; }
+.portal-platform .platform-priority-empty svg { color: var(--sp-teal); }
+.portal-platform .platform-panel { padding: 21px; }
+.portal-platform .platform-panel-head h2 { color: var(--sp-ink); font-size: 1.23rem; }
+.portal-platform .platform-panel-head p { color: var(--sp-muted); font-size: .78rem; }
+.portal-platform .platform-refresh { min-height: 39px; border: 1px solid #cddfe2; border-radius: 9px; background: #fff; color: #365a67; font-size: .77rem; }
+.portal-platform .platform-registry-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+.portal-platform .platform-registry-tools label { display: flex; align-items: center; gap: 9px; width: min(440px, 100%); min-height: 42px; padding: 0 12px; border: 1px solid #d4e3e6; border-radius: 9px; color: #65808b; background: #fff; }
+.portal-platform .platform-registry-tools input { min-width: 0; width: 100%; padding: 8px 0; border: 0; outline: 0; background: transparent; color: var(--sp-ink); font: inherit; font-size: .8rem; }
+.portal-platform .platform-registry-tools label:focus-within { border-color: var(--sp-teal); box-shadow: 0 0 0 3px rgba(8, 126, 134, .12); }
+.portal-platform .platform-registry-tools > span { flex-shrink: 0; color: var(--sp-muted); font-size: .72rem; }
+.portal-platform .platform-tabs { width: 100%; margin-bottom: 17px; padding: 4px; border-radius: 9px; background: #f4f8f8; }
+.portal-platform .platform-tabs button { min-height: 36px; color: #526d79; font-size: .74rem; }
+.portal-platform .platform-tabs button.active { color: var(--sp-teal); }
+.portal-platform .platform-tabs button.active span { background: var(--sp-teal); }
+.portal-platform .approval-clinic-list { gap: 9px; }
+.portal-platform .approval-clinic-row { grid-template-columns: 42px minmax(0, 1fr) auto; align-items: start; gap: 13px; padding: 16px; border-radius: 10px; box-shadow: none; }
+.portal-platform .approval-clinic-row:hover { transform: none; border-color: #a9d2d0; box-shadow: 0 7px 22px rgba(17, 62, 72, .06); }
+.portal-platform .approval-clinic-avatar { width: 40px; height: 40px; border-radius: 9px; color: var(--sp-teal); background: #e8f6f4; }
+.portal-platform .approval-clinic-title strong { color: var(--sp-ink); font-size: .85rem; }
+.portal-platform .approval-clinic-meta { gap: 8px 14px; font-size: .71rem; }
+.portal-platform .approval-clinic-metrics { flex-wrap: wrap; }
+.portal-platform .approval-clinic-metrics span { min-width: 72px; color: var(--sp-muted); background: #f3f8f8; font-size: .69rem; }
+.portal-platform .approval-clinic-actions { grid-column: 2 / -1; flex-wrap: wrap; padding-top: 11px; border-top: 1px solid #edf2f3; }
+.portal-platform .approval-clinic-actions button { min-height: 36px; border-radius: 8px; font-size: .72rem; }
+.portal-platform .platform-message { border-color: #b9ded8; background: #eaf7f4; color: #14685f; }
+
+/* Shared visual language for privacy, readiness and branding pages. */
+.portal-platform .privacy-center > .head { min-height: 0; margin-bottom: 21px; padding: 0 0 22px; border: 0; border-bottom: 1px solid var(--sp-line); border-radius: 0; background: transparent; box-shadow: none; }
+.portal-platform .privacy-center > .head::after { content: none; }
+.portal-platform .privacy-center > .head .eyebrow { padding: 0; border: 0; background: none; color: var(--sp-teal); font-size: .68rem; letter-spacing: .12em; }
+.portal-platform .privacy-center > .head h1 { color: var(--sp-ink); font-size: clamp(1.8rem, 2.3vw, 2.4rem); letter-spacing: -.035em; }
+.portal-platform .privacy-center > .head .page-subtitle { color: var(--sp-muted); font-size: .86rem; }
+.portal-platform .privacy-center :is(.privacy-review-queue, .governance-console, .operations-overview-card, .operations-section-card) { padding: 21px; }
+.portal-platform .privacy-center :is(.privacy-summary-grid > div, .privacy-workspace-links > button, .privacy-request) { border: 1px solid var(--sp-line); border-radius: 10px; background: #fff; box-shadow: none; }
+.portal-platform .privacy-center :is(.privacy-workspace-links > button, .privacy-summary-grid > div):hover { border-color: #b8dcda; }
+.portal-platform .privacy-center :is(.privacy-governance-tabs, .operations-tabs) { top: calc(var(--portal-topbar-h) + 8px); border-radius: 9px; background: #f3f8f8; }
+.portal-platform .privacy-center :is(.privacy-governance-tabs, .operations-tabs) button { min-height: 39px; border-radius: 8px; }
+.portal-platform .privacy-center :is(.privacy-governance-tabs, .operations-tabs) .primary { background: var(--sp-teal); border-color: var(--sp-teal); color: #fff; }
+.portal-platform .privacy-center .governance-form { border-radius: 10px; background: #f8fbfb; }
+.portal-platform .privacy-center :is(input, select, textarea), .portal-platform .platform-review-modal :is(input, select, textarea) { border: 1px solid #d1e0e4; border-radius: 8px; background: #fff; color: var(--sp-ink); }
+.portal-platform .privacy-center .primary { background: var(--sp-teal); border-color: var(--sp-teal); color: #fff; }
+.portal-platform .platform-branding-hero { border: 1px solid var(--sp-line); border-radius: 13px; background: #fff; box-shadow: var(--sp-shadow); }
+.portal-platform .platform-branding-hero h1 { color: var(--sp-ink); font-size: clamp(1.7rem, 2.3vw, 2.35rem); }
+.portal-platform .platform-branding-hero p, .portal-platform .platform-branding-card-head p { color: var(--sp-muted); }
+.portal-platform .platform-branding-hero-icon { color: var(--sp-teal); background: #eaf7f4; }
+.portal-platform .platform-branding-card { padding: 22px; }
+.portal-platform .platform-review-modal { max-height: calc(100dvh - 32px); overflow-y: auto; border-radius: 13px; }
+.portal-platform .platform-modal-actions { flex-wrap: wrap; }
+.portal-platform .platform-modal-actions button { min-height: 41px; }
+
+/* Dedicated notification page; the live toast retains its existing popup behavior. */
+.portal-patient .patient-notification-page { max-width: 980px; padding: clamp(17px, 2.3vw, 27px); }
+.portal-patient .patient-notification-page .notification-list { max-height: none; overflow: visible; }
+
+@media (max-width: 1200px) {
+  .portal-platform .platform-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .portal-platform .approval-clinic-row { grid-template-columns: 42px minmax(0, 1fr); }
+  .portal-platform .approval-clinic-metrics { grid-column: 2; }
+  .portal-platform .approval-clinic-actions { grid-column: 2; }
+}
+@media (max-width: 900px) {
+  .portal-platform .portal-header-inner { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .portal-platform :is(.platform-shell, .privacy-center, .platform-branding-page) { width: min(100% - 38px, 1480px); }
+  .portal-platform main.privacy-center { width: calc(100% - 38px); }
+  .portal-platform .platform-overview-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .portal-platform :is(.platform-shell, .privacy-center, .platform-branding-page) { width: calc(100% - 28px); padding-top: 19px; }
+  .portal-platform main.privacy-center { width: calc(100% - 28px); }
+  .portal-platform .privacy-center .governance-form { grid-template-columns: minmax(0, 1fr); }
+  .portal-platform .platform-hero-v2 { display: grid; min-height: 0; gap: 13px; }
+  .portal-platform .platform-hero-v2 h1 { font-size: 1.75rem; }
+  .portal-platform .platform-owner-actions { width: 100%; flex-direction: row; align-items: center; }
+  .portal-platform .platform-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .portal-platform .platform-stat-card { min-height: 117px; display: grid; gap: 8px; padding: 13px; }
+  .portal-platform .platform-stat-card strong { margin-top: 6px; font-size: 1.45rem; }
+  .portal-platform .platform-stat-card small { font-size: .67rem; }
+  .portal-platform .platform-panel, .portal-platform .platform-priority-card, .portal-platform .privacy-center :is(.privacy-review-queue, .governance-console, .operations-overview-card, .operations-section-card), .portal-platform .platform-branding-card { padding: 15px; }
+  .portal-platform .platform-panel-head { align-items: flex-start; }
+  .portal-platform .platform-registry-tools { align-items: stretch; flex-direction: column; }
+  .portal-platform .platform-registry-tools label { width: 100%; }
+  .portal-platform .approval-clinic-row { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+  .portal-platform .approval-clinic-avatar { display: none; }
+  .portal-platform .approval-clinic-metrics, .portal-platform .approval-clinic-actions { grid-column: 1; }
+  .portal-platform .approval-clinic-actions button { flex: 1 1 auto; justify-content: center; }
+  .portal-platform .platform-tabs { overflow-x: auto; }
+  .portal-platform .platform-review-modal { padding: 18px; }
+  .portal-platform .platform-modal-actions button { flex: 1 1 130px; }
+  .portal-platform .privacy-center :is(.privacy-governance-tabs, .operations-tabs) { position: static; }
+}
+@media (max-width: 370px) {
+  .portal-platform .platform-stats { grid-template-columns: 1fr; }
+  .portal-platform .platform-stat-card { grid-template-columns: 42px 1fr; align-items: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portal-platform .portal-sidebar-nav a, .portal-platform .approval-clinic-row { transition: none; }
+}
+html[data-theme="dark"] .portal-platform .portal-topbar { background: #0d2532 !important; border-color: #294653 !important; }
+html[data-theme="dark"] .portal-platform .portal-content { background: #07141e !important; }
+html[data-theme="dark"] .portal-platform .platform-hero-v2 { color: #e5eff3; background: transparent !important; border-color: #294653 !important; box-shadow: none !important; }
+html[data-theme="dark"] .portal-platform .platform-hero-v2 :is(h1, p) { color: #e5eff3 !important; }
+html[data-theme="dark"] .portal-platform :is(.platform-panel, .platform-stat-card, .platform-priority-card, .privacy-center .card, .platform-branding-card, .platform-branding-hero, .approval-clinic-row) { color: #e5eff3 !important; background: #0f2230 !important; border-color: #294653 !important; }
+html[data-theme="dark"] .portal-platform :is(.platform-stat-card strong, .platform-priority-row b, .platform-panel-head h2, .privacy-center .head h1, .platform-branding-hero h1) { color: #e5eff3 !important; }
+html[data-theme="dark"] .portal-platform :is(.platform-owner-chip, .platform-registry-tools label, .privacy-center .privacy-request, .privacy-center .privacy-summary-grid > div, .privacy-center .privacy-workspace-links > button) { color: #d6e8ec !important; background: #142a38 !important; border-color: #294653 !important; }
+html[data-theme="dark"] .portal-platform :is(.platform-registry-tools input, .privacy-center input, .privacy-center select, .privacy-center textarea, .platform-review-modal input, .platform-review-modal select, .platform-review-modal textarea) { color: #e5eff3 !important; background: #102a37 !important; border-color: #355461 !important; }
+html[data-theme="dark"] .portal-platform .platform-priority-row { border-color: #294653; }
+html[data-theme="dark"] .portal-platform .platform-priority-heading { border-color: #294653; }
+html[data-theme="dark"] .portal-platform .platform-review-modal { color: #e5eff3; background: #0f2230; }

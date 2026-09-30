@@ -42,7 +42,7 @@ function ReferralStatus({ status }) {
   return <span className={`referral-status referral-status-${status}`}>{String(status || "pending").replaceAll("_", " ")}</span>;
 }
 
-export function DoctorReferrals({ currentDoctor, activeToken, recentTokens = [] }) {
+export function DoctorReferrals({ currentDoctor, activeToken, recentTokens = [], expanded = false }) {
   const { t } = useLanguage();
   const { referrals, loading, error, refresh } = useReferrals();
   const [doctors, setDoctors] = useState([]);
@@ -100,7 +100,7 @@ export function DoctorReferrals({ currentDoctor, activeToken, recentTokens = [] 
     } catch (error) { setClinicalError(message(error)); }
   };
 
-  return <details className="card referral-workspace">
+  return <details className="card referral-workspace" open={expanded}>
     <summary><strong><Trans text={"Department Referrals"} /></strong><span className="muted"><Trans text={"Refer to another specialty or review incoming referrals"} /></span></summary>
     <div className="referral-content">
       <div className="referral-panel">
@@ -167,7 +167,7 @@ export function DoctorReferrals({ currentDoctor, activeToken, recentTokens = [] 
   </details>;
 }
 
-export function ReceptionReferrals() {
+export function ReceptionReferrals({ expanded = false }) {
   const { t } = useLanguage();
   const { referrals, loading, error, refresh } = useReferrals();
   const [selected, setSelected] = useState(null);
@@ -203,7 +203,7 @@ export function ReceptionReferrals() {
     finally { setBusy(false); }
   };
 
-  return <details className="card referral-workspace">
+  return <details className="card referral-workspace" open={expanded}>
     <summary><strong><Trans text={"Department Referral Desk"} /></strong><span className="muted"><Trans text={"Confirm arrival, fees and destination token"} /></span></summary>
     <div className="referral-content">
       <div className="referral-panel">

@@ -36,5 +36,5 @@ test("public and portal headers consume the saved platform logo", () => {
   assert.match(app, /path="\/platform\/branding"/);
   assert.match(brandingCss, /platform-logo-square/);
   assert.match(brandingCss, /platform-logo-wide/);
-  assert.match(brandingCss, /object-fit:contain/);
+  assert.match(brandingCss, /object-fit:\s*contain/);
 });

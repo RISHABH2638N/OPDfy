@@ -32,6 +32,7 @@ router.get("/patients", async (req, res) => {
 
 router.get("/", async (req, res) => {
   const query = {};
+  if (req.user.role === "doctor") query.doctor = req.user.id;
   if (req.query.patientId) {
     if (!mongoose.isValidObjectId(req.query.patientId)) return res.status(400).json({ message: "Invalid patient identifier." });
     query.patient = req.query.patientId;
@@ -82,7 +83,8 @@ router.post("/", requireRole("admin", "doctor"), async (req, res) => {
 router.patch("/:id/review", requireRole("admin", "doctor"), async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ message: "Invalid consent identifier." });
-    const consent = await ClinicalConsent.findById(req.params.id);
+    const consent = await ClinicalConsent.findOne({ _id: req.params.id,
+      ...(req.user.role === "doctor" ? { doctor: req.user.id } : {}) });
     if (!consent) return res.status(404).json({ message: "Consent request not found." });
     if (effectiveConsentStatus(consent) === "expired") return res.status(409).json({ message: "This consent request has expired." });
     if (consent.patientDecision?.actorType !== "guardian" || consent.status !== "patient_acknowledged") return res.status(409).json({ message: "Only a pending guardian acknowledgement requires authority review." });
@@ -102,7 +104,8 @@ router.patch("/:id/review", requireRole("admin", "doctor"), async (req, res) => 
 router.patch("/:id/cancel", requireRole("admin", "doctor"), async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ message: "Invalid consent identifier." });
-    const consent = await ClinicalConsent.findById(req.params.id);
+    const consent = await ClinicalConsent.findOne({ _id: req.params.id,
+      ...(req.user.role === "doctor" ? { doctor: req.user.id } : {}) });
     if (!consent) return res.status(404).json({ message: "Consent request not found." });
     if (!["pending", "patient_acknowledged"].includes(consent.status)) return res.status(409).json({ message: "This consent can no longer be cancelled." });
     const reason = String(req.body.reason || "").trim();

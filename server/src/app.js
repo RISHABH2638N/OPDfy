@@ -10,6 +10,7 @@ import jwt from "jsonwebtoken";
 
 import authRoutes from "./routes/authRoutes.js";
 import tokenRoutes from "./routes/tokenRoutes.js";
+import doctorAnalyticsRoutes from "./routes/doctorAnalyticsRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import patientAuthRoutes from "./routes/patientAuthRoutes.js";
@@ -114,6 +115,33 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
 app.use("/api", requestSafety);
+
+// Health probes must not depend on the database-backed API rate-limit store.
+// Register the existing endpoints before that limiter, retaining CORS/Helmet.
+app.use(["/health", "/api/health"], (req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
+function healthPayload() {
+  const dbState = mongoose.connection.readyState;
+  return {
+    ok: dbState === 1,
+    service: "opd-smart-queue",
+    database: dbState === 1 ? "connected" : "unavailable",
+    uptimeSeconds: Math.floor(process.uptime()),
+  };
+}
+app.get("/health", (req, res) => {
+  const payload = healthPayload();
+  res.status(payload.ok ? 200 : 503).json(payload);
+});
+app.get("/health/live", (req, res) => res.json({ ok: true }));
+app.get("/api/health", (req, res) => res.json({ ok: true }));
+app.get("/health/ready", (req, res) => {
+  const payload = healthPayload();
+  res.status(payload.ok ? 200 : 503).json(payload);
+});
+
 app.use(
   rateLimit({
     windowMs: 60 * 1000,
@@ -137,28 +165,6 @@ const io = new Server(server, {
 app.set("io", io);
 
 installRealtimeGateway(io);
-
-function healthPayload() {
-  const dbState = mongoose.connection.readyState;
-  return {
-    ok: dbState === 1,
-    service: "opd-smart-queue",
-    database: dbState === 1 ? "connected" : "unavailable",
-    uptimeSeconds: Math.floor(process.uptime()),
-  };
-}
-
-app.get("/health", (req, res) => {
-  const payload = healthPayload();
-  res.status(payload.ok ? 200 : 503).json(payload);
-});
-app.get("/health/live", (req, res) =>
-  res.json({ ok: true, service: "opd-smart-queue", uptimeSeconds: Math.floor(process.uptime()) })
-);
-app.get("/health/ready", (req, res) => {
-  const payload = healthPayload();
-  res.status(payload.ok ? 200 : 503).json(payload);
-});
 
 // Platform owner APIs are intentionally outside clinic tenantContext.
 // They use a separate Super Admin identity and never expose clinical records.
@@ -206,6 +212,7 @@ app.get("/api/tenant/current", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/tokens", tokenRoutes);
+app.use("/api/doctor", doctorAnalyticsRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/privacy-clinic", privacyClinicRoutes);
 app.use("/api/privacy-clinic", privacyClinicPhase3Routes);

@@ -1,4 +1,4 @@
-import { sessionKindForRequest, shouldExpireSession } from "./authRouting.js";
+import { sessionKindForRequest, shouldExpireSession, patientSessionSummary } from "./authRouting.js";
 import axios from "axios";
 import { socket } from "./socket";
 
@@ -207,7 +207,7 @@ function persistPatientAuth(data, { resetClinicContext = false } = {}) {
   }
 
   if (data?.patient) {
-    sessionStorage.setItem(PATIENT_USER_KEY, JSON.stringify(data.patient));
+    sessionStorage.setItem(PATIENT_USER_KEY, JSON.stringify(patientSessionSummary(data.patient)));
   }
 }
 
@@ -221,7 +221,7 @@ export function updateStoredPatient(patient) {
 
   sessionStorage.setItem(
     PATIENT_USER_KEY,
-    JSON.stringify(patient)
+    JSON.stringify(patientSessionSummary(patient))
   );
 }
 
@@ -238,9 +238,11 @@ export function getStoredPatient() {
         PATIENT_USER_KEY
       );
 
-    return patient
-      ? JSON.parse(patient)
-      : null;
+    if (!patient) return null;
+    const summary = patientSessionSummary(JSON.parse(patient));
+    // Scrub full profiles cached by earlier releases in the current tab.
+    sessionStorage.setItem(PATIENT_USER_KEY, JSON.stringify(summary));
+    return summary;
   } catch {
     return null;
   }

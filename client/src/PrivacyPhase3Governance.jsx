@@ -18,10 +18,9 @@ export default function PrivacyPhase3Governance() {
   const [searchParams] = useSearchParams();
   const { language, t } = useLanguage();
   const requestedTab = searchParams.get("tab");
-  const initialTab = ["retention", "incidents", "corrections"].includes(requestedTab) ? requestedTab : "retention";
+  const tab = ["retention", "incidents", "corrections"].includes(requestedTab) ? requestedTab : "retention";
   const [approvalId, setApprovalId] = useState(null);
   const [approvalPassword, setApprovalPassword] = useState("");
-  const [tab, setTab] = useState(initialTab);
   const [rows, setRows] = useState([]);
   const [clinics, setClinics] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -90,7 +89,7 @@ export default function PrivacyPhase3Governance() {
     </div>
     <section className="card governance-console">
       <div className="privacy-actions privacy-governance-tabs" style={{ justifyContent: "flex-start" }}>
-        {tabs.map(([value, label]) => <button type="button" key={value} className={tab === value ? "primary" : "ghost"} onClick={() => setTab(value)}>{t(label)}</button>)}
+        {tabs.map(([value, label]) => <button type="button" key={value} className={tab === value ? "primary" : "ghost"} onClick={() => navigate(`/platform/privacy/governance?tab=${value}`)}>{t(label)}</button>)}
         <button className="ghost" onClick={() => load().catch(error => setError(messageOf(error)))}><RefreshCw size={15}/> {t("Refresh")}</button>
       </div>
       <button type="button" className="ghost privacy-operations-link" onClick={() => navigate("/platform/privacy/operations")}>{t("Operational readiness & notification evidence")}</button>

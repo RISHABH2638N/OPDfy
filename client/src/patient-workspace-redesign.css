@@ -1,0 +1,183 @@
+/* Patient portal: one calm visual language across care, records, and account pages. */
+.portal-patient {
+  --patient-navy: #123548;
+  --patient-teal: #087f88;
+  --patient-line: #dce7eb;
+  --patient-canvas: #f5f8fa;
+  --patient-shadow: 0 5px 22px rgba(23, 60, 78, .045);
+  --portal-sidebar-w: 260px;
+  --portal-topbar-h: 72px;
+}
+.portal-patient .portal-topbar {
+  height: var(--portal-topbar-h);
+  background: #fff;
+  border-bottom: 1px solid var(--patient-line);
+  box-shadow: 0 2px 14px rgba(19, 55, 72, .035);
+}
+.portal-patient .portal-header-inner { padding-inline: 24px; }
+.portal-patient .portal-brand { color: var(--patient-navy); }
+.portal-patient .portal-brand strong { color: var(--patient-navy); font-size: 1.16rem; letter-spacing: -.035em; }
+.portal-patient .portal-brand small { color: #718d9c; opacity: 1; }
+.portal-patient .portal-brand .brand-mark { color: var(--patient-teal); background: #e4f4f2; border-color: #cce7e4; }
+.portal-patient .portal-topbar-context { padding-left: 20px; border-left: 1px solid var(--patient-line); }
+.portal-patient .portal-topbar-context span { color: #718b99; font-size: .67rem; }
+.portal-patient .portal-topbar-context b { color: var(--patient-navy); font-size: .88rem; }
+.portal-patient .portal-role-chip,.portal-patient .system-status { color: #426373; background: #f2f7f8; border-color: #e0eaed; }
+.portal-patient .system-status i { background: #0a9c78; box-shadow: none; }
+.portal-patient .portal-menu-toggle { color: var(--patient-navy); background: #f2f7f8; border-color: var(--patient-line); }
+.portal-patient .portal-sidebar { padding: 20px 12px 17px; color: #dcebf0; background: var(--patient-navy); border-right: 1px solid #153d52; box-shadow: none; scrollbar-width: thin; scrollbar-color: #426276 transparent; }
+.portal-patient .portal-sidebar-profile { margin: 0 7px 13px; padding: 11px 7px 19px; background: transparent; border: 0; border-bottom: 1px solid #335367; border-radius: 0; }
+.portal-patient .portal-avatar { color: #a4e5e1; background: #21485b; border-color: #3d6577; }
+.portal-patient .portal-sidebar-profile b { color: #f3f9fa; font-size: .85rem; }
+.portal-patient .portal-sidebar-profile span:not(.portal-avatar) { color: #a9bfca; }
+.portal-patient .portal-nav-label { color: #9eb6c3; margin: 19px 13px 7px; font-size: .67rem; letter-spacing: .12em; }
+.portal-patient .portal-sidebar-nav { gap: 2px; }
+.portal-patient .portal-sidebar-nav a { min-height: 43px; gap: 11px; padding: 9px 12px; border: 1px solid transparent; border-radius: 9px; color: #c6dbe4; font-size: .82rem; font-weight: 650; transition: background .16s, color .16s; }
+.portal-patient .portal-sidebar-nav a svg:first-child { color: #9db8c5; }
+.portal-patient .portal-sidebar-nav a:hover { background: #244c60; color: #fff; transform: none; border-color: transparent; }
+.portal-patient .portal-sidebar-nav a.active { color: #fff; background: #176b78; border-color: #258390; box-shadow: inset 3px 0 0 #66d5ce; }
+.portal-patient .portal-sidebar-nav a.active svg:first-child,.portal-patient .portal-nav-arrow { color: #9ce4df; }
+.portal-patient .portal-sidebar-preferences { border-color: #365569; }
+.portal-patient .portal-sidebar-language .platform-preference-title { color: #d4e5eb; }
+.portal-patient .portal-sidebar-language .language-switcher,.portal-patient .portal-sidebar-language .language-switcher select { color: #e6f3f5; background: #21475a; border-color: #406475; }
+.portal-patient .portal-security-note { color: #d9e9ee; background: #1d4255; border-color: #3b5e70; }
+.portal-patient .portal-security-note b { color: #edf8fa; }
+.portal-patient .portal-security-note span { color: #b7cad2; }
+.portal-patient .portal-logout { color: #e3eff2; background: transparent; border-color: #426276; }
+.portal-patient .portal-content { background: var(--patient-canvas); }
+.portal-patient .page,.portal-patient .premium-page,.portal-patient .patient-market-shell { width: min(1390px, calc(100% - 64px)); margin-inline: auto; padding-top: 30px; padding-bottom: 70px; }
+.portal-patient .page > .head,.portal-patient .premium-page > .head { min-height: 0; margin-bottom: 22px; padding: 0 0 22px; border: 0; border-bottom: 1px solid var(--patient-line); border-radius: 0; background: transparent; box-shadow: none; }
+.portal-patient .page > .head::after,.portal-patient .premium-page > .head::after { content: none; }
+.portal-patient .head .eyebrow,.portal-patient .patient-section-toolbar .eyebrow { color: var(--patient-teal); background: transparent; border: 0; font-size: .7rem; letter-spacing: .12em; font-weight: 820; }
+.portal-patient .head h1 { margin: 5px 0 7px; color: var(--patient-navy); font-size: clamp(1.9rem, 2.45vw, 2.55rem); line-height: 1.15; letter-spacing: -.04em; }
+.portal-patient .page-subtitle { color: #66808d; font-size: .88rem; line-height: 1.6; }
+.portal-patient .dashboard-actions { gap: 8px; }
+.portal-patient .patient-head-action { min-height: 40px; padding: 9px 12px; white-space: nowrap; }
+/* Keep header actions in normal flow, including the unread count. */
+.portal-patient .patient-workspace > .head > div { min-width: 0; }
+.portal-patient .patient-workspace .dashboard-actions { flex-wrap: wrap; }
+@media (max-width: 768px) {
+  .portal-patient .patient-workspace > .head { display: flex; flex-direction: column; align-items: stretch; gap: 16px; }
+  .portal-patient .patient-workspace .head .dashboard-actions { width: 100%; margin-left: 0; justify-content: flex-start; gap: 8px; }
+  .portal-patient .patient-workspace .patient-head-action { display: inline-flex; align-items: center; justify-content: center; width: auto; min-width: 44px; height: auto; min-height: 44px; padding: 10px 12px; font-size: .8rem; white-space: normal; }
+  .portal-patient .patient-workspace :is(.patient-head-profile,.patient-head-signout) { display: none; }
+}
+.portal-patient .card,.portal-patient .patient-clinic-card,.portal-patient .patient-market-toolbar { border: 1px solid var(--patient-line); border-radius: 13px; background: #fff; box-shadow: var(--patient-shadow); }
+.portal-patient .card { min-width: 0; padding: 23px; }
+.portal-patient :is(.card h2,.card h3) { color: var(--patient-navy); }
+.portal-patient :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),select,textarea) { min-height: 42px; border: 1px solid #d4e2e7; border-radius: 8px; background: #fff; color: #244b5f; font-size: .88rem; }
+.portal-patient textarea { min-height: 96px; }
+.portal-patient :is(button,a,input,select,textarea,summary):focus-visible { outline: 3px solid #39b7b5; outline-offset: 2px; }
+.portal-patient :is(.primary,.ghost,.danger,.button-like) { min-height: 40px; border-radius: 8px; font-size: .82rem; font-weight: 720; box-shadow: none; }
+.portal-patient .primary { color: #fff; background: var(--patient-teal); border-color: var(--patient-teal); }
+.portal-patient .primary:hover:not(:disabled) { background: #066e77; border-color: #066e77; }
+.portal-patient .ghost { color: #31586a; background: #fff; border-color: #d3e1e6; }
+.portal-patient .ghost:hover:not(:disabled) { color: var(--patient-teal); background: #f0f9f8; border-color: #9dcfd1; }
+.portal-patient :is(button,a):disabled { opacity: .55; cursor: not-allowed; }
+
+/* The visit stays prominent; deeper records live in the sidebar. */
+.portal-patient .patient-command-tabs { position: static; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; padding: 5px; margin-bottom: 20px; border: 1px solid var(--patient-line); border-radius: 11px; background: #fff; box-shadow: none; backdrop-filter: none; }
+.portal-patient .patient-command-tabs button { min-height: 60px; padding: 10px 12px; border-radius: 8px; }
+.portal-patient .patient-command-tabs button.active { background: #e8f5f3; border-color: #cee7e3; box-shadow: none; }
+.portal-patient .patient-command-tabs button b { font-size: .82rem; }
+.portal-patient .patient-command-tabs button small { font-size: .68rem; }
+.portal-patient .patient-premium-snapshot { grid-template-columns: minmax(240px,.8fr) minmax(0,1.4fr); gap: 20px; padding: 24px; border: 1px solid #cfe4e5; border-left: 4px solid var(--patient-teal); border-radius: 13px; background: #fff; box-shadow: var(--patient-shadow); }
+.portal-patient .patient-snapshot-copy h2 { color: var(--patient-navy); font-size: clamp(1.4rem,2.2vw,1.9rem); }
+.portal-patient .patient-snapshot-grid article { border-radius: 10px; background: #f7fafb; box-shadow: none; }
+.portal-patient .patient-snapshot-grid strong { font-size: clamp(1rem,1.5vw,1.35rem); }
+.portal-patient .patient-premium-section,.portal-patient .token-booking-card,.portal-patient .queue-reservation-card { border-radius: 13px; box-shadow: var(--patient-shadow); }
+.portal-patient .appointment-booking-card .appointment-form { background: #f7fafb; border-radius: 10px; }
+.portal-patient .ai-triage-card { top: 94px; max-height: calc(100vh - 112px); }
+.portal-patient .patient-section-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 19px; padding: 17px 20px; border: 1px solid var(--patient-line); border-radius: 11px; background: #fff; }
+.portal-patient .patient-section-toolbar p { margin: 0; }
+.portal-patient .patient-section-toolbar p:last-child { margin-top: 3px; color: #66808d; font-size: .84rem; }
+.portal-patient .patient-section-card { margin: 0; }
+.portal-patient .patient-section-card > summary { cursor: pointer; }
+.portal-patient .patient-section-card .patient-feedback-dropdown-content { padding-top: 18px; }
+.portal-patient .patient-appointment-feedback:empty { display: none; }
+.portal-patient .patient-appointment-feedback > :first-child { margin-top: 0; }
+.portal-patient .patient-appointment-feedback > :last-child { margin-bottom: 16px; }
+.portal-patient .patient-section-card .card-title h2 { font-size: 1.08rem; }
+.portal-patient .patient-section-card .patient-section-count { font-size: .72rem; }
+.portal-patient .patient-appointment-wrap,.portal-patient .patient-feedback-card,.portal-patient .patient-history-row-button { border-radius: 10px; }
+
+/* Choose-clinic, profile, EHR, privacy, consent, and lounge share the same frame. */
+.portal-patient .patient-market-hero { padding: 28px 30px; border: 1px solid #d3e8e8; border-radius: 13px; background: #eaf6f4; box-shadow: none; }
+.portal-patient .patient-market-hero h1 { color: var(--patient-navy); font-size: clamp(1.85rem,2.5vw,2.5rem); letter-spacing: -.04em; }
+.portal-patient .patient-market-hero p { color: #52717f; font-size: .88rem; }
+.portal-patient .patient-market-kicker { color: #096f78; }
+.portal-patient .patient-market-account { background: #fff; border: 1px solid #cfe4e4; border-radius: 10px; color: #325467; }
+.portal-patient .patient-market-account strong { color: var(--patient-navy); }
+.portal-patient .patient-market-account span { color: #66838f; }
+.portal-patient .patient-market-account-icon { background: #e6f4f2; color: var(--patient-teal); }
+.portal-patient .patient-market-search input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) { min-height: 44px; border: 0; background: transparent; box-shadow: none; }
+.portal-patient .patient-market-search input:focus-visible { outline-offset: 4px; }
+.portal-patient .patient-clinic-open { background: var(--patient-teal); color: #fff; }
+.portal-patient .patient-clinic-open:hover { background: #066d76; }
+.portal-patient .patient-clinic-mark { color: var(--patient-teal); background: #e7f5f3; }
+.portal-patient .patient-clinic-card { padding: 22px; }
+.portal-patient .patient-clinic-open { border-radius: 8px; }
+.portal-patient .patient-privacy-view .head { padding: 0 0 22px; border: 0; border-bottom: 1px solid var(--patient-line); border-radius: 0; background: transparent; }
+.portal-patient .patient-privacy-view .card,.portal-patient .patient-ehr-page .card { border-radius: 13px; }
+.portal-patient .patient-waiting-lounge { width: min(1390px,calc(100% - 64px)); }
+
+@media (max-width: 1180px) {
+  .portal-patient .patient-premium-snapshot { grid-template-columns: 1fr; }
+  .portal-patient .ai-triage-card { position: static; max-height: none; }
+  .portal-patient .dashboard-actions { justify-content: flex-start; }
+}
+@media (max-width: 900px) {
+  .portal-patient .portal-content { width: 100%; margin-left: 0; }
+  .portal-patient .portal-sidebar { width: min(300px,86vw); }
+  .portal-patient .page,.portal-patient .premium-page,.portal-patient .patient-market-shell { width: calc(100% - 36px); }
+  .portal-patient .patient-waiting-lounge { width: calc(100% - 36px); }
+  .portal-patient .portal-topbar-context { display: none; }
+  .portal-patient .patient-command-tabs { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 600px) {
+  .portal-patient { --portal-topbar-h: 64px; }
+  .portal-patient .portal-topbar { height: 64px; }
+  .portal-patient .portal-header-inner { padding-inline: 12px; gap: 9px; }
+  .portal-patient .portal-brand strong { font-size: 1rem; }
+  .portal-patient .portal-brand small { display: none; }
+  .portal-patient .page,.portal-patient .premium-page,.portal-patient .patient-market-shell { width: calc(100% - 28px); padding-top: 20px; padding-bottom: 44px; }
+  .portal-patient .patient-waiting-lounge { width: calc(100% - 28px); }
+  .portal-patient .head h1 { font-size: 1.8rem; }
+  .portal-patient .page > .head,.portal-patient .premium-page > .head { align-items: flex-start; flex-direction: column; }
+  .portal-patient .dashboard-actions { width: 100%; }
+  .portal-patient .dashboard-actions .patient-head-action { min-height: 42px; }
+  .portal-patient .card { padding: 17px; }
+  .portal-patient .patient-premium-snapshot { padding: 17px; }
+  .portal-patient .patient-snapshot-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .portal-patient .patient-section-toolbar { align-items: stretch; flex-direction: column; padding: 15px; }
+  .portal-patient .patient-section-toolbar button { width: 100%; }
+  .portal-patient .patient-market-hero { padding: 20px 17px; }
+  .portal-patient .patient-market-account { width: 100%; min-width: 0; }
+  .portal-patient .patient-market-toolbar { flex-direction: column; align-items: stretch; }
+  .portal-patient .patient-appointment-wrap .appointment-row { gap: 10px; }
+  .portal-patient .patient-appointment-wrap .appointment-row > button { min-height: 40px; }
+}
+@media (max-width: 380px) {
+  .portal-patient .patient-command-tabs { grid-template-columns: 1fr 1fr; }
+  .portal-patient .patient-command-tabs button { grid-template-columns: 22px minmax(0,1fr); padding: 8px; }
+  .portal-patient .patient-command-tabs button small { display: none; }
+  .portal-patient .patient-snapshot-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portal-patient :is(button,a) { transition-duration: .01ms !important; }
+}
+html[data-theme="dark"] .portal-patient {
+  --patient-navy: #e7f3f6;
+  --patient-line: #395865;
+  --patient-canvas: #10232e;
+  --patient-shadow: 0 5px 20px #06151d33;
+}
+html[data-theme="dark"] .portal-patient .portal-sidebar { background: #102f42; border-color: #294c5e; }
+html[data-theme="dark"] .portal-patient .portal-topbar,html[data-theme="dark"] .portal-patient :is(.card,.patient-section-toolbar,.patient-command-tabs,.patient-premium-snapshot,.patient-clinic-card,.patient-market-toolbar) { background: #1b3441; border-color: #3a5968; color: #e4f1f5; }
+html[data-theme="dark"] .portal-patient :is(.head h1,.portal-brand strong,.portal-topbar-context b,.card h2,.card h3,.patient-snapshot-copy h2,.patient-section-card .card-title h2,.patient-market-hero h1) { color: #edf7f9; }
+html[data-theme="dark"] .portal-patient :is(.page-subtitle,.patient-section-toolbar p:last-child,.patient-market-hero p) { color: #afc5cf; }
+html[data-theme="dark"] .portal-patient :is(.patient-snapshot-grid article,.patient-market-account,.appointment-booking-card .appointment-form) { background: #24414d; border-color: #466472; color: #e8f4f6; }
+html[data-theme="dark"] .portal-patient .patient-market-hero { background: #173b47; border-color: #3e6270; }
+html[data-theme="dark"] .portal-patient :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),select,textarea,.ghost) { color: #eaf5f7; background: #213e4c; border-color: #4d6b78; }
+html[data-theme="dark"] .portal-patient .patient-market-search input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) { background: transparent; }
+html[data-theme="dark"] .portal-patient .patient-command-tabs button.active { background: #285764; border-color: #47757d; }

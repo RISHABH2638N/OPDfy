@@ -29,9 +29,10 @@ test('dark rules are screen scoped and contain no application behaviour or layou
   });
   assert.ok(darkRules>500);
 });
-test('public login header exposes both existing preference components',()=>{
+test('public navigation retains language and theme preferences',()=>{
   const app=read('src/App.jsx');
-  assert.match(app,/<div className="header-actions">\s*<LanguageSwitcher \/>\s*<ThemeToggle \/>/);
+  assert.match(app,/<section className="public-menu-preferences"[^>]*>[\s\S]*?<LanguageSwitcher \/>\s*<ThemeToggle \/>/);
+  assert.match(app,/aria-controls="public-mobile-navigation"/);
   assert.match(read('src/main.jsx'),/import "\.\/dark-contrast.css"/);
   assert.match(read('src/appearance-controls.css'),/\.public-mode \.theme-toggle span \{ display: inline;/);
 });

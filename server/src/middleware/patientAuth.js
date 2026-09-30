@@ -3,7 +3,7 @@ import { publicErrorMessage } from "../utils/httpSafety.js";
 import { verifySessionToken } from "../utils/sessionTokens.js";
 import jwt from "jsonwebtoken";
 import GlobalPatient from "../models/GlobalPatient.js";
-import { resolvePatientMembership } from "../services/patientMembershipService.js";
+import { resolvePatientMembership, assertVerifiedMembership } from "../services/patientMembershipService.js";
 
 export async function protectPatient(req, res, next) {
   try {
@@ -27,6 +27,7 @@ export async function protectPatient(req, res, next) {
       globalPatient,
     });
     if (!patient) return res.status(500).json({ message: "Unable to resolve clinic patient profile." });
+    assertVerifiedMembership(patient);
 
     req.globalPatient = globalPatient;
     req.patient = patient;
@@ -49,6 +50,7 @@ export async function protectPatient(req, res, next) {
       return res.status(401).json({ message: "Invalid patient session." });
     }
     console.error("Patient authentication error:", safeDiagnostic(error));
-    return res.status(error.status || 500).json({ message: publicErrorMessage(error, "Unable to authenticate patient.") });
+    return res.status(error.status || 500).json({ message: publicErrorMessage(error, "Unable to authenticate patient."),
+      ...(error.code === "PATIENT_IDENTITY_REVIEW_REQUIRED" ? { code: error.code } : {}) });
   }
 }

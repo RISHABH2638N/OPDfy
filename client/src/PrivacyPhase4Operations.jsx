@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ShieldCheck, RefreshCw, AlertTriangle } from "lucide-react";
 import { platformApi } from "./api";
 import "./privacy-center.css";
@@ -21,8 +21,11 @@ const initialNotice = { audience: "board", status: "required", dueAt: "", delive
 
 export default function PrivacyPhase4Operations() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { language, t } = useLanguage();
-  const [tab, setTab] = useState("readiness");
+  const requestedTab = searchParams.get("tab");
+  const tab = ["readiness", "notifications", "backups"].includes(requestedTab) ? requestedTab : "readiness";
+  const setTab = (value) => navigate(`/platform/privacy/operations?tab=${value}`);
   const [snapshot, setSnapshot] = useState(null);
   const [checks, setChecks] = useState([]);
   const [incidents, setIncidents] = useState([]);

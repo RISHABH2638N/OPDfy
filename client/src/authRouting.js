@@ -26,3 +26,10 @@ export function shouldExpireSession(error, currentToken) {
   const sent = error.config?.headers?.Authorization;
   return Boolean(currentToken && sent === `Bearer ${currentToken}`);
 }
+
+// Navigation needs identity and profile-completion state, not a cached EHR.
+export function patientSessionSummary(patient) {
+  if (!patient || typeof patient !== "object" || Array.isArray(patient)) return null;
+  return Object.fromEntries(["id", "_id", "patientId", "name", "email", "profileCompleted", "accountScope"]
+    .filter(key => patient[key] !== undefined).map(key => [key, patient[key]]));
+}

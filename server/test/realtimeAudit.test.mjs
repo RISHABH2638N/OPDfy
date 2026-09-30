@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
+import { assertVerifiedMembership } from '../src/services/patientMembershipService.js';
 
 async function harness() {
   let resolveMember;
@@ -13,11 +14,12 @@ async function harness() {
   const dependencies = {
     '../models/Tenant.js': { default: {} },
     '../models/User.js': { default: {} },
+    '../models/Patient.js': { default: {} },
     '../models/GlobalPatient.js': { default: { findOne: () => ({ select: async () => account }) } },
     '../models/Token.js': { default: { find: () => ({ select() { return this; }, sort() { return this; }, lean: async () => [] }) } },
     '../utils/sessionTokens.js': { verifySessionToken: () => ({ id: account._id, role: 'patient-global', ver: 0, exp: Math.floor(Date.now()/1000)+600 }) },
     './tenantExecutionContext.js': { runWithTenant: (_, action) => Promise.resolve(action()) },
-    './patientMembershipService.js': { resolvePatientMembership: () => membership },
+    './patientMembershipService.js': { resolvePatientMembership: () => membership, assertVerifiedMembership },
   };
   const module = new vm.SourceTextModule(readFileSync(new URL('../src/services/realtimeGateway.js', import.meta.url), 'utf8'), { context });
   await module.link(name => {
@@ -47,7 +49,7 @@ for (const interruption of ['patient:logout', 'disconnect']) {
       await Promise.resolve();
       if (interruption === 'disconnect') h.socket.disconnect();
       else h.handlers.get(interruption)();
-      h.resolveMember({ _id: 'clinic-patient' });
+      h.resolveMember({ _id: 'clinic-patient', identityLink: { method: 'verified_global_registration' } });
       await pending;
       assert.equal(h.socket.data.session, undefined);
       assert.equal(h.socket.data.patientId, undefined);
@@ -61,7 +63,7 @@ test('successful patient authentication still joins only the resolved patient an
   const h = await harness();
   try {
     const pending = h.handlers.get('patient:authenticate')('test-token');
-    h.resolveMember({ _id: 'clinic-patient' });
+    h.resolveMember({ _id: 'clinic-patient', identityLink: { method: 'verified_global_registration' } });
     await pending;
     assert.ok(h.socket.rooms.has('patient:clinic-patient'));
     assert.ok(h.socket.rooms.has('tenant:clinic-a'));
@@ -69,5 +71,16 @@ test('successful patient authentication still joins only the resolved patient an
     assert.ok(h.events.some(event => event.name === 'patient:authenticated'));
     h.handlers.get('patient:logout')();
     assert.equal(h.socket.rooms.has('patient:clinic-patient'), false);
+  } finally { h.socket.disconnect(); }
+});
+
+test('unverified historical membership never joins private rooms on reauthentication', async () => {
+  const h = await harness();
+  try {
+    const pending = h.handlers.get('patient:authenticate')('test-token');
+    h.resolveMember({ _id: 'clinic-patient' });
+    await pending;
+    assert.equal([...h.socket.rooms].some(room => /^(patient:|tenant:|session:)/.test(room)), false);
+    assert.ok(h.events.some(event => event.name === 'patient:authentication-failed'));
   } finally { h.socket.disconnect(); }
 });

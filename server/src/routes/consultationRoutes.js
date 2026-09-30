@@ -24,6 +24,19 @@ import {
 
 const router = asyncRouter();
 
+router.get("/doctor/recent", protect, requireRole("doctor"), async (req, res) => {
+  try {
+    const consultations = await Consultation.find({ doctor: req.user.id, status: "completed" })
+      .select("patient token doctor department diagnosis prescription medicines testsRecommended advice followUpDate createdAt")
+      .populate("patient", "name patientId")
+      .populate("token", "tokenNumber department patientName patientId urgency")
+      .sort({ createdAt: -1 }).limit(30).lean();
+    return res.json({ consultations });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to load your recent prescriptions." });
+  }
+});
+
 /* =========================================================
    COMPLETE A CONSULTATION
 

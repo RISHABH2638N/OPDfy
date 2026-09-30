@@ -15,6 +15,12 @@ import "./clinical-consent.css";
 import "./responsive-professional.css";
 import "./platform-branding.css";
 import "./public-responsive-navigation.css";
+import "./landing.css";
+import "./admin-workspace.css";
+import "./patient-workspace-redesign.css";
+import "./reception-workspace-redesign.css";
+import "./doctor-workspace-redesign.css";
+import "./superadmin-workspace.css";
 try {
 for (const key of ["opd_token", "opd_user", "opd_patient_token", "opd_patient_user", "opd_platform_token", "opd_platform_user", "opd_clinic_onboarding_token"]) {
   localStorage.removeItem(key);

@@ -1,6 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { sessionKindForRequest, isSessionExpiryEligible, shouldExpireSession } from "../src/authRouting.js";
+import { sessionKindForRequest, isSessionExpiryEligible, shouldExpireSession, patientSessionSummary } from "../src/authRouting.js";
+
+test("patient session summary retains navigation fields without caching health data", () => {
+  assert.deepEqual(patientSessionSummary({ id: "global-id", _id: "clinic-id", patientId: "PT-1",
+    name: "Test", email: "test@example.invalid", profileCompleted: true, accountScope: "global",
+    dateOfBirth: "2000-01-01", allergies: ["sensitive"], medicalHistory: ["sensitive"],
+    currentMedications: ["sensitive"], pastSurgeries: ["sensitive"], phone: "sensitive",
+    emergencyContact: { phone: "sensitive" }, token: "secret" }), {
+    id: "global-id", _id: "clinic-id", patientId: "PT-1", name: "Test",
+    email: "test@example.invalid", profileCompleted: true, accountScope: "global",
+  });
+  assert.equal(patientSessionSummary(null), null);
+  assert.equal(patientSessionSummary([]), null);
+});
 
 test("patient routes never inherit staff identity", () => {
   for (const url of ["/patients/me", "/patients/me/appointments", "/feedback/patient/me",

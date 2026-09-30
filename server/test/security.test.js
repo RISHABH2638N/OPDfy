@@ -17,6 +17,7 @@ import Tenant from "../src/models/Tenant.js";
 import User from "../src/models/User.js";
 import Patient from "../src/models/Patient.js";
 import GlobalPatient from "../src/models/GlobalPatient.js";
+import PatientSession from "../src/models/PatientSession.js";
 import Appointment from "../src/models/Appointment.js";
 import Token from "../src/models/Token.js";
 import ActivityLog from "../src/models/ActivityLog.js";
@@ -37,7 +38,8 @@ let staffVersion = 0, patientVersion = 0, databaseUnavailable = false;
 let staffRole = "receptionist";
 let membershipSaves = 0;
 const patientProfile = { _id: globalId, email: "patient@example.invalid", name: "Test Patient", phone: "9876543210", allergies: ["test allergen"], medicalHistory: ["test history"], currentMedications: ["test medicine"], profileCompleted: true, status: "active" };
-const membership = { ...patientProfile, _id: patientId, tenantId, globalPatientId: globalId, patientId: "TEST-001", save: async () => { membershipSaves++; } };
+const membership = { ...patientProfile, _id: patientId, tenantId, globalPatientId: globalId,
+  identityLink: { method: "verified_global_registration" }, patientId: "TEST-001", save: async () => { membershipSaves++; } };
 const tenant = { _id: tenantId, name: "Test Clinic", slug: "test-clinic", status: "active", settings: { billing: { maxDiscountPercent: 90 }, branding: { shortName: "Test" } }, subscription: {} };
 const appointment = { _id: appointmentId, patient: patientId, tenantId, patientName: "Test Patient", doctorName: "Test Doctor", department: "General OPD", appointmentDate: new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date()), startTime: "10:00", endTime: "10:10", status: "booked", billing: { quotedAmount: 100, status: "pending" } };
 const query = (value) => ({ select() { return this; }, lean() { return this; }, sort() { return this; }, limit() { return this; }, populate() { return this; }, then(resolve, reject) { return Promise.resolve(value).then(resolve, reject); } });
@@ -51,6 +53,7 @@ before(async () => {
   mock.method(User, "findById", () => query({ _id: staffId, role: staffRole, tokenVersion: staffVersion }));
   mock.method(GlobalPatient, "findOne", () => query({ ...patientProfile, tokenVersion: patientVersion }));
   mock.method(GlobalPatient, "updateOne", async () => { patientVersion++; });
+  mock.method(PatientSession, "updateMany", async () => ({ acknowledged: true, modifiedCount: 0 }));
   mock.method(User, "updateOne", async () => { staffVersion++; });
   mock.method(Patient, "findOne", () => query(membership));
   mock.method(Token, "find", () => query([]));

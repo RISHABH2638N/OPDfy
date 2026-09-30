@@ -11,6 +11,9 @@ test('HTTP security boundaries work without a database connection', async t => {
   try {
     await t.test('liveness succeeds while database readiness fails closed', async () => {
       assert.equal((await fetch(base + '/health/live')).status, 200);
+      const externalMonitor = await fetch(base + '/api/health');
+      assert.equal(externalMonitor.status, 200);
+      assert.equal((await externalMonitor.json()).ok, true);
       assert.equal((await fetch(base + '/health/ready')).status, 503);
     });
     await t.test('unknown browser origin is rejected', async () => {

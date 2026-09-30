@@ -26,6 +26,8 @@ import {
 
 import {
   Activity,
+  Archive,
+  ArrowRight,
   AlertTriangle,
   Bell,
   BarChart3,
@@ -43,6 +45,8 @@ import {
   HeartPulse,
   LogIn,
   LogOut,
+  LayoutDashboard,
+  LockKeyhole,
   Menu,
   X,
   Mail,
@@ -50,6 +54,7 @@ import {
   Phone,
   Pill,
   RefreshCw,
+  Search,
   QrCode,
   Send,
   ShieldAlert,
@@ -57,6 +62,7 @@ import {
   SkipForward,
   Sparkles,
   Stethoscope,
+  Star,
   Ticket,
   User,
   UserCheck,
@@ -68,6 +74,7 @@ import {
   Palette,
   Building2,
   Save,
+  Settings2,
   Globe2,
   MapPin,
   Image as ImageIcon,
@@ -105,10 +112,12 @@ import {
 import { socket } from "./socket";
 import { QRCodeSVG } from "qrcode.react";
 import DoctorRating, { doctorOptionText } from "./DoctorRating";
+import DoctorAnalytics from "./DoctorAnalytics";
 import StaffPasswordRecovery from "./StaffPasswordRecovery";
 import { DashboardTranslator, LanguageSwitcher } from "./LanguageContext";
 import { ThemeToggle } from "./ThemeContext";
 import PublicInfoPage, { PublicFooter, PatientPolicyNotice, ClinicPolicyAcceptance } from "./PublicPages.jsx";
+import LandingPage from "./LandingPage.jsx";
 import { POLICY_VERSION } from "./publicContent.js";
 import { DoctorReferrals, ReceptionReferrals, PatientReferrals } from "./DepartmentReferrals";
 
@@ -766,7 +775,7 @@ function AppLayout({ children }) {
   useEffect(() => {
     setIsPortalNavOpen(false);
     setIsPublicMenuOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
   useEffect(() => {
     if (!isPortalNavOpen) return;
     const close = (event) => { if (event.key === "Escape") setIsPortalNavOpen(false); };
@@ -804,7 +813,7 @@ function AppLayout({ children }) {
       }
     };
     const closeAtDesktopWidth = () => {
-      if (window.innerWidth > 1120) setIsPublicMenuOpen(false);
+      if (window.innerWidth > 1120 && location.pathname !== "/") setIsPublicMenuOpen(false);
     };
 
     window.addEventListener("keydown", closeOnEscape);
@@ -815,7 +824,7 @@ function AppLayout({ children }) {
       window.removeEventListener("resize", closeAtDesktopWidth);
       document.body.classList.remove("public-nav-open");
     };
-  }, [isPublicMenuOpen]);
+  }, [isPublicMenuOpen, location.pathname]);
 
   useEffect(() => {
     const topbar = topbarRef.current;
@@ -862,6 +871,16 @@ function AppLayout({ children }) {
   };
 
   const isCurrentPage = (path) => location.pathname === path;
+  const isCurrentPortalNavItem = (to) => {
+    const path = location.pathname + location.search;
+    const defaultPlatformTab = location.pathname === "/platform/privacy/governance"
+      ? "/platform/privacy/governance?tab=retention"
+      : location.pathname === "/platform/privacy/operations"
+        ? "/platform/privacy/operations?tab=readiness" : path;
+    return ["/admin", "/patient", "/reception", "/doctor", "/platform"].includes(to)
+      ? location.pathname === to && !location.search
+      : to.includes("?") ? path === to || (!location.search && defaultPlatformTab === to) : isCurrentPage(to);
+  };
   const isPathWithin = (path) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);
 
@@ -889,6 +908,13 @@ function AppLayout({ children }) {
       nav: selectedClinicSlug
         ? [
             { to: "/patient", label: "My Dashboard", icon: <Activity size={17} /> },
+            { group: "My Care" },
+            { to: "/patient?section=my-appointments", label: "My Appointments", icon: <Calendar size={17} /> },
+            { to: "/patient?section=lab-referrals", label: "Lab Referrals", icon: <FileText size={17} /> },
+            { to: "/patient?section=feedback", label: "Rate Your Doctor", icon: <HeartPulse size={17} /> },
+            { to: "/patient?section=history", label: "OPD Visit History", icon: <Clock3 size={17} /> },
+            { to: "/patient?section=notifications", label: "Notifications", icon: <Bell size={17} /> },
+            { group: "Account & Services" },
             { to: "/patient/clinics", label: "Switch Clinic", icon: <HeartPulse size={17} /> },
             { to: "/patient/profile", label: "Health Profile", icon: <User size={17} /> },
             { to: "/patient/ehr", label: "Clinical EHR Summary", icon: <FileText size={17} /> },
@@ -912,10 +938,21 @@ function AppLayout({ children }) {
       role: "Super Admin",
       logout: handlePlatformLogout,
       nav: [
-        { to: "/platform", label: "Platform Overview", icon: <ShieldAlert size={17} /> },
+        { group: "PLATFORM" },
+        { to: "/platform", label: "Platform Overview", icon: <LayoutDashboard size={17} /> },
+        { group: "CLINICS & SUBSCRIPTIONS" },
+        { to: "/platform?view=pending", label: "Pending Clinics", icon: <Clock3 size={17} /> },
+        { to: "/platform?view=active", label: "Active Clinics", icon: <HeartPulse size={17} /> },
+        { to: "/platform?view=rejected", label: "Rejected Clinics", icon: <AlertTriangle size={17} /> },
+        { group: "PRIVACY & GOVERNANCE" },
         { to: "/platform/privacy", label: "Privacy Requests", icon: <FileText size={17} /> },
-        { to: "/platform/privacy/governance", label: "Privacy Governance", icon: <ShieldCheck size={17} /> },
-        { to: "/platform/privacy/operations", label: "Operational Readiness", icon: <Activity size={17} /> },
+        { to: "/platform/privacy/governance?tab=retention", label: "Retention Registry", icon: <Archive size={17} /> },
+        { to: "/platform/privacy/governance?tab=incidents", label: "Incident Register", icon: <ShieldAlert size={17} /> },
+        { to: "/platform/privacy/governance?tab=corrections", label: "Global Corrections", icon: <UserCheck size={17} /> },
+        { group: "OPERATIONS & IDENTITY" },
+        { to: "/platform/privacy/operations?tab=readiness", label: "Operational Readiness", icon: <Activity size={17} /> },
+        { to: "/platform/privacy/operations?tab=notifications", label: "Incident Notifications", icon: <Bell size={17} /> },
+        { to: "/platform/privacy/operations?tab=backups", label: "Backup & Recovery", icon: <Download size={17} /> },
         { to: "/platform/branding", label: "Brand & Logo", icon: <ImageIcon size={17} /> },
       ],
     };
@@ -926,36 +963,68 @@ function AppLayout({ children }) {
     portalConfig = {
       type: isAdmin ? "admin" : isReception ? "reception" : "doctor",
       eyebrow: isAdmin
-        ? "Hospital Operations"
+        ? "Clinic Operations"
         : isReception
           ? "Front Desk Workspace"
           : "Clinical Workspace",
       title: isAdmin
-        ? "Admin Control Center"
+        ? "Clinic Administration"
         : isReception
           ? currentStaff?.name || "Reception Desk"
           : `Dr. ${currentStaff?.name || "Practitioner"}`,
       role: isAdmin
-        ? "Hospital Administrator"
+        ? "Clinic Administrator"
         : isReception
           ? "Receptionist"
           : currentStaff?.department || "Doctor",
       logout: handleStaffLogout,
       nav: isAdmin
         ? [
-            { to: "/admin", label: "Admin Dashboard", icon: <BarChart3 size={17} /> },
-            { to: "/admin/displays", label: "TV Displays", icon: <Monitor size={17} /> },
-            { to: "/admin/settings", label: "Clinic Settings", icon: <Palette size={17} /> },
+            { group: "WORKSPACE" },
+            { to: "/admin", label: "Overview", icon: <LayoutDashboard size={17} /> },
+            { to: "/admin?section=analytics", label: "Analytics", icon: <BarChart3 size={17} /> },
+            { to: "/admin?section=revenue", label: "Revenue", icon: <IndianRupee size={17} /> },
+            { to: "/admin?section=operations", label: "Staff & Schedules", icon: <Users size={17} /> },
+            { group: "CLINIC SETUP" },
+            { to: "/admin/displays", label: "Waiting Displays", icon: <Monitor size={17} /> },
+            { to: "/admin/settings", label: "Clinic Settings", icon: <Settings2 size={17} /> },
+            { group: "GOVERNANCE" },
             { to: "/admin/consents", label: "Treatment Consent", icon: <FileCheck2 size={17} /> },
+            { to: "/admin/privacy", label: "Privacy Reviews", icon: <ShieldCheck size={17} /> },
+            { to: "/admin/privacy/identity", label: "Identity Reviews", icon: <UserCheck size={17} /> },
+            { to: "/admin/privacy/reviews", label: "Privacy Controls", icon: <LockKeyhole size={17} /> },
           ]
         : isReception
           ? [
-              { to: "/reception", label: "Reception Desk", icon: <UserCheck size={17} /> },
+              { group: "FRONT DESK" },
+              { to: "/reception", label: "Overview", icon: <LayoutDashboard size={17} /> },
+              { to: "/reception?section=patients", label: "Patient Search", icon: <Users size={17} /> },
+              { to: "/reception?section=register", label: "Register Patient", icon: <UserRound size={17} /> },
+              { to: "/reception?section=tokens", label: "Token Desk", icon: <Ticket size={17} /> },
+              { group: "VISITS & QUEUE" },
+              { to: "/reception?section=appointments", label: "Appointments", icon: <Calendar size={17} /> },
+              { to: "/reception?section=payments", label: "Payments & Check-in", icon: <IndianRupee size={17} /> },
+              { to: "/reception?section=queue", label: "Live Queue", icon: <Activity size={17} /> },
+              { to: "/reception?section=referrals", label: "Department Referrals", icon: <ArrowRight size={17} /> },
+              { group: "HANDOVER & SUPPORT" },
+              { to: "/reception?section=prescriptions", label: "Prescription Print Desk", icon: <Printer size={17} /> },
               { to: "/reception/scan", label: "QR Scanner", icon: <QrCode size={17} /> },
               { to: "/reception/consents", label: "Treatment Consent", icon: <FileCheck2 size={17} /> },
             ]
           : [
-              { to: "/doctor", label: "Doctor Workstation", icon: <Stethoscope size={17} /> },
+              { group: "MY WORKSPACE" },
+              { to: "/doctor", label: "Overview", icon: <LayoutDashboard size={17} /> },
+              { to: "/doctor?section=queue", label: "My Queue", icon: <Users size={17} /> },
+              { to: "/doctor?section=appointments", label: "Appointments", icon: <Calendar size={17} /> },
+              { to: "/doctor?section=consultation", label: "Consultation", icon: <Stethoscope size={17} /> },
+              { group: "CLINICAL RECORDS" },
+              { to: "/doctor?section=patient", label: "Active Patient EHR", icon: <HeartPulse size={17} /> },
+              { to: "/doctor?section=history", label: "Visit History", icon: <Clock3 size={17} /> },
+              { to: "/doctor?section=prescriptions", label: "Prescriptions", icon: <FileText size={17} /> },
+              { to: "/doctor?section=referrals", label: "Department Referrals", icon: <ArrowRight size={17} /> },
+              { group: "INSIGHTS & SUPPORT" },
+              { to: "/doctor?section=analytics", label: "My Analytics", icon: <BarChart3 size={17} /> },
+              { to: "/doctor?section=feedback", label: "Patient Feedback", icon: <Star size={17} /> },
               { to: "/doctor/consents", label: "Treatment Consent", icon: <FileCheck2 size={17} /> },
             ],
     };
@@ -1027,19 +1096,20 @@ function AppLayout({ children }) {
                       <ShieldCheck size={20} />}
               </span>
               <div>
-                <b>{portalConfig.title}</b>
+                <b>{portalConfig.type === "admin" ? (clinicBranding?.settings?.displayName || currentStaff?.name || portalConfig.title) : portalConfig.title}</b>
                 <span>{t(portalConfig.role)}</span>
               </div>
             </div>
 
             <nav className="portal-sidebar-nav" aria-label={t(`${portalConfig.role} navigation`)}>
-              <span className="portal-nav-label"><Trans text={"Workspace"} /></span>
+              {portalConfig.type !== "admin" && portalConfig.nav[0]?.group === undefined && <span className="portal-nav-label"><Trans text={"Workspace"} /></span>}
               {portalConfig.nav.map((item) => (
-                <Link
+                item.group ? <span className="portal-nav-label admin-nav-group" key={item.group}>{t(item.group)}</span> : <Link
                   key={item.to}
                   to={item.to}
-                  className={isCurrentPage(item.to) ? "active" : ""}
-                  aria-current={isCurrentPage(item.to) ? "page" : undefined}
+                  onClick={() => setIsPortalNavOpen(false)}
+                  className={isCurrentPortalNavItem(item.to) ? "active" : ""}
+                  aria-current={isCurrentPortalNavItem(item.to) ? "page" : undefined}
                 >
                   {item.icon}
                   <span>{t(item.label)}</span>
@@ -1088,8 +1158,9 @@ function AppLayout({ children }) {
   }
 
   return (
-    <div className="app-shell public-mode">
+    <div className={`app-shell public-mode ${location.pathname === "/" ? "landing-mode" : ""}`}>
       <DashboardTranslator />
+      <a href="#main-content" className="skip-link"><Trans text={"Skip to content"} /></a>
       <header ref={topbarRef} className="premium-header">
         <div className="header-inner">
           <Link to="/" className={`premium-brand ${platformBranding.logoUrl ? `uses-platform-logo platform-logo-${platformLogoShape}` : ""}`} aria-label={t("OPDfy home")}>
@@ -1103,19 +1174,26 @@ function AppLayout({ children }) {
           </Link>
 
           <nav className="premium-nav public-patient-nav" aria-label={t("Primary navigation")}>
-            <Link className="patient-portal-link" to={getPatientToken() ? "/patient/clinics" : "/patient-login"} aria-current={isCurrentPage("/patient-login") || isCurrentPage("/patient/clinics") ? "page" : undefined}>
-              <User size={15} /> <Trans text={"Patient Portal"} /></Link>
+            {location.pathname === "/" ? <>
+              <a href="#workflow">{t("How it works")}</a>
+              <a href="#platform">{t("Platform")}</a>
+              <a href="#features">{t("Features")}</a>
+              <a href="#questions">{t("FAQs")}</a>
+            </> : <Link className="patient-portal-link" to={getPatientToken() ? "/patient/clinics" : "/patient-login"} aria-current={isCurrentPage("/patient-login") || isCurrentPage("/patient/clinics") ? "page" : undefined}>
+              <User size={15} /> <Trans text={"Patient Portal"} /></Link>}
           </nav>
 
           <div className="header-actions public-desktop-actions">
-            <LanguageSwitcher />
-            <ThemeToggle />
-            <Link to="/clinic/register" className="clinic-register-link">
-              <Plus size={15} /> <Trans text={"Register Clinic"} /></Link>
-            <Link to="/platform/login" className="platform-admin-link">
-              <ShieldAlert size={15} /> <Trans text={"Platform Admin"} /></Link>
-            <Link to="/login" className="staff-login-link">
-              <LogIn size={15} /> <Trans text={"Staff Sign In"} /></Link>
+            {location.pathname === "/" ? <>
+              <Link to={getPatientToken() ? "/patient/clinics" : "/patient-login"} className="patient-portal-link"><User size={16} /><Trans text={"Patient Portal"} /></Link>
+              <Link to="/clinic/register" className="clinic-register-link"><Trans text={"Register Clinic"} /><ArrowRight size={16}/></Link>
+            </> : <>
+              <LanguageSwitcher />
+              <ThemeToggle />
+              <Link to="/clinic/register" className="clinic-register-link"><Plus size={15} /> <Trans text={"Register Clinic"} /></Link>
+              <Link to="/platform/login" className="platform-admin-link"><ShieldAlert size={15} /> <Trans text={"Platform Admin"} /></Link>
+              <Link to="/login" className="staff-login-link"><LogIn size={15} /> <Trans text={"Staff Sign In"} /></Link>
+            </>}
           </div>
 
           <button
@@ -1160,6 +1238,12 @@ function AppLayout({ children }) {
 
             <nav className="public-menu-links" aria-label={t("Account and clinic access")}>
               <span className="public-menu-section-label"><Trans text="Account and clinic access" /></span>
+              {location.pathname === "/" && <>
+                <a className="public-menu-link" href="#workflow" onClick={() => setIsPublicMenuOpen(false)}>{t("How it works")}</a>
+                <a className="public-menu-link" href="#platform" onClick={() => setIsPublicMenuOpen(false)}>{t("Platform")}</a>
+                <a className="public-menu-link" href="#features" onClick={() => setIsPublicMenuOpen(false)}>{t("Features")}</a>
+                <Link to={getPatientToken() ? "/patient/clinics" : "/patient-login"} className="public-menu-link" onClick={() => setIsPublicMenuOpen(false)}><User size={18}/><span><strong>{t("Patient Portal")}</strong></span><ChevronRight size={17}/></Link>
+              </>}
               <Link to="/clinic/register" className="public-menu-link register" onClick={() => setIsPublicMenuOpen(false)}>
                 <Plus size={18} /><span><strong><Trans text="Register Clinic" /></strong><small><Trans text="Create a new clinic workspace" /></small></span><ChevronRight size={17} />
               </Link>
@@ -1180,7 +1264,7 @@ function AppLayout({ children }) {
       )}
 
       <div id="main-content" tabIndex={-1} className="app-content">{children}</div>
-      <PublicFooter />
+      {location.pathname !== "/" && <PublicFooter />}
     </div>
   );
 }
@@ -2260,6 +2344,11 @@ function PatientSelfCheckInPage() {
 function PatientDashboard() {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
+  const requestedSection = new URLSearchParams(location.search).get("section");
+  const patientSection = ["my-appointments", "lab-referrals", "feedback", "history", "notifications"].includes(requestedSection)
+    ? requestedSection : "overview";
+  useEffect(() => { window.scrollTo(0, 0); }, [patientSection]);
   const queueTokenList = useLiveQueue("patient");
 
   const [aiChatMessages, setAiChatMessages] = useState([]);
@@ -2391,6 +2480,11 @@ function PatientDashboard() {
     }
   };
 
+  useEffect(() => {
+    if (patientSection !== "notifications" || !activePatient?._id) return;
+    fetchPatientNotifications().then(markAllNotificationsRead);
+  }, [patientSection, activePatient?._id]);
+
   const prepareFollowUpBooking = async (notification) => {
     const meta = notification?.metadata || {};
     if (!meta.consultationId || !meta.doctorId || !meta.department) return;
@@ -2470,7 +2564,6 @@ function PatientDashboard() {
       setPatientAppointments(data.appointments || []);
     } catch (error) {
       console.error("Unable to load patient appointments:", error);
-      setPatientAppointments([]);
     }
   };
 
@@ -2590,6 +2683,10 @@ function PatientDashboard() {
         data.message || "Appointment cancelled successfully."
       );
 
+      setPatientAppointments((appointments) => appointments.map((item) =>
+        item._id === appointment._id ? { ...item, ...data.appointment } : item
+      ));
+
       if (appointmentQr?.appointmentId === appointment._id) {
         setAppointmentQr(null);
       }
@@ -2621,7 +2718,7 @@ function PatientDashboard() {
     setAppointmentForm({ department: appointment.department, doctorId: String(appointment.doctor || ""), appointmentDate: "", startTime: "", reason: appointment.reason || "" });
     await fetchAppointmentDoctors(appointment.department);
     await loadAppointmentDates(String(appointment.doctor || ""));
-    document.getElementById("patient-appointments")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    openPatientWorkspace("appointments", "patient-appointments");
   };
 
   const prepareRepeatBooking = async (appointment) => {
@@ -2629,7 +2726,7 @@ function PatientDashboard() {
     setRescheduleTarget(null); setAppointmentConsultationKind("normal"); setAppointmentMessage("Previous visit details loaded. Choose a new available date and time."); setAppointmentError("");
     setAppointmentForm({ department: appointment.department, doctorId: String(appointment.doctor || ""), appointmentDate: "", startTime: "", reason: appointment.reason || "Follow-up visit", followUpConsultationId: "" });
     await fetchAppointmentDoctors(appointment.department); await loadAppointmentDates(String(appointment.doctor || ""));
-    document.getElementById("patient-appointments")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    openPatientWorkspace("appointments", "patient-appointments");
   };
 
   const toggleAppointmentQr = async (appointment) => {
@@ -3272,18 +3369,19 @@ function PatientDashboard() {
 
   const openPatientWorkspace = (tab, sectionId) => {
     setPatientWorkspaceTab(tab);
-    window.requestAnimationFrame(() => {
+    if (patientSection !== "overview") navigate("/patient");
+    window.setTimeout(() => {
       document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    }, 60);
   };
 
   return (
-    <main className={`page premium-page patient-workspace patient-workspace-${patientWorkspaceTab}`}>
+    <main className={`page premium-page patient-workspace patient-workspace-${patientSection === "overview" ? patientWorkspaceTab : "section"}`}>
       {/* PATIENT HEADER */}
       <div className="head">
         <div>
           <p className="eyebrow"><Trans text={"Patient Medical Portal"} /></p>
-          <h1><Trans text={"Welcome, "} />{activePatient.name}</h1>
+          <h1>{patientSection === "overview" ? <><Trans text={"Welcome, "} />{activePatient.name}</> : t({ "my-appointments": "My Appointments", "lab-referrals": "Lab Referrals", feedback: "Rate Your Doctor", history: "OPD Visit History", notifications: "Notifications" }[patientSection])}</h1>
           <p className="page-subtitle">
             <strong>{patientClinicContext?.settings?.displayName || patientClinicContext?.name || getActiveClinicSlug()}</strong> <Trans text={"· Patient ID "} /><strong>{activePatient.patientId}</strong>
           </p>
@@ -3333,8 +3431,9 @@ function PatientDashboard() {
         </div>
       </div>
 
-      <PatientReferrals />
+      {patientSection === "overview" && <PatientReferrals />}
 
+      {patientSection === "overview" && <>
       <section className="patient-command-tabs" aria-label={t("Patient workspace sections")}>
         <button type="button" className={patientWorkspaceTab === "overview" ? "active" : ""} onClick={() => openPatientWorkspace("overview", "patient-overview")}>
           <Activity size={20} />
@@ -3344,13 +3443,13 @@ function PatientDashboard() {
           <Calendar size={20} />
           <span><b><Trans text={"Appointments"} /></b><small><Trans text={"Booking & check-in"} /></small></span>
         </button>
-        <button type="button" className={patientWorkspaceTab === "records" ? "active" : ""} onClick={() => openPatientWorkspace("records", "patient-visit-history")}>
+        <button type="button" className={patientWorkspaceTab === "records" ? "active" : ""} onClick={() => navigate("/patient?section=history")}>
           <FileText size={20} />
           <span><b><Trans text={"Health Records"} /></b><small><Trans text={"OPD history & prescriptions"} /></small></span>
         </button>
         <button type="button" className={patientWorkspaceTab === "care" ? "active" : ""} onClick={() => openPatientWorkspace("care", "patient-care-assistant")}>
           <Sparkles size={20} />
-          <span><b><Trans text={"Care Assistant"} /></b><small><Trans text={"AI guide, labs & feedback"} /></small></span>
+          <span><b><Trans text={"Care Assistant"} /></b><small><Trans text={"AI guide & queue help"} /></small></span>
         </button>
       </section>
 
@@ -3412,6 +3511,7 @@ function PatientDashboard() {
         </div>
       </section>
 
+      </>}
       {liveNotificationToast && (
         <div className="patient-notification-toast" role="status">
           <Bell size={18} />
@@ -3422,8 +3522,8 @@ function PatientDashboard() {
         </div>
       )}
 
-      {notificationPanelOpen && (
-        <section className="card patient-notification-center">
+      {(notificationPanelOpen || patientSection === "notifications") && (
+        <section className={`card patient-notification-center ${patientSection === "notifications" ? "patient-notification-page" : ""}`}>
           <div className="notification-center-head">
             <div>
               <p className="eyebrow"><Trans text={"Live Patient Alerts"} /></p>
@@ -3474,6 +3574,7 @@ function PatientDashboard() {
         </section>
       )}
 
+      {patientSection === "overview" && <>
       <div className={`patient-dashboard-main-grid patient-dashboard-tab-${patientWorkspaceTab}`}>
         <div className="patient-dashboard-primary-column">
       {/* ACTIVE TOKEN HERO OR TOKEN BOOKING CARD */}
@@ -3825,12 +3926,24 @@ function PatientDashboard() {
 
         </aside>
       </div>
+      </>}
 
-      <details id="patient-my-appointments" className="card patient-dashboard-section patient-feedback-dropdown patient-my-appointments">
+      {patientSection !== "overview" && <div className="patient-section-toolbar">
+        <div><p className="eyebrow"><Trans text={"My Care"} /></p><p><Trans text={"Your clinic records and actions in one place."} /></p></div>
+        <button type="button" className="ghost" onClick={() => patientSection === "my-appointments" ? openPatientWorkspace("appointments", "patient-appointments") : navigate("/patient")}>
+          {patientSection === "my-appointments" ? <><Calendar size={16}/><Trans text={"Book Appointment"}/></> : <><Activity size={16}/><Trans text={"My Dashboard"}/></>}
+        </button>
+      </div>}
+
+      {patientSection === "my-appointments" && <details open id="patient-my-appointments" className="card patient-dashboard-section patient-feedback-dropdown patient-my-appointments patient-section-card">
         <summary className="patient-feedback-dropdown-header"><div className="card-title"><Calendar/><h2><Trans text={"My Appointments"} /><small className="patient-section-count">{patientAppointments.length}</small></h2></div><span className="feedback-dropdown-arrow" aria-hidden="true">⌄</span></summary>
         <div className="patient-feedback-dropdown-content">
+        <div className="patient-appointment-feedback" aria-live="polite">
+          {appointmentError && <div className="login-error" role="alert">{t(appointmentError)}</div>}
+          {appointmentMessage && <p className="success">{t(appointmentMessage)}</p>}
+        </div>
         <div className="appointment-list">
-          {patientAppointments.slice(0,5).map(a=>(
+          {patientAppointments.map(a=>(
             <div className="patient-appointment-wrap" key={a._id}>
               <div className="appointment-row">
                 <div>
@@ -3898,10 +4011,10 @@ function PatientDashboard() {
           {!patientAppointments.length && <p className="muted"><Trans text={"No scheduled appointments yet."} /></p>}
         </div>
         </div>
-      </details>
+      </details>}
       {/* PATIENT FEEDBACK */}
             {/* LAB REFERRALS */}
-      <details id="patient-lab-referrals" className="card patient-dashboard-section lab-referrals-section patient-feedback-dropdown">
+      {patientSection === "lab-referrals" && <details open id="patient-lab-referrals" className="card patient-dashboard-section lab-referrals-section patient-feedback-dropdown patient-section-card">
         <summary className="patient-feedback-dropdown-header">
           <div className="card-title">
             <FileText />
@@ -3992,9 +4105,9 @@ function PatientDashboard() {
           <p className="muted"><Trans text={"No active lab referrals are available yet."} /></p>
         )}
         </div>
-      </details>
+      </details>}
 
-<details id="patient-feedback" className="card patient-feedback-section patient-feedback-dropdown">
+      {patientSection === "feedback" && <details open id="patient-feedback" className="card patient-feedback-section patient-feedback-dropdown patient-section-card">
         <summary className="patient-feedback-dropdown-header">
           <div className="card-title">
             <HeartPulse />
@@ -4107,10 +4220,10 @@ function PatientDashboard() {
             )}
           </div>
         </div>
-      </details>
+      </details>}
 
       {/* OPD VISIT HISTORY */}
-      <details className="card patient-dashboard-section patient-feedback-dropdown" id="patient-visit-history">
+      {patientSection === "history" && <details open className="card patient-dashboard-section patient-feedback-dropdown patient-section-card" id="patient-visit-history">
         <summary className="patient-feedback-dropdown-header">
           <div className="card-title">
             <Clock3 />
@@ -4148,7 +4261,7 @@ function PatientDashboard() {
           </div>
         )}
         </div>
-      </details>
+      </details>}
 
 
       {selectedHistoryToken && (
@@ -4755,12 +4868,17 @@ function PlatformLoginPage() {
 function PlatformDashboardPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
+  const requestedView = new URLSearchParams(location.search).get("view");
+  const platformView = ["pending", "active", "rejected"].includes(requestedView) ? requestedView : "overview";
+  const activeTab = platformView === "overview" ? "pending" : platformView;
+  const setActiveTab = (value) => navigate(`/platform?view=${value}`);
   const current = getStoredPlatformUser();
   const [overview, setOverview] = useState(null);
   const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-  const [activeTab, setActiveTab] = useState("pending");
+  const [clinicSearch, setClinicSearch] = useState("");
   const [rejecting, setRejecting] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
   const [subscriptionClinic, setSubscriptionClinic] = useState(null);
@@ -4851,11 +4969,15 @@ function PlatformDashboardPage() {
     } finally { setVerificationSaving(false); }
   };
 
-  const signOut = () => { logoutPlatform(); navigate("/platform/login", { replace: true }); };
   const pending = clinics.filter((c) => c.status === "pending");
   const active = clinics.filter((c) => ["active", "suspended", "expired"].includes(c.status));
   const rejected = clinics.filter((c) => c.status === "rejected");
-  const visible = activeTab === "pending" ? pending : activeTab === "active" ? active : rejected;
+  const visible = (activeTab === "pending" ? pending : activeTab === "active" ? active : rejected)
+    .filter((clinic) => [clinic.name, clinic.slug, clinic.onboarding?.ownerName, clinic.onboarding?.adminEmail, clinic.contactEmail]
+      .some((field) => String(field || "").toLowerCase().includes(clinicSearch.trim().toLowerCase())));
+  const expiring = active.filter((clinic) => clinic.subscription?.endsAt &&
+    new Date(clinic.subscription.endsAt).getTime() > Date.now() &&
+    new Date(clinic.subscription.endsAt).getTime() < Date.now() + 30 * 86400000);
 
   const cards = [
     { label: "Total Clinics", value: overview?.clinics?.total, note: t("{active} active · {expired} expired", { active: overview?.clinics?.active ?? 0, expired: overview?.clinics?.expired ?? 0 }), icon: <HeartPulse size={20} /> },
@@ -4869,13 +4991,12 @@ function PlatformDashboardPage() {
       <section className="platform-hero platform-hero-v2">
         <div>
           <span className="platform-kicker"><ShieldAlert size={14} /> <Trans text={"SaaS Platform Control Plane"} /></span>
-          <h1><Trans text={"Clinic Operations"} /></h1>
+          <h1>{t({ overview: "Platform command center", pending: "Pending clinic reviews", active: "Active clinics & subscriptions", rejected: "Rejected clinic requests" }[platformView])}</h1>
           <p><Trans text={"Verify new organizations, manage tenant lifecycle and monitor platform health without opening clinical records."} /></p>
         </div>
         <div className="platform-owner-actions">
-          <div className="platform-notification"><Bell size={17} />{pending.length > 0 && <b>{pending.length}</b>}</div>
+          <button type="button" className="platform-notification" onClick={() => setActiveTab("pending")} aria-label={t("Pending Clinics")}><Bell size={17} />{pending.length > 0 && <b>{pending.length}</b>}</button>
           <span className="platform-owner-chip"><ShieldCheck size={15} /> {current?.name || "Platform Owner"}</span>
-          <button type="button" className="platform-signout" onClick={signOut}><LogOut size={15} /> <Trans text={"Sign Out"} /></button>
         </div>
       </section>
 
@@ -4889,11 +5010,26 @@ function PlatformDashboardPage() {
         ))}
       </section>
 
+      {platformView === "overview" && <section className="platform-overview-grid" aria-label={t("Platform priorities")}>
+        <article className="platform-priority-card">
+          <div className="platform-priority-heading"><span><Clock3 size={17}/><Trans text={"Awaiting review"}/></span><button type="button" onClick={() => setActiveTab("pending")}>{t("View all")} <ArrowRight size={15}/></button></div>
+          {pending.slice(0, 3).map((clinic) => <div className="platform-priority-row" key={clinic._id}><span className="platform-priority-avatar">{clinic.name?.[0]?.toUpperCase() || "C"}</span><div><b>{clinic.name}</b><small>{clinic.onboarding?.ownerName || clinic.slug}</small></div><span className="platform-status pending">{t("Pending")}</span></div>)}
+          {!pending.length && <p className="platform-priority-empty"><CheckCircle size={17}/>{t("No clinics awaiting review.")}</p>}
+        </article>
+        <article className="platform-priority-card">
+          <div className="platform-priority-heading"><span><Calendar size={17}/><Trans text={"Subscription watch"}/></span><button type="button" onClick={() => setActiveTab("active")}>{t("View all")} <ArrowRight size={15}/></button></div>
+          {expiring.slice(0, 3).map((clinic) => <div className="platform-priority-row" key={clinic._id}><span className="platform-priority-avatar"><HeartPulse size={17}/></span><div><b>{clinic.name}</b><small>{clinic.slug}</small></div><time>{new Date(clinic.subscription.endsAt).toLocaleDateString()}</time></div>)}
+          {!expiring.length && <p className="platform-priority-empty"><CheckCircle size={17}/>{t("No subscriptions ending in the next 30 days.")}</p>}
+        </article>
+      </section>}
+
       <section className="platform-panel platform-registry-v2">
         <div className="platform-panel-head">
-          <div><span className="platform-section-label"><Trans text={"Tenant Registry"} /></span><h2><Trans text={"Clinic Approval Center"} /></h2><p><Trans text={"Review registration requests and control active workspaces."} /></p></div>
+          <div><span className="platform-section-label"><Trans text={"Tenant Registry"} /></span><h2>{t(platformView === "active" ? "Active clinics & subscriptions" : platformView === "rejected" ? "Rejected clinic requests" : "Clinic Approval Center")}</h2><p><Trans text={"Review registration requests and control active workspaces."} /></p></div>
           <button type="button" className="platform-refresh" onClick={load}><RefreshCw size={15} /> <Trans text={"Refresh"} /></button>
         </div>
+
+        <div className="platform-registry-tools"><label><Search size={17}/><input type="search" value={clinicSearch} onChange={(event) => setClinicSearch(event.target.value)} placeholder={t("Search clinics, owners or email")} aria-label={t("Search clinics, owners or email")}/></label><span>{visible.length} {t("clinics shown")}</span></div>
 
         <div className="platform-tabs">
           <button className={activeTab === "pending" ? "active" : ""} onClick={() => setActiveTab("pending")}><Trans text={"Pending Clinics "} /><span>{pending.length}</span></button>
@@ -4956,7 +5092,7 @@ function PlatformDashboardPage() {
                 </div>
               </article>
             ))}
-            {!visible.length && <div className="platform-empty platform-empty-v2"><CheckCircle size={26} /><strong><Trans text={"All clear"} /></strong><span><Trans text={"No clinics in this category."} /></span></div>}
+            {!visible.length && <div className="platform-empty platform-empty-v2"><CheckCircle size={26} /><strong><Trans text={clinicSearch ? "No matching clinics" : "All clear"} /></strong><span><Trans text={clinicSearch ? "Try another name, owner or email." : "No clinics in this category."} /></span></div>}
           </div>
         )}
       </section>
@@ -4993,7 +5129,7 @@ function PlatformDashboardPage() {
 
       {verificationClinic && (
         <div className="platform-modal-backdrop" onMouseDown={() => setVerificationClinic(null)}>
-          <div className="platform-review-modal legal-review-modal" onMouseDown={(e) => e.stopPropagation()}>
+          <div className="platform-review-modal legal-review-modal" role="dialog" aria-modal="true" aria-label={t("Review clinic registration")} onMouseDown={(e) => e.stopPropagation()}>
             <div className="platform-modal-icon subscription"><ShieldCheck size={22} /></div>
             <h3><Trans text={"Review clinic registration"} /></h3>
             <p><strong>{verificationClinic.legalVerification?.legalName || verificationClinic.name}</strong> · {verificationClinic.legalVerification?.registrationAuthority || t("Authority not supplied")}</p>
@@ -5387,6 +5523,11 @@ function DoctorDashboardPage() {
   const { t } = useLanguage();
   const liveQueue = useLiveQueue("staff");
   const navigate = useNavigate();
+  const location = useLocation();
+  const requestedDoctorSection = new URLSearchParams(location.search).get("section");
+  const doctorSection = ["queue", "appointments", "consultation", "patient", "history", "prescriptions", "referrals", "analytics", "feedback"].includes(requestedDoctorSection) ? requestedDoctorSection : "overview";
+  const setDoctorSection = (section) => navigate(section === "overview" ? "/doctor" : `/doctor?section=${section}`);
+  useEffect(() => { window.scrollTo(0, 0); }, [doctorSection]);
   const currentDoctor = getLoggedInStaff();
 
   const [activePatientEhr, setActivePatientEhr] = useState(null);
@@ -5422,6 +5563,8 @@ function DoctorDashboardPage() {
   const [doctorClinicContext, setDoctorClinicContext] = useState(null);
   const [doctorPrescriptionProfile, setDoctorPrescriptionProfileState] = useState(currentDoctor?.prescriptionProfile || {});
   const [lastCompletedPrescription, setLastCompletedPrescription] = useState(null);
+  const [recentDoctorPrescriptions, setRecentDoctorPrescriptions] = useState([]);
+  const [recentPrescriptionError, setRecentPrescriptionError] = useState("");
 
   const doctorDepartment = currentDoctor?.department || "General OPD";
   const isAssignedToCurrentDoctor = (item) =>
@@ -5460,10 +5603,15 @@ function DoctorDashboardPage() {
       setDoctorFeedbackLoading(false);
     }
   };
+  const fetchDoctorPrescriptions = async () => {
+    try { const { data } = await api.get("/consultations/doctor/recent"); setRecentDoctorPrescriptions(data.consultations || []); setRecentPrescriptionError(""); }
+    catch (error) { setRecentPrescriptionError(error.response?.data?.message || "Unable to load your recent prescriptions."); }
+  };
 
   useEffect(() => {
     fetchTodayDoctorAppointments();
     fetchDoctorFeedback();
+    fetchDoctorPrescriptions();
   }, []);
 
   useEffect(() => {
@@ -5474,11 +5622,13 @@ function DoctorDashboardPage() {
       if (hasOperationalDomain(update, "feedback")) {
         fetchDoctorFeedback();
       }
+      if (hasOperationalDomain(update, "prescriptions")) fetchDoctorPrescriptions();
     };
 
     const handleReconnect = () => {
       fetchTodayDoctorAppointments();
       fetchDoctorFeedback();
+      fetchDoctorPrescriptions();
     };
 
     socket.on("operations:updated", handleOperationsUpdate);
@@ -5707,6 +5857,8 @@ function DoctorDashboardPage() {
         });
       }
       await fetchTodayDoctorAppointments();
+      await fetchDoctorPrescriptions();
+      setDoctorSection("prescriptions");
 
       setConsultationFormData({
       symptoms: "",
@@ -5751,14 +5903,15 @@ function DoctorDashboardPage() {
   const nextThreePatients = waitingPatientsList.slice(0, 3);
   const bookedAppointments = todayDoctorAppointments.filter((item) => item.status === "booked").length;
   const checkedInAppointments = todayDoctorAppointments.filter((item) => item.status === "checked_in").length;
+  const doctorPageTitles = { overview: "Doctor Overview", queue: "My Queue", appointments: "Appointments", consultation: "Consultation", patient: "Active Patient EHR", history: "Visit History", prescriptions: "Prescriptions", referrals: "Department Referrals", analytics: "My Analytics", feedback: "Patient Feedback" };
 
   return (
-    <main className="page premium-page">
+    <main className="page premium-page doctor-page">
       <section className="doctor-command-hero">
         <div className="doctor-command-intro">
-          <span className="doctor-command-kicker"><Stethoscope size={15} /> <Trans text={"Clinical Command Center"} /></span>
-          <h1><Trans text={"Good day, Dr. "} />{currentDoctor?.name || t("Practitioner")}</h1>
-          <p><Trans text={"Run today’s queue, review patient context, document consultations and issue prescriptions from one focused workspace."} /></p>
+          <span className="doctor-command-kicker"><Stethoscope size={15} /> <Trans text={"DOCTOR WORKSPACE"} /></span>
+          <h1>{t(doctorPageTitles[doctorSection])}</h1>
+          <p><Trans text={"Dr. "} />{currentDoctor?.name || t("Practitioner")} · {t(doctorDepartment)}. <Trans text={"Your clinical workspace for today's visits."}/></p>
           <div className="doctor-command-meta">
             <span><Activity size={14} /> {doctorDepartment}</span>
             <span><ShieldCheck size={14} /> <Trans text={"Secure clinical session"} /></span>
@@ -5779,7 +5932,7 @@ function DoctorDashboardPage() {
         </div>
       </section>
 
-      <section className="doctor-command-kpis">
+      {doctorSection === "overview" && <section className="doctor-command-kpis">
         <article>
           <span className="doctor-kpi-icon"><Users size={18} /></span>
           <div><small><Trans text={"Today’s Queue"} /></small><strong>{doctorQueue.length}</strong><em>{waitingPatientsList.length} <Trans text={"waiting"} /></em></div>
@@ -5800,9 +5953,16 @@ function DoctorDashboardPage() {
           <span className="doctor-kpi-icon"><BarChart3 size={18} /></span>
           <div><small><Trans text={"Patient Rating"} /></small><strong>{doctorFeedbackSummary.averageRating || "—"}</strong><em>{doctorFeedbackSummary.total} <Trans text={"feedback"} /></em></div>
         </article>
-      </section>
+      </section>}
 
-      <div className="doctor-focus-grid">
+      {doctorSection === "overview" && <div className="doctor-overview-actions" aria-label={t("Doctor shortcuts")}>
+        <button type="button" onClick={() => setDoctorSection("queue")}><Users size={17}/><Trans text={"My Queue"}/></button>
+        <button type="button" onClick={() => setDoctorSection("appointments")}><Calendar size={17}/><Trans text={"Appointments"}/></button>
+        <button type="button" onClick={() => setDoctorSection("consultation")}><Stethoscope size={17}/><Trans text={"Consultation"}/></button>
+        <button type="button" onClick={() => setDoctorSection("analytics")}><BarChart3 size={17}/><Trans text={"My Analytics"}/></button>
+      </div>}
+
+      {["overview", "queue", "consultation"].includes(doctorSection) && <div className="doctor-focus-grid">
         <section className={`card doctor-current-focus ${activeCalledPatient?.urgency === "emergency" ? "emergency" : ""}`}>
           <div className="doctor-section-heading">
             <div>
@@ -5828,7 +5988,7 @@ function DoctorDashboardPage() {
               <div className="doctor-current-actions">
                 <button type="button" className="danger" disabled={isSavingConsultation} onClick={() => updateTokenStatus(activeCalledPatient._id, "skipped")}>
                   <SkipForward size={16} /> <Trans text={"Mark Skipped"} /></button>
-                <a className="ghost doctor-jump-link" href="#doctor-consultation-form"><FileText size={15} /> <Trans text={"Open Consultation"} /></a>
+                <button type="button" className="ghost doctor-jump-link" onClick={() => setDoctorSection("consultation")}><FileText size={15} /> <Trans text={"Open Consultation"} /></button>
               </div>
             </>
           ) : (
@@ -5842,7 +6002,7 @@ function DoctorDashboardPage() {
           )}
         </section>
 
-        <section className="card doctor-next-panel">
+        {doctorSection !== "consultation" && <section className="card doctor-next-panel">
           <div className="doctor-section-heading compact">
             <div><p className="eyebrow"><Trans text={"Queue Preview"} /></p><h2><Trans text={"Next Patients"} /></h2></div>
             <span className="doctor-queue-count">{waitingPatientsList.length} <Trans text={"waiting"} /></span>
@@ -5858,11 +6018,15 @@ function DoctorDashboardPage() {
             ))}
             {!nextThreePatients.length && <div className="doctor-next-empty"><CheckCircle size={22} /><span><Trans text={"No patients are waiting."} /></span></div>}
           </div>
-          {waitingPatientsList.length > 3 && <small className="doctor-more-queue">+{waitingPatientsList.length - 3} <Trans text={"more patients in queue"} /></small>}
-        </section>
-      </div>
+          {waitingPatientsList.length > 3 && <button type="button" className="ghost compact" onClick={() => setDoctorSection("queue")}>+{waitingPatientsList.length - 3} <Trans text={"more patients in queue"} /></button>}
+        </section>}
+      </div>}
 
-      <details className="card doctor-appointments-card doctor-workspace-dropdown">
+      {doctorSection === "overview" && <section className="card doctor-overview-schedule"><div className="doctor-section-heading"><div><p className="eyebrow"><Trans text={"TODAY'S SCHEDULE"}/></p><h2><Trans text={"Upcoming appointments"}/></h2></div><button type="button" className="ghost compact" onClick={() => setDoctorSection("appointments")}><Trans text={"View all"}/><ArrowRight size={15}/></button></div><div className="doctor-overview-appointments">{todayDoctorAppointments.filter((item) => item.status === "booked" || item.status === "checked_in").slice(0, 4).map((item) => <div key={item._id}><time>{item.startTime}</time><span><b>{item.patientName}</b><small>{item.reason || t(item.department)}</small></span><em className={`appointment-status ${item.status}`}>{t(item.status.replace("_", " "))}</em></div>)}{!todayDoctorAppointments.some((item) => ["booked", "checked_in"].includes(item.status)) && <p className="muted"><Trans text={"No upcoming appointments today."}/></p>}</div></section>}
+
+      {doctorSection === "queue" && <section className="card doctor-all-queue"><div className="doctor-section-heading"><div><p className="eyebrow"><Trans text={"LIVE QUEUE"}/></p><h2><Trans text={"All waiting patients"}/></h2></div><span className="doctor-queue-count">{waitingPatientsList.length} <Trans text={"waiting"}/></span></div><div className="doctor-full-queue-list">{waitingPatientsList.map((item) => <article key={item._id} className={item.urgency === "emergency" ? "emergency" : ""}><span className="doctor-current-token">#{item.tokenNumber}</span><div><b>{item.patientName}</b><small>{t(item.queueSource === "appointment" ? "Appointment" : item.queueSource === "reservation" ? "Online reservation" : "Walk-in")} · {t(item.urgency)}</small></div><button type="button" className="primary compact" disabled={Boolean(activeCalledPatient)} onClick={() => updateTokenStatus(item._id, "called")}><UserCheck size={15}/><Trans text={"Call Patient"}/></button></article>)}{!waitingPatientsList.length && <p className="muted"><Trans text={"No patients are waiting."}/></p>}</div></section>}
+
+      {doctorSection === "appointments" && <details open className="card doctor-appointments-card doctor-workspace-dropdown">
         <summary>
           <div><Calendar size={18}/><span><b><Trans text={"Today’s Scheduled Appointments"} /></b><small><Trans text={"Booked visits and live check-in status"} /></small></span></div>
           <strong>{todayDoctorAppointments.length}</strong>
@@ -5881,10 +6045,10 @@ function DoctorDashboardPage() {
             {!todayDoctorAppointments.length && <p className="muted"><Trans text={"No appointments scheduled for today."} /></p>}
           </div>
         </div>
-      </details>
+      </details>}
 
       {/* PATIENT EHR SNAPSHOT */}
-      <section className="card doctor-medical-profile">
+      {doctorSection === "patient" && <section className="card doctor-medical-profile">
         <div className="card-title">
           <Activity />
           <h2><Trans text={"Active Patient EHR Profile"} /></h2>
@@ -5990,10 +6154,10 @@ function DoctorDashboardPage() {
             </div>
           </>
         )}
-      </section>
+      </section>}
 
       {/* PREVIOUS CLINICAL HISTORY SNAPSHOT */}
-      <section className="card doctor-history-snapshot">
+      {doctorSection === "history" && <section className="card doctor-history-snapshot">
         <div className="card-title">
           <Activity />
           <h2><Trans text={"Previous Clinical History · Last 3 Visits"} /></h2>
@@ -6132,10 +6296,10 @@ function DoctorDashboardPage() {
           <p className="doctor-history-privacy-note">
             <Trans text={"Secure snapshot: only the doctor currently assigned to this called patient can load these previous visits."} /></p>
         )}
-      </section>
+      </section>}
 
       {/* DIGITAL CONSULTATION RECORD / SOAP FORM */}
-      <section className="card doctor-consultation-card" id="doctor-consultation-form">
+      {doctorSection === "consultation" && <section className="card doctor-consultation-card" id="doctor-consultation-form">
         <div className="card-title">
           <Stethoscope />
           <h2><Trans text={"Consultation Record & Digital Prescription"} /></h2>
@@ -6336,11 +6500,11 @@ function DoctorDashboardPage() {
             </button>
           </form>
         )}
-      </section>
+      </section>}
 
-      <DoctorReferrals currentDoctor={currentDoctor} activeToken={activeCalledPatient} recentTokens={completedPatientsList} />
+      {doctorSection === "referrals" && <DoctorReferrals expanded currentDoctor={currentDoctor} activeToken={activeCalledPatient} recentTokens={completedPatientsList} />}
 
-      {lastCompletedPrescription && (
+      {doctorSection === "prescriptions" && lastCompletedPrescription && (
         <details className="card doctor-prescription-ready" open>
           <summary>
             <span><FileText size={17} /> <Trans text={"Prescription Ready"} /></span>
@@ -6358,9 +6522,13 @@ function DoctorDashboardPage() {
           </div>
         </details>
       )}
+      {doctorSection === "prescriptions" && <section className="card doctor-prescription-history"><div className="doctor-section-heading"><div><p className="eyebrow"><Trans text={"RECENT RECORDS"}/></p><h2><Trans text={"My recent prescriptions"}/></h2></div><button type="button" className="ghost compact" onClick={fetchDoctorPrescriptions}><RefreshCw size={15}/><Trans text={"Refresh"}/></button></div>
+        {recentPrescriptionError && <p className="login-error" role="alert">{t(recentPrescriptionError)}</p>}
+        <div className="doctor-prescription-list">{recentDoctorPrescriptions.map((item) => <article key={item._id}><span className="doctor-prescription-icon"><FileText size={18}/></span><div><b>{item.patient?.name || item.token?.patientName || t("Patient")}</b><small>{item.patient?.patientId || item.token?.patientId || "—"} · {t(item.department)} · {new Date(item.createdAt).toLocaleDateString("en-IN")}</small><span>{item.diagnosis}</span></div><button type="button" className="ghost compact" onClick={() => downloadPrescriptionPdf({ ...item, doctor: { name: currentDoctor?.name, department: currentDoctor?.department, prescriptionProfile: doctorPrescriptionProfile } }, item.token, item.patient, doctorClinicContext)}><Download size={15}/><Trans text={"PDF"}/></button><button type="button" className="primary compact" onClick={() => printPrescription({ ...item, doctor: { name: currentDoctor?.name, department: currentDoctor?.department, prescriptionProfile: doctorPrescriptionProfile } }, item.token, item.patient, doctorClinicContext)}><Printer size={15}/><Trans text={"Print"}/></button></article>)}{!recentDoctorPrescriptions.length && !recentPrescriptionError && <p className="muted"><Trans text={"No completed prescriptions found yet."}/></p>}</div>
+      </section>}
 
       {/* DOCTOR FEEDBACK SECTION */}
-      <details className="card doctor-feedback-section doctor-feedback-dropdown">
+      {doctorSection === "feedback" && <details open className="card doctor-feedback-section doctor-feedback-dropdown">
         <summary className="doctor-feedback-dropdown-header">
           <div className="doctor-feedback-dropdown-title">
             <div>
@@ -6409,7 +6577,9 @@ function DoctorDashboardPage() {
             <p className="muted"><Trans text={"No patient feedback has been submitted yet."} /></p>
           )}
         </div>
-      </details>
+      </details>}
+
+      {doctorSection === "analytics" && <DoctorAnalytics />}
 
 
     </main>
@@ -6536,7 +6706,7 @@ function AdminWaitingLoungeDisplaysPage() {
     <main className="page premium-page">
       <div className="head">
         <div>
-          <p className="eyebrow"><Trans text={"Hospital Display Control"} /></p>
+          <p className="eyebrow"><Trans text={"Clinic Display Control"} /></p>
           <h1><Trans text={"Waiting Lounge TV Displays"} /></h1>
           <p className="page-subtitle">
             <Trans text={"Create a separate secure display for each department or doctor. Only the queue shown on that TV can trigger its voice announcement."} /></p>
@@ -8077,9 +8247,15 @@ function ReceptionQueueIntervention({ tokenItem, doctors, onApply }) {
 }
 
 function ReceptionDashboardPage() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const liveQueue = useLiveQueue("staff");
   const navigate = useNavigate();
+  const location = useLocation();
+  const requestedReceptionSection = new URLSearchParams(location.search).get("section");
+  const receptionSection = ["patients", "register", "tokens", "appointments", "payments", "queue", "referrals", "prescriptions"].includes(requestedReceptionSection)
+    ? requestedReceptionSection : "overview";
+  const setReceptionSection = (section) => navigate(section === "overview" ? "/reception" : `/reception?section=${section}`);
+  useEffect(() => { window.scrollTo(0, 0); }, [receptionSection]);
   const currentStaff = getLoggedInStaff();
 
   const [patientSearch, setPatientSearch] = useState("");
@@ -8119,7 +8295,6 @@ function ReceptionDashboardPage() {
   const [receptionPrescriptions, setReceptionPrescriptions] = useState([]);
   const [receptionClinicContext, setReceptionClinicContext] = useState(null);
   const [prescriptionDeskLoading, setPrescriptionDeskLoading] = useState(false);
-  const [receptionSection, setReceptionSection] = useState("overview");
   const [pendingPrintConfirmation, setPendingPrintConfirmation] = useState(null);
   const [receptionRescheduleTarget, setReceptionRescheduleTarget] = useState(null);
   const [receptionOperationsStatus, setReceptionOperationsStatus] = useState(null);
@@ -8226,6 +8401,7 @@ function ReceptionDashboardPage() {
   };
 
   const prepareReceptionReschedule = async (appointment) => {
+    setReceptionSection("appointments");
     setReceptionRescheduleTarget(appointment); setFrontDeskError(""); setFrontDeskMessage("Choose a new doctor/date/time below.");
     setReceptionAppointment({ department: appointment.department, doctorId: String(appointment.doctor || ""), appointmentDate: "", startTime: "", reason: appointment.reason || "" });
     await loadReceptionAppointmentDoctors(appointment.department); await loadReceptionDates(String(appointment.doctor || ""));
@@ -8374,6 +8550,7 @@ function ReceptionDashboardPage() {
         `${data.name} registered successfully (${data.patientId}). You can issue the OPD token now.`
       );
       await searchPatients("");
+      setReceptionSection("tokens");
     } catch (error) {
       setFrontDeskError(
         error.response?.data?.message || "Unable to register walk-in patient."
@@ -8496,7 +8673,7 @@ function ReceptionDashboardPage() {
       (doctor) => String(doctor._id) === String(lastIssuedToken.assignedDoctor)
     );
     const safeName = escapeSlipText(lastIssuedToken.patientName || "Patient");
-    const safePatientId = escapeSlipText(selectedPatient?.patientId || "-");
+    const safePatientId = escapeSlipText(lastIssuedToken.patientId || "-");
     const safeDepartment = escapeSlipText(lastIssuedToken.department || "OPD");
     const safeDoctor = escapeSlipText(assignedDoctor?.name || "Assigned specialist");
     const safeUrgency = lastIssuedToken.urgency === "emergency" ? "EMERGENCY" : "NORMAL OPD";
@@ -8607,36 +8784,25 @@ function ReceptionDashboardPage() {
     unprintedPrescriptionCount > 0 ? `${unprintedPrescriptionCount} completed prescription${unprintedPrescriptionCount > 1 ? "s are" : " is"} ready to print.` : null,
     bookedTodayCount > 0 ? `${bookedTodayCount} booked appointment${bookedTodayCount > 1 ? "s" : ""} still await check-in.` : null,
   ].filter(Boolean);
+  const receptionPageTitles = {
+    overview: "Reception Overview", patients: "Patient Search", register: "Register Patient",
+    tokens: "Token Desk", appointments: "Appointments", payments: "Payments & Check-in",
+    queue: "Live Queue", referrals: "Department Referrals", prescriptions: "Prescription Print Desk",
+  };
 
   return (
     <main className="page premium-page reception-page">
-      <ReceptionReferrals />
       {paymentModal && <div className="payment-modal-backdrop" role="presentation"><section className="payment-modal card" role="dialog" aria-modal="true"><div className="payment-modal-head"><div><p className="eyebrow"><Trans text={"Reception Billing"} /></p><h2>{t(paymentModal.title)}</h2><small>{paymentModal.target?.patientName || selectedPatient?.name || t("Patient")}</small></div><button type="button" className="ghost compact" onClick={()=>setPaymentModal(null)}><X size={16}/></button></div><ReceptionPaymentBox amount={paymentModal.amount} feeType={paymentModal.feeType} draft={paymentDraft} onChange={setPaymentDraft}/><div className="payment-modal-actions"><button type="button" className="ghost" onClick={()=>setPaymentModal(null)}><Trans text={"Cancel"} /></button><button type="button" className="primary" disabled={paymentBusy} onClick={confirmReceptionPayment}><CheckCircle size={16}/>{t(paymentBusy?"Processing...":paymentModal.amount>0?"Confirm Payment & Check In":"Confirm Free Visit & Check In")}</button></div></section></div>}
       <div className="head reception-command-head">
         <div>
-          <p className="eyebrow"><Trans text={"Hospital Front Desk"} /></p>
-          <h1><Trans text={"Reception Command Desk"} /></h1>
+          <p className="eyebrow"><Trans text={"FRONT DESK WORKSPACE"} /> · {new Date().toLocaleDateString(language === "hi" ? "hi-IN" : "en-IN", { weekday: "long", day: "numeric", month: "long" })}</p>
+          <h1>{t(receptionPageTitles[receptionSection])}</h1>
           <p className="page-subtitle">
-            <Trans text={"Signed in as "} /><strong>{currentStaff?.name || "Reception Staff"}</strong><Trans text={". Manage arrivals, patient registration, queue interventions, appointments and prescription handover from one workspace."} /></p>
+            <Trans text={"Signed in as "} /><strong>{currentStaff?.name || "Reception Staff"}</strong><Trans text={". Select a workspace from the sidebar to manage today's visits."} /></p>
         </div>
-        <button type="button" className="ghost" onClick={() => { logout(); navigate("/login", { replace: true }); }}>
-          <LogOut size={15} /> <Trans text={"End Front-Desk Shift"} /></button>
+        <div className="reception-head-actions"><Link to="/reception/scan" className="ghost"><QrCode size={16}/><Trans text={"QR Scanner"}/></Link><button type="button" className="ghost" onClick={() => { logout(); navigate("/login", { replace: true }); }}><LogOut size={15} /> <Trans text={"End Shift"} /></button></div>
       </div>
-
-      <nav className="admin-section-tabs reception-section-tabs" aria-label={t("Reception workspace sections")}>
-        <button type="button" className={receptionSection === "overview" ? "active" : ""} onClick={() => setReceptionSection("overview")}>
-          <Activity size={16} />
-          <span><Trans text={"Overview"} /><small><Trans text={"Live front-desk command center"} /></small></span>
-        </button>
-        <button type="button" className={receptionSection === "patients" ? "active" : ""} onClick={() => setReceptionSection("patients")}>
-          <Users size={16} />
-          <span><Trans text={"Patient Desk"} /><small><Trans text={"Registry, walk-ins & tokens"} /></small></span>
-        </button>
-        <button type="button" className={receptionSection === "operations" ? "active" : ""} onClick={() => setReceptionSection("operations")}>
-          <ShieldCheck size={16} />
-          <span><Trans text={"Operations"} /><small><Trans text={"Queue, appointments & print desk"} /></small></span>
-        </button>
-      </nav>
+      {receptionSection === "referrals" && <ReceptionReferrals expanded />}
 
       {receptionSection === "overview" && (
         <section className="reception-command-overview">
@@ -8692,12 +8858,13 @@ function ReceptionDashboardPage() {
             <section className="card reception-command-card reception-quick-actions">
               <div className="reception-section-head"><div><p className="eyebrow"><Trans text={"Quick Actions"} /></p><h2><Sparkles size={18}/> <Trans text={"Front-Desk Shortcuts"} /></h2></div></div>
               <div className="reception-action-grid">
-                <button type="button" onClick={() => setReceptionSection("patients")}><Users size={17}/><span><Trans text={"Find / Register Patient"} /></span></button>
-                <button type="button" onClick={() => setReceptionSection("patients")}><Ticket size={17}/><span><Trans text={"Issue / Check-in Token"} /></span></button>
+                <button type="button" onClick={() => setReceptionSection("patients")}><Users size={17}/><span><Trans text={"Patient Search"} /></span></button>
+                <button type="button" onClick={() => setReceptionSection("register")}><UserRound size={17}/><span><Trans text={"Register Patient"} /></span></button>
+                <button type="button" onClick={() => setReceptionSection("tokens")}><Ticket size={17}/><span><Trans text={"Token Desk"} /></span></button>
                 <button type="button" onClick={() => navigate("/reception/scan")}><QrCode size={17}/><span><Trans text={"Open QR Scanner"} /></span></button>
-                <button type="button" onClick={() => setReceptionSection("operations")}><Activity size={17}/><span><Trans text={"Manage Live Queue"} /></span></button>
-                <button type="button" onClick={() => setReceptionSection("operations")}><Printer size={17}/><span><Trans text={"Prescription Print Desk"} /></span></button>
-                <button type="button" onClick={() => setReceptionSection("operations")}><Calendar size={17}/><span><Trans text={"Appointments"} /></span></button>
+                <button type="button" onClick={() => setReceptionSection("queue")}><Activity size={17}/><span><Trans text={"Live Queue"} /></span></button>
+                <button type="button" onClick={() => setReceptionSection("prescriptions")}><Printer size={17}/><span><Trans text={"Prescription Print Desk"} /></span></button>
+                <button type="button" onClick={() => setReceptionSection("appointments")}><Calendar size={17}/><span><Trans text={"Appointments"} /></span></button>
               </div>
             </section>
           </div>
@@ -8714,6 +8881,14 @@ function ReceptionDashboardPage() {
               <span><b>{billingSummary?.pendingCount || 0}</b> <Trans text={"payments pending"} /></span>
             </div>
           </section>
+          <div className="reception-day-grid">
+            <section className="card reception-day-card"><div className="reception-section-head"><div><p className="eyebrow"><Trans text={"TODAY'S SCHEDULE"}/></p><h2><Calendar size={18}/><Trans text={"Upcoming appointments"}/></h2></div><button type="button" className="ghost compact" onClick={() => setReceptionSection("appointments")}><Trans text={"View all"}/><ArrowRight size={15}/></button></div>
+              <div className="reception-day-list">{todayAppointments.filter((item) => item.status === "booked").slice(0, 4).map((item) => <div key={item._id}><span className="reception-time">{item.startTime}</span><span><b>{item.patientName}</b><small>{t(item.department)} · Dr. {item.doctorName}</small></span><button type="button" className="ghost compact" onClick={() => openReceptionPayment("appointment", item)}><Trans text={"Check in"}/></button></div>)}{!bookedTodayCount && <p className="muted"><Trans text={"No appointments awaiting check-in."}/></p>}</div>
+            </section>
+            <section className="card reception-day-card"><div className="reception-section-head"><div><p className="eyebrow"><Trans text={"LIVE ARRIVALS"}/></p><h2><Activity size={18}/><Trans text={"Queue at a glance"}/></h2></div><button type="button" className="ghost compact" onClick={() => setReceptionSection("queue")}><Trans text={"View all"}/><ArrowRight size={15}/></button></div>
+              <div className="reception-day-list">{activeQueue.slice(0, 4).map((item) => <div key={item._id}><span className="reception-time">#{item.tokenNumber}</span><span><b>{item.patientName}</b><small>{t(item.department)} · {t(formatQueueStatus(item.status))}</small></span><span className={`arrival-chip ${item.arrivalStatus || "not_checked_in"}`}>{t(item.arrivalStatus === "arrived" ? "Arrived" : "Not checked in")}</span></div>)}{!activeQueue.length && <p className="muted"><Trans text={"No active queue records found."}/></p>}</div>
+            </section>
+          </div>
         </section>
       )}
 
@@ -8722,10 +8897,11 @@ function ReceptionDashboardPage() {
           {t(frontDeskError) || t(frontDeskMessage)}
         </div>
       )}
+      {lastIssuedToken && receptionSection !== "tokens" && <div className="reception-issued-banner" role="status"><span><CheckCircle size={18}/><b><Trans text={"Token issued"}/> #{lastIssuedToken.tokenNumber}</b> · {t(lastIssuedToken.department)}</span><button type="button" className="ghost compact" onClick={printLastToken}><Printer size={15}/><Trans text={"Print Token Slip"}/></button></div>}
 
-      {receptionSection === "patients" && (
+      {["patients", "register", "tokens"].includes(receptionSection) && (
       <div className="reception-workspace-grid">
-        <section className="card reception-registry-card">
+        {["patients", "tokens"].includes(receptionSection) && <section className="card reception-registry-card">
           <div className="reception-section-head">
             <div>
               <p className="eyebrow"><Trans text={"Patient Registry"} /></p>
@@ -8777,12 +8953,14 @@ function ReceptionDashboardPage() {
               </button>
             ))}
             {!isSearchingPatients && patientResults.length === 0 && (
-              <p className="muted"><Trans text={"No matching patient found. Register a new walk-in below."} /></p>
+              <div className="reception-empty-state"><Users size={24}/><p><Trans text={"Search by name, patient ID, phone or email. No match? Register a new patient."} /></p><button type="button" className="ghost" onClick={() => setReceptionSection("register")}><Trans text={"Register Patient"}/></button></div>
             )}
           </div>
+          {selectedPatient && <div className="reception-selection-actions"><span><CheckCircle size={16}/><b>{selectedPatient.name}</b> · {selectedPatient.patientId}</span><div><button type="button" className="primary compact" onClick={() => setReceptionSection("tokens")}><Ticket size={15}/><Trans text={"Issue Token"}/></button><button type="button" className="ghost compact" onClick={() => setReceptionSection("appointments")}><Calendar size={15}/><Trans text={"Book Appointment"}/></button><button type="button" className="ghost compact" onClick={() => setReceptionSection("payments")}><IndianRupee size={15}/><Trans text={"Payments"}/></button></div></div>}
 
-          <div className="reception-divider" />
+        </section>}
 
+        {receptionSection === "register" && <section className="card reception-registry-card reception-register-card">
           <p className="eyebrow"><Trans text={"New Walk-In"} /></p>
           <h2><UserRound size={18} /> <Trans text={"Register Patient"} /></h2>
 
@@ -8858,9 +9036,9 @@ function ReceptionDashboardPage() {
               {t(isRegistering ? "Registering..." : "Register Walk-In Patient")}
             </button>
           </form>
-        </section>
+        </section>}
 
-        <section className="card reception-token-card">
+        {receptionSection === "tokens" && <section className="card reception-token-card">
           <p className="eyebrow"><Trans text={"Token Desk"} /></p>
           <h2><Ticket size={18} /> <Trans text={"Issue OPD Queue Token"} /></h2>
 
@@ -9004,14 +9182,12 @@ function ReceptionDashboardPage() {
                 <FileText size={15} /> <Trans text={"Print Token Slip"} /></button>
             </div>
           )}
-        </section>
+        </section>}
       </div>
       )}
 
 
-      {receptionSection === "operations" && (
-        <>
-      <details className="card reception-prescription-desk">
+      {receptionSection === "prescriptions" && <details open className="card reception-prescription-desk">
         <summary className="reception-prescription-summary">
           <div>
             <p className="eyebrow"><Trans text={"Prescription Handover"} /></p>
@@ -9047,9 +9223,9 @@ function ReceptionDashboardPage() {
             </div>
           )}
         </div>
-      </details>
+      </details>}
 
-      <section className="card reception-appointment-card">
+      {receptionSection === "appointments" && <section className="card reception-appointment-card">
         <div className="reception-section-head">
           <div>
             <p className="eyebrow"><Trans text={"Scheduled Visits"} /></p>
@@ -9059,6 +9235,7 @@ function ReceptionDashboardPage() {
             <QrCode size={16} /> <Trans text={"Open QR Scanner"} /></Link>
         </div>
         <p className="muted"><Trans text={"Select a registry patient, then book against the doctor's actual working schedule. Today's booked patients can be checked in and converted to a live queue token."} /></p>
+        {selectedPatient ? <div className="reception-selected-patient"><div><small><Trans text={"SELECTED PATIENT"}/></small><strong>{selectedPatient.name}</strong><span>{selectedPatient.patientId}</span></div><button type="button" className="ghost compact" onClick={() => setReceptionSection("patients")}><Trans text={"Change"}/></button></div> : <div className="reception-inline-hint"><Users size={17}/><span><Trans text={"Select a patient to book an appointment."}/></span><button type="button" className="ghost compact" onClick={() => setReceptionSection("patients")}><Trans text={"Find Patient"}/></button></div>}
         <form className="appointment-form" onSubmit={bookReceptionAppointment}>
           <label><Trans text={"Department"} /><select value={receptionAppointment.department} onChange={async e=>{const department=e.target.value;setReceptionAppointment({department,doctorId:"",appointmentDate:"",startTime:"",reason:""});setReceptionAppointmentDates([]);setReceptionAppointmentSlots([]);await loadReceptionAppointmentDoctors(department);}}>{CLINICAL_DEPARTMENTS.map(d=><option key={d.value} value={d.value}>{t(d.label)}</option>)}</select></label>
           <label><Trans text={"Doctor"} /><select value={receptionAppointment.doctorId} onChange={async e=>{const doctorId=e.target.value;setReceptionAppointment(prev=>({...prev,doctorId,appointmentDate:"",startTime:""}));await loadReceptionDates(doctorId);}}><option value="">{t("Select doctor")}</option>{receptionAppointmentDoctors.map(d=><option key={d._id} value={d._id}>{t("Dr. ")}{d.name}</option>)}</select></label>
@@ -9072,9 +9249,25 @@ function ReceptionDashboardPage() {
           {todayAppointments.map(a=><div className="appointment-row" key={a._id}><div><strong>{a.startTime} · {a.patientName}</strong><small>{t(a.department)} <Trans text={"· Dr. "} />{a.doctorName}</small>{a.cancellationReason&&<small><Trans text={"Reason: "} />{a.cancellationReason}</small>}</div><span className={`appointment-status ${a.status}`}>{a.status.replace("_"," ")}</span>{a.status==="booked"&&<button type="button" className="small" onClick={()=>openReceptionPayment("appointment", a)}><Trans text={"Collect "} />{formatInr(a.billing?.quotedAmount || 0)} <Trans text={"& Check In"} /></button>}{["booked","missed"].includes(a.status)&&<button type="button" className="small" onClick={()=>prepareReceptionReschedule(a)}><Trans text={"Reschedule"} /></button>}{a.status==="booked"&&<button type="button" className="small appointment-cancel-button" onClick={()=>cancelReceptionAppointment(a)}><Trans text={"Cancel"} /></button>}{a.status==="booked"&&<button type="button" className="small" onClick={()=>markReceptionAppointmentMissed(a)}><Trans text={"Mark Missed"} /></button>}</div>)}
           {!todayAppointments.length&&<p className="muted"><Trans text={"No appointments scheduled for today."} /></p>}
         </div>
-      </section>
+      </section>}
 
-      <section className="card reception-live-queue-card">
+      {receptionSection === "payments" && <div className="reception-payments-workspace">
+        <div className="reception-payment-metrics">
+          <div className="card"><span><IndianRupee size={17}/><Trans text={"Collected today"}/></span><strong>{formatInr(billingSummary?.collected || 0)}</strong><small>{billingSummary?.paidCount || 0} <Trans text={"payments recorded"}/></small></div>
+          <div className="card"><span><Clock3 size={17}/><Trans text={"Awaiting payment"}/></span><strong>{billingSummary?.pendingCount || 0}</strong><small>{formatInr(billingSummary?.pendingAmount || 0)} <Trans text={"estimated pending"}/></small></div>
+          <div className="card"><span><CreditCard size={17}/><Trans text={"Payment methods"}/></span><div className="reception-methods">{["cash", "upi", "card", "other"].map((method) => <span key={method}>{t(method.toUpperCase())}<b>{formatInr(billingSummary?.methods?.[method] || 0)}</b></span>)}</div></div>
+        </div>
+        <section className="card reception-payment-list"><div className="reception-section-head"><div><p className="eyebrow"><Trans text={"APPOINTMENT COLLECTIONS"}/></p><h2><Calendar size={18}/><Trans text={"Check in today's visits"}/></h2></div><button type="button" className="ghost compact" onClick={loadReceptionBillingSummary}><RefreshCw size={15}/><Trans text={"Refresh"}/></button></div>
+          <div className="reception-day-list">{todayAppointments.filter((item) => item.status === "booked").map((item) => <div key={item._id}><span className="reception-time">{item.startTime}</span><span><b>{item.patientName}</b><small>{t(item.department)} · Dr. {item.doctorName}</small></span><strong>{formatInr(item.billing?.quotedAmount || 0)}</strong><button type="button" className="primary compact" onClick={() => openReceptionPayment("appointment", item)}><Trans text={"Collect & Check In"}/></button></div>)}{!bookedTodayCount && <p className="reception-empty-state"><Trans text={"No appointments awaiting payment today."}/></p>}</div>
+        </section>
+        <section className="card reception-payment-list"><div className="reception-section-head"><div><p className="eyebrow"><Trans text={"ONLINE RESERVATIONS"}/></p><h2><QrCode size={18}/><Trans text={"Patient reservation check-in"}/></h2></div><button type="button" className="ghost compact" onClick={() => setReceptionSection("patients")}><Users size={15}/><Trans text={"Find Patient"}/></button></div>
+          {selectedPatient && <p className="reception-inline-hint"><UserCheck size={16}/>{selectedPatient.name} · {selectedPatient.patientId}</p>}
+          <div className="reception-day-list">{selectedPatientReservations.map((item) => <div key={item._id}><span><b>{t(item.department)}</b><small>Dr. {item.doctorName}</small></span><strong>{formatInr(item.billing?.quotedAmount || 0)}</strong><button type="button" className="primary compact" onClick={() => openReceptionPayment("reservation", item)}><Trans text={"Collect & Check In"}/></button></div>)}{!selectedPatientReservations.length && <p className="reception-empty-state"><Trans text={selectedPatient ? "No active reservations for the selected patient." : "Find a patient to see their online reservations."}/></p>}</div>
+          <div className="reception-inline-hint"><Ticket size={17}/><span><Trans text={"Walk-in payments are collected while issuing a token."}/></span><button type="button" className="ghost compact" onClick={() => setReceptionSection("tokens")}><Trans text={"Token Desk"}/></button></div>
+        </section>
+      </div>}
+
+      {receptionSection === "queue" && <section className="card reception-live-queue-card">
         <div className="reception-queue-header">
           <div>
             <p className="eyebrow"><Trans text={"Live Operations"} /></p>
@@ -9198,9 +9391,7 @@ function ReceptionDashboardPage() {
             <p className="muted reception-empty-queue"><Trans text={"No active queue records found."} /></p>
           )}
         </div>
-      </section>
-        </>
-      )}
+      </section>}
     </main>
   );
 }
@@ -9212,9 +9403,13 @@ function ReceptionDashboardPage() {
 function AdminDashboardPage() {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [hospitalStats, setHospitalStats] = useState(null);
-  const [adminSection, setAdminSection] = useState("overview");
+  const [adminSection, setAdminSection] = useState(() => {
+    const section = new URLSearchParams(window.location.search).get("section");
+    return ["analytics", "revenue", "operations"].includes(section) ? section : "overview";
+  });
   const [analytics, setAnalytics] = useState(null);
   const [analyticsRange, setAnalyticsRange] = useState(7);
   const [analyticsDepartment, setAnalyticsDepartment] = useState("");
@@ -9255,6 +9450,11 @@ function AdminDashboardPage() {
     role: "doctor",
     department: "General OPD",
   });
+
+  useEffect(() => {
+    const section = new URLSearchParams(location.search).get("section");
+    setAdminSection(["analytics", "revenue", "operations"].includes(section) ? section : "overview");
+  }, [location.search]);
 
   const fetchAnalytics = async (range = analyticsRange, overrides = {}) => {
     setAnalyticsLoading(true);
@@ -9721,52 +9921,46 @@ function AdminDashboardPage() {
   const maxHourlyPatients = Math.max(1, ...(analytics?.hourlyTrend || []).map((item) => item.patients || 0));
 
   return (
-    <main className="page premium-page">
+    <main className="page premium-page admin-dashboard-page">
       <div className="head">
         <div>
-          <p className="eyebrow"><Trans text={"Hospital Operations"} /></p>
-          <h1><Trans text={"Admin Control Center"} /></h1>
+          <p className="eyebrow"><Trans text={"CLINIC ADMIN · OPERATIONS"} /></p>
+          <h1><Trans text={"Clinic overview"} /></h1>
           <p className="page-subtitle">
-            <Trans text={"Manage hospital departments, physician availability, staff access, and daily OPD operations."} /></p>
+            <Trans text={"Your patients, queue, team and performance in one place."} /></p>
         </div>
-
-        <button
-          type="button"
-          className="ghost"
-          onClick={() => {
-            logout();
-            navigate("/login", { replace: true });
-          }}
-        >
-          <LogOut size={15} /> <Trans text={"Staff Logout"} /></button>
+        <div className="admin-head-actions">
+          <span className="admin-today-chip"><Calendar size={16} />{new Intl.DateTimeFormat(language === "hi" ? "hi-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric" }).format(new Date())}</span>
+          <Link to="/admin/settings" className="ghost button-like"><Settings2 size={16} /><Trans text={"Clinic Settings"} /></Link>
+        </div>
       </div>
 
       <nav className="admin-section-tabs" aria-label={t("Admin workspace sections")}>
         <button
           type="button"
           className={adminSection === "overview" ? "active" : ""}
-          onClick={() => setAdminSection("overview")}
+          onClick={() => navigate("/admin")}
         >
           <Activity size={16} /> <Trans text={"Overview"} /><small><Trans text={"Live command center"} /></small>
         </button>
         <button
           type="button"
           className={adminSection === "analytics" ? "active" : ""}
-          onClick={() => setAdminSection("analytics")}
+          onClick={() => navigate("/admin?section=analytics")}
         >
           <BarChart3 size={16} /> <Trans text={"Analytics"} /><small><Trans text={"Department & doctor drill-down"} /></small>
         </button>
         <button
           type="button"
           className={adminSection === "revenue" ? "active" : ""}
-          onClick={() => { setAdminSection("revenue"); fetchRevenue(); }}
+          onClick={() => { navigate("/admin?section=revenue"); fetchRevenue(); }}
         >
           <IndianRupee size={16} /> <Trans text={"Revenue"} /><small><Trans text={"Collections & receipts"} /></small>
         </button>
         <button
           type="button"
           className={adminSection === "operations" ? "active" : ""}
-          onClick={() => setAdminSection("operations")}
+          onClick={() => navigate("/admin?section=operations")}
         >
           <ShieldCheck size={16} /> <Trans text={"Operations"} /><small><Trans text={"Staff, schedules & audit"} /></small>
         </button>
@@ -9777,23 +9971,23 @@ function AdminDashboardPage() {
       <section className="metricgrid">
         <div className="metric">
           <Users />
-          <b>{hospitalStats?.total ?? 0}</b>
+          <b>{hospitalStats?.total ?? "—"}</b>
           <span><Trans text={"Today's Arrivals"} /></span>
         </div>
         <div className="metric">
           <Clock3 />
-          <b>{hospitalStats?.waiting ?? 0}</b>
+          <b>{hospitalStats?.waiting ?? "—"}</b>
           <span><Trans text={"Waiting"} /></span>
         </div>
         <div className="metric">
           <CheckCircle />
-          <b>{hospitalStats?.completed ?? 0}</b>
+          <b>{hospitalStats?.completed ?? "—"}</b>
           <span><Trans text={"Completed Today"} /></span>
         </div>
         <div className="metric">
           <BarChart3 />
-          <b>{hospitalStats?.averageMinutes ?? 7} <Trans text={"min"} /></b>
-          <span><Trans text={"Service Pace"} /></span>
+          <b>{hospitalStats?.averageMinutes ?? "—"} <Trans text={"min"} /></b>
+          <span><Trans text={"Average service time"} /></span>
         </div>
       </section>
 
@@ -9875,10 +10069,10 @@ function AdminDashboardPage() {
       )}
 
       {adminSection === "overview" && analytics && (
-        <section className="admin-command-center" aria-label={t("Hospital command center")}>
+        <section className="admin-command-center" aria-label={t("Clinic command center")}>
           <div className="command-center-hero">
             <div>
-              <p className="eyebrow"><Trans text={"Live Hospital Command Center"} /></p>
+              <p className="eyebrow"><Trans text={"LIVE CLINIC OPERATIONS"} /></p>
               <h2><Trans text={"Operations at a glance"} /></h2>
               <p><Trans text={"Queue pressure, doctor capacity, patient experience, safety alerts, and service health for "} /><b>{analyticsScopeLabel}</b> · {analyticsPeriodLabel}.</p>
             </div>
@@ -9890,12 +10084,12 @@ function AdminDashboardPage() {
           </div>
 
           <div className="command-quick-actions">
-            <button type="button" onClick={() => setAdminSection("operations")}><UserRound size={16} /><span><Trans text={"Add Staff"} /></span></button>
+            <button type="button" onClick={() => navigate("/admin?section=operations")}><UserRound size={16} /><span><Trans text={"Add Staff"} /></span></button>
             <button type="button" onClick={() => navigate("/admin/displays")}><Monitor size={16} /><span><Trans text={"TV Displays"} /></span></button>
             <button type="button" onClick={() => navigate("/admin/settings")}><Palette size={16} /><span><Trans text={"Clinic Settings"} /></span></button>
             <button type="button" onClick={() => navigate("/admin/privacy")}><ShieldCheck size={16} /><span><Trans text={"Privacy Reviews"} /></span></button>
-            <button type="button" onClick={() => setAdminSection("operations")}><Activity size={16} /><span><Trans text={"Activity Logs"} /></span></button>
-            <button type="button" onClick={() => setAdminSection("analytics")}><BarChart3 size={16} /><span><Trans text={"Deep Analytics"} /></span></button>
+            <button type="button" onClick={() => navigate("/admin?section=operations")}><Activity size={16} /><span><Trans text={"Activity Logs"} /></span></button>
+            <button type="button" onClick={() => navigate("/admin?section=analytics")}><BarChart3 size={16} /><span><Trans text={"Deep Analytics"} /></span></button>
             <button type="button" onClick={() => { fetchAdminData(); fetchAnalytics(analyticsRange); fetchCommandActivity(); }}><RefreshCw size={16} /><span><Trans text={"Refresh Center"} /></span></button>
           </div>
 
@@ -10376,10 +10570,10 @@ function AdminDashboardPage() {
             </label>
 
             <label>
-              <Trans text={"Official Hospital Email"} /><input
+              <Trans text={"Official Clinic Email"} /><input
                 required
                 type="email"
-                placeholder={t("rsharma@hospital.org")}
+                placeholder={t("doctor@clinic.com")}
                 value={newStaffForm.email}
                 onChange={(e) =>
                   setNewStaffForm({
@@ -10449,7 +10643,7 @@ function AdminDashboardPage() {
 
                 {newStaffForm.role !== "doctor" && (
                   <small>
-                    <Trans text={"Non-doctor staff receive hospital-wide operational access appropriate to their role."} /></small>
+                    <Trans text={"Non-doctor staff receive clinic-wide operational access appropriate to their role."} /></small>
                 )}
               </label>
             </div>
@@ -10858,7 +11052,7 @@ export default function App() {
         <Route path="/terms" element={<PublicInfoPage kind="terms" />} />
         <Route path="/support" element={<PublicInfoPage kind="support" />} />
         {/* PATIENT PORTAL ROUTES */}
-        <Route path="/" element={<Navigate to="/patient-login" replace />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/patient-login" element={<PatientLoginPage />} />
         <Route path="/patient/clinics" element={<PatientClinicMarketplacePage />} />
         <Route path="/patient/profile" element={<PatientProfilePage />} />
