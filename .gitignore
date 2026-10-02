@@ -118,3 +118,10 @@ desktop.ini
 *.7z
 *.tar
 *.tar.gz
+
+# Local audit and update reports
+/CHANGED_FILES_SINCE_LAST_SECURITY_AUDIT.md
+/CLINIC_ANALYTICS_UPDATE.md
+/RESPONSIVE_FIXES_AND_RUN.md
+/SECURITY_AUDIT_REPORT.md
+/SECURITY_CHANGELOG.md
