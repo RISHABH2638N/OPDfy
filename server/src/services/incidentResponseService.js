@@ -55,6 +55,14 @@ export async function sendSecurityAlert(incident) {
   }
 }
 
+// Background callers must handle transport AND persistence failures. The
+// explicit, awaited retry endpoint still reports failures to its caller.
+export function queueSecurityAlert(incident) {
+  return sendSecurityAlert(incident).catch(error => {
+    console.warn("Incident security alert skipped:", safeDiagnostic(error));
+  });
+}
+
 export async function createAutomaticIncident({ title, description, severity, tenantIds = [], fingerprint, eventId }) {
   const existing = await PrivacyIncident.findOne({ detectionFingerprint: fingerprint, status: { $ne: "closed" } });
   if (existing) return existing;
@@ -63,7 +71,7 @@ export async function createAutomaticIncident({ title, description, severity, te
     const incident = await PrivacyIncident.create({ title, description, category: "security_event", severity, source: "automatic", detectionFingerprint: fingerprint,
       tenantIds: tenantIds.filter(Boolean), detectedAt, responseDueAt: new Date(detectedAt.getTime() + hoursBySeverity[severity] * 3600000),
       events: [{ kind: "detected", note: `Automatic detection rule triggered. Security event reference: ${eventId}.`, evidenceReference: String(eventId || ""), actorType: "system" }] });
-    void sendSecurityAlert(incident);
+    void queueSecurityAlert(incident);
     return incident;
   } catch (error) {
     if (error?.code === 11000) return PrivacyIncident.findOne({ detectionFingerprint: fingerprint, status: { $ne: "closed" } });

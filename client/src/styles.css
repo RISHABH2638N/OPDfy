@@ -10284,3 +10284,107 @@ body { overflow-x: hidden; }
   margin-bottom: 14px;
   color: var(--primary, #2563eb);
 }
+
+/* Patient AI assistant: floating launcher and compact chat window. */
+.portal-patient .patient-dashboard-main-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.portal-patient #patient-care-assistant.patient-ai-chat-window {
+  position: fixed;
+  inset: auto 24px calc(96px + env(safe-area-inset-bottom, 0px)) auto;
+  z-index: 1400;
+  display: flex;
+  flex-direction: column;
+  width: min(420px, calc(100vw - 32px));
+  height: min(640px, calc(100dvh - 128px));
+  min-height: 0;
+  max-height: calc(100dvh - 128px);
+  margin: 0;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(15, 35, 55, .24);
+}
+
+.portal-patient #patient-care-assistant.patient-ai-chat-window .ai-chat-messages {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+.portal-patient #patient-care-assistant.patient-ai-chat-window .ai-chat-form {
+  flex-shrink: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.patient-ai-chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.patient-ai-chat-close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  color: var(--text, #1f2937);
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #dbe4ea);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.portal-patient .patient-ai-widget-launcher {
+  position: fixed;
+  right: 24px;
+  bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  z-index: 1401;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  min-width: 58px;
+  padding: 0;
+  color: #fff;
+  background: var(--primary, #087f8c);
+  border: 0;
+  border-radius: 50%;
+  box-shadow: 0 10px 28px rgba(8, 127, 140, .3);
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+
+.portal-patient .patient-ai-widget-launcher:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(8, 127, 140, .36);
+}
+
+.portal-patient .patient-ai-widget-launcher:focus-visible,
+.portal-patient .patient-ai-chat-close:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .42);
+  outline-offset: 3px;
+}
+
+@media (max-width: 520px) {
+  .portal-patient #patient-care-assistant.patient-ai-chat-window {
+    inset: auto 12px calc(84px + env(safe-area-inset-bottom, 0px)) 12px;
+    width: auto;
+    height: min(600px, calc(100dvh - 108px - env(safe-area-inset-bottom, 0px)));
+    max-height: calc(100dvh - 108px - env(safe-area-inset-bottom, 0px));
+  }
+
+  .portal-patient #patient-care-assistant.patient-ai-chat-window .ai-chat-form button {
+    width: auto;
+  }
+
+  .portal-patient .patient-ai-widget-launcher {
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: 54px;
+    height: 54px;
+    min-width: 54px;
+  }
+}

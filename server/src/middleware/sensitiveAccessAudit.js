@@ -1,6 +1,6 @@
 import { logSecurityEvent } from "../utils/securityEvents.js";
 
-const PATIENT_DATA_ROUTES = [/^\/api\/admin\/(?:patients|analytics)/, /^\/api\/reception\/(?:patients|prescriptions)/, /^\/api\/consultations/, /^\/api\/patients\/(?:history|records)/];
+const PATIENT_DATA_ROUTES = [/^\/api\/admin\/(?:patients|analytics|condition-insights)/, /^\/api\/reception\/(?:patients|prescriptions)/, /^\/api\/consultations/, /^\/api\/patients\/(?:history|records)/, /^\/api\/tokens\/[^/]+\/(?:conditions|patient-profile)$/];
 const EXPORT_ROUTES = [/\/export(?:\/|$)/, /\/download(?:\/|$)/];
 
 export function sensitiveAccessAudit(req, res, next) {

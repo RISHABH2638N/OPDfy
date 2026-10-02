@@ -1,3 +1,4 @@
+import { getPatientConditions, savePatientConditions } from "./healthConditionHandlers.js";
 import { safeDiagnostic } from "../utils/privacySafeLog.js";
 import { asyncRouter, publicErrorMessage } from "../utils/httpSafety.js";
 import express from "express";
@@ -69,6 +70,9 @@ function normalizeList(value) {
 
    GET /api/patients/me
 ========================================================= */
+
+router.get("/me/conditions", protectPatient, getPatientConditions);
+router.put("/me/conditions", protectPatient, savePatientConditions);
 
 router.get(
   "/me",

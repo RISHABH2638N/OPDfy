@@ -116,6 +116,23 @@ const patientSchema = new mongoose.Schema(
       default: [],
     },
 
+    // Patient-owned selection and clinician review stay inside this clinic.
+    conditionProfile: {
+      revision: { type: Number, default: 0, min: 0 },
+      declaration: { type: String, enum: ["conditions", "none", "undisclosed"], default: "undisclosed" },
+      analyticsConsent: { type: Boolean, default: false },
+      consentUpdatedAt: { type: Date, default: null },
+      reportedAt: { type: Date, default: null },
+      entries: { type: [new mongoose.Schema({
+        code: { type: String, required: true },
+        status: { type: String, enum: ["pending", "confirmed", "not_confirmed"], default: "pending" },
+        verifiedCode: { type: String, default: null },
+        reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+        reviewedAt: { type: Date, default: null },
+        reviewToken: { type: mongoose.Schema.Types.ObjectId, ref: "Token", default: null },
+      }, { _id: false })], default: [] },
+    },
+
     currentMedications: {
       type: [String],
       default: [],

@@ -1,3 +1,5 @@
+import { conditionInsights } from "../services/healthConditions.js";
+import { getConditionInsights } from "./healthConditionHandlers.js";
 import { safeDiagnostic } from "../utils/privacySafeLog.js";
 import { csvCell } from "../utils/httpSafety.js";
 import { asyncRouter, publicErrorMessage } from "../utils/httpSafety.js";
@@ -375,9 +377,20 @@ function sendCsv(res, filename, rows) {
   return res.send(`\uFEFF${rows.map((row) => row.map(csvCell).join(",")).join("\n")}`);
 }
 
+router.get("/condition-insights", getConditionInsights);
+
 router.get("/export", async (req, res) => {
   try {
     const type = String(req.query.type || "appointments");
+    if (type === "conditions") {
+      const result = await conditionInsights(req.tenantId, req.query);
+      res.set("Cache-Control", "no-store");
+      return sendCsv(res, `confirmed-conditions-${result.fromDate}-to-${result.toDate}.csv`, [
+        ["Condition", "Consenting patients (confirmed)", "Reporting rule", "Review date from (UTC)", "Review date to (UTC)"],
+        ...result.rows.map(item => [item.label, item.suppressed ? "Not reported (0-4)" : item.count,
+          "Doctor-confirmed; current analytics consent; groups below 5 suppressed", result.fromDate, result.toDate]),
+      ]);
+    }
     const tenant = await Tenant.findById(req.tenantId).select("timezone").lean();
     const today = hospitalLocalDateTime(tenant).date;
     const fromDate = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.fromDate || "")) ? String(req.query.fromDate) : today;
@@ -421,6 +434,7 @@ router.get("/export", async (req, res) => {
     }
     return res.status(400).json({ message: "Unknown export type." });
   } catch (error) {
+    if (error.status === 400) return res.status(400).json({ message: error.message });
     console.error("ADMIN CSV EXPORT:", safeDiagnostic(error));
     return res.status(500).json({ message: "Unable to generate CSV export." });
   }

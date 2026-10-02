@@ -1,3 +1,4 @@
+import HealthConditions, { ConditionInsights } from "./HealthConditions";
 import PrivacyPhase4Operations from "./PrivacyPhase4Operations";
 import ClinicPrivacyReview from "./ClinicPrivacyReview";
 import ClinicIdentityReviews from "./ClinicIdentityReviews";
@@ -912,6 +913,7 @@ function AppLayout({ children }) {
             { to: "/patient?section=my-appointments", label: "My Appointments", icon: <Calendar size={17} /> },
             { to: "/patient?section=lab-referrals", label: "Lab Referrals", icon: <FileText size={17} /> },
             { to: "/patient?section=feedback", label: "Rate Your Doctor", icon: <HeartPulse size={17} /> },
+            { to: "/patient?section=conditions", label: "Health Conditions", icon: <HeartPulse size={17} /> },
             { to: "/patient?section=history", label: "OPD Visit History", icon: <Clock3 size={17} /> },
             { to: "/patient?section=notifications", label: "Notifications", icon: <Bell size={17} /> },
             { group: "Account & Services" },
@@ -2346,7 +2348,7 @@ function PatientDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const requestedSection = new URLSearchParams(location.search).get("section");
-  const patientSection = ["my-appointments", "lab-referrals", "feedback", "history", "notifications"].includes(requestedSection)
+  const patientSection = ["my-appointments", "lab-referrals", "feedback", "history", "notifications", "conditions"].includes(requestedSection)
     ? requestedSection : "overview";
   useEffect(() => { window.scrollTo(0, 0); }, [patientSection]);
   const queueTokenList = useLiveQueue("patient");
@@ -2355,6 +2357,11 @@ function PatientDashboard() {
   const [chatMessageInput, setChatMessageInput] = useState("");
   const [isChatThinking, setIsChatThinking] = useState(false);
   const [chatErrorMessage, setChatErrorMessage] = useState("");
+  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
+
+  useEffect(() => {
+    if (patientSection !== "overview") setIsAiChatOpen(false);
+  }, [patientSection]);
 
   const [activePatient, setActivePatient] = useState(null);
   const [identityReviewRequired, setIdentityReviewRequired] = useState(false);
@@ -2399,7 +2406,6 @@ function PatientDashboard() {
   const [notificationFilter, setNotificationFilter] = useState("all");
   const [followUpBookingBusy, setFollowUpBookingBusy] = useState(false);
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
-  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
   const [liveNotificationToast, setLiveNotificationToast] = useState(null);
   const [patientClinicContext, setPatientClinicContext] = useState(null);
   const [patientWorkspaceTab, setPatientWorkspaceTab] = useState("overview");
@@ -2470,14 +2476,8 @@ function PatientDashboard() {
     }
   };
 
-  const handleNotificationBell = async () => {
-    const willOpen = !notificationPanelOpen;
-    setNotificationPanelOpen(willOpen);
-
-    if (willOpen) {
-      await fetchPatientNotifications();
-      await markAllNotificationsRead();
-    }
+  const handleNotificationBell = () => {
+    if (patientSection !== "notifications") navigate("/patient?section=notifications");
   };
 
   useEffect(() => {
@@ -2514,11 +2514,9 @@ function PatientDashboard() {
         await loadAppointmentDates(String(plan.doctorId));
         setAppointmentMessage("Follow-up details loaded. Choose an available date and time.");
       }
-      setNotificationPanelOpen(false);
       openPatientWorkspace("appointments", "patient-appointments");
     } catch (error) {
       setAppointmentError(error.response?.data?.message || "Unable to load follow-up details.");
-      setNotificationPanelOpen(false);
       openPatientWorkspace("appointments", "patient-appointments");
     } finally {
       setFollowUpBookingBusy(false);
@@ -3381,7 +3379,7 @@ function PatientDashboard() {
       <div className="head">
         <div>
           <p className="eyebrow"><Trans text={"Patient Medical Portal"} /></p>
-          <h1>{patientSection === "overview" ? <><Trans text={"Welcome, "} />{activePatient.name}</> : t({ "my-appointments": "My Appointments", "lab-referrals": "Lab Referrals", feedback: "Rate Your Doctor", history: "OPD Visit History", notifications: "Notifications" }[patientSection])}</h1>
+          <h1>{patientSection === "overview" ? <><Trans text={"Welcome, "} />{activePatient.name}</> : t({ "my-appointments": "My Appointments", "lab-referrals": "Lab Referrals", feedback: "Rate Your Doctor", history: "OPD Visit History", notifications: "Notifications", conditions: "Health Conditions" }[patientSection])}</h1>
           <p className="page-subtitle">
             <strong>{patientClinicContext?.settings?.displayName || patientClinicContext?.name || getActiveClinicSlug()}</strong> <Trans text={"· Patient ID "} /><strong>{activePatient.patientId}</strong>
           </p>
@@ -3447,7 +3445,13 @@ function PatientDashboard() {
           <FileText size={20} />
           <span><b><Trans text={"Health Records"} /></b><small><Trans text={"OPD history & prescriptions"} /></small></span>
         </button>
-        <button type="button" className={patientWorkspaceTab === "care" ? "active" : ""} onClick={() => openPatientWorkspace("care", "patient-care-assistant")}>
+        <button
+          type="button"
+          className={isAiChatOpen ? "active" : ""}
+          onClick={() => setIsAiChatOpen((open) => !open)}
+          aria-expanded={isAiChatOpen}
+          aria-controls={isAiChatOpen ? "patient-care-assistant" : undefined}
+        >
           <Sparkles size={20} />
           <span><b><Trans text={"Care Assistant"} /></b><small><Trans text={"AI guide & queue help"} /></small></span>
         </button>
@@ -3522,8 +3526,8 @@ function PatientDashboard() {
         </div>
       )}
 
-      {(notificationPanelOpen || patientSection === "notifications") && (
-        <section className={`card patient-notification-center ${patientSection === "notifications" ? "patient-notification-page" : ""}`}>
+      {patientSection === "notifications" && (
+        <section className="card patient-notification-center patient-notification-page">
           <div className="notification-center-head">
             <div>
               <p className="eyebrow"><Trans text={"Live Patient Alerts"} /></p>
@@ -3842,18 +3846,33 @@ function PatientDashboard() {
 
         </div>
 
-        <aside className="patient-dashboard-ai-column">
-          {/* =====================================================
-              UNIFIED AI HOSPITAL GUIDE & TRIAGE
-          ====================================================== */}
-          <section id="patient-care-assistant" className="card ai-triage-card patient-premium-section">
+      </div>
+
+      {isAiChatOpen && (
+        <section
+          id="patient-care-assistant"
+          className="card ai-triage-card patient-premium-section patient-ai-chat-window"
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby="patient-care-assistant-title"
+        >
             <div className="card-title ai-triage-title">
               <div className="ai-triage-icon"><Sparkles size={18} /></div>
               <div>
-                    <h2><Trans text={"AI Hospital Guide & Triage"} /></h2>
+                    <h2 id="patient-care-assistant-title"><Trans text={"AI Hospital Guide & Triage"} /></h2>
                     <p><Trans text={"One assistant for symptoms, department routing, token booking, live queue and waiting-time questions."} /></p>
               </div>
-              <span className="ai-triage-badge"><Trans text={"LIVE + PATIENT AWARE"} /></span>
+              <div className="patient-ai-chat-header-actions">
+                <span className="ai-triage-badge"><Trans text={"LIVE + PATIENT AWARE"} /></span>
+                <button
+                  type="button"
+                  className="patient-ai-chat-close"
+                  onClick={() => setIsAiChatOpen(false)}
+                  aria-label={t("Close")}
+                >
+                  <X size={17} />
+                </button>
+              </div>
             </div>
 
             <div className="ai-chat-messages">
@@ -3923,9 +3942,18 @@ function PatientDashboard() {
               </button>
             </form>
           </section>
+      )}
 
-        </aside>
-      </div>
+      <button
+        type="button"
+        className="patient-ai-widget-launcher"
+        onClick={() => setIsAiChatOpen((open) => !open)}
+        aria-label={t(isAiChatOpen ? "Close" : "Care Assistant")}
+        aria-expanded={isAiChatOpen}
+        aria-controls={isAiChatOpen ? "patient-care-assistant" : undefined}
+      >
+        {isAiChatOpen ? <X size={23} /> : <Bot size={24} />}
+      </button>
       </>}
 
       {patientSection !== "overview" && <div className="patient-section-toolbar">
@@ -3934,6 +3962,8 @@ function PatientDashboard() {
           {patientSection === "my-appointments" ? <><Calendar size={16}/><Trans text={"Book Appointment"}/></> : <><Activity size={16}/><Trans text={"My Dashboard"}/></>}
         </button>
       </div>}
+
+      {patientSection === "conditions" && <HealthConditions key={getActiveClinicSlug()} />}
 
       {patientSection === "my-appointments" && <details open id="patient-my-appointments" className="card patient-dashboard-section patient-feedback-dropdown patient-my-appointments patient-section-card">
         <summary className="patient-feedback-dropdown-header"><div className="card-title"><Calendar/><h2><Trans text={"My Appointments"} /><small className="patient-section-count">{patientAppointments.length}</small></h2></div><span className="feedback-dropdown-arrow" aria-hidden="true">⌄</span></summary>
@@ -6102,6 +6132,8 @@ function DoctorDashboardPage() {
               )}
             </div>
 
+            <HealthConditions key={activeCalledPatient._id} tokenId={activeCalledPatient._id} />
+
             <div className="doctor-medical-section">
               <h3><Trans text={"Past Medical History & Chronic Conditions"} /></h3>
               {doctorNormalizedHistory.length > 0 ? (
@@ -7308,6 +7340,7 @@ function AdminClinicSettingsPage() {
               <div className="clinic-settings-dropdown-body">
                 <div className="clinic-settings-grid two-col"><label><Trans text={"From date"} /><input type="date" value={exportRange.fromDate} onChange={(e)=>setExportRange((c)=>({...c,fromDate:e.target.value}))}/></label><label><Trans text={"To date"} /><input type="date" value={exportRange.toDate} onChange={(e)=>setExportRange((c)=>({...c,toDate:e.target.value}))}/></label></div>
                 <div className="operations-actions"><button type="button" className="ghost" onClick={()=>downloadAdminCsv("patients")}><Download size={15}/><Trans text={"Patient Visits CSV"} /></button><button type="button" className="ghost" onClick={()=>downloadAdminCsv("appointments")}><Download size={15}/><Trans text={"Appointments CSV"} /></button><button type="button" className="ghost" onClick={()=>downloadAdminCsv("doctor-performance")}><Download size={15}/><Trans text={"Doctor Performance CSV"} /></button><button type="button" className="ghost" onClick={()=>downloadAdminCsv("payments")}><Download size={15}/><Trans text={"Payments CSV"} /></button></div>
+                <ConditionInsights range={exportRange} />
               </div>
             </details>
 

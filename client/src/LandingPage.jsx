@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity, ArrowRight, BarChart3, CalendarCheck2, Check, ChevronRight,
-  ClipboardCheck, Clock3, HeartPulse, Monitor, QrCode, ShieldCheck,
+  ClipboardCheck, Clock3, HeartPulse, Monitor, Plus, QrCode, ShieldCheck,
   Stethoscope, Ticket, UserRoundCheck, Users,
 } from "lucide-react";
 import { useLanguage } from "./LanguageContext.jsx";
@@ -35,7 +35,7 @@ export default function LandingPage() {
     <section className="landing-hero" aria-labelledby="landing-title">
       <div className="landing-wrap landing-hero-grid">
         <div className="landing-hero-copy">
-          <span className="landing-eyebrow"><span className="landing-eyebrow-dot" />{t("THE CONNECTED CLINIC WORKSPACE")}</span>
+          <span className="landing-eyebrow"><span className="landing-medical-mark" aria-hidden="true"><Plus size={14} strokeWidth={3} /></span>{t("THE CONNECTED CLINIC WORKSPACE")}</span>
           <h1 id="landing-title">{t("A better clinic day,")} <em>{t("for everyone.")}</em></h1>
           <p>{t("Bring appointments, check-in, live queues and consultations together. Give your team a calmer workflow and patients a clearer visit.")}</p>
           <div className="landing-actions">
@@ -72,7 +72,7 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-          <div className="landing-floating-card"><span><Check size={17}/></span><div><strong>{t("One shared view")}</strong><small>{t("For every step of the visit")}</small></div></div>
+          <div className="landing-floating-card"><span><Plus size={18} strokeWidth={2.8} aria-hidden="true" /></span><div><strong>{t("One shared view")}</strong><small>{t("For every step of the visit")}</small></div></div>
         </div>
       </div>
     </section>

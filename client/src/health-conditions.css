@@ -1,0 +1,29 @@
+/* Scoped additions reuse OPDfy's surfaces, controls and palette. */
+.health-conditions-panel { min-width: 0; }
+.health-conditions-panel :is(p,small,strong,span) { overflow-wrap: anywhere; }
+.health-conditions-panel label { display: grid; gap: 7px; font-weight: 600; }
+.health-conditions-panel button { min-height: 44px; white-space: normal; }
+.health-conditions-panel select { width: 100%; min-width: 0; min-height: 44px; }
+.condition-editor { display: grid; gap: 16px; }
+.condition-selected { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,240px),1fr)); gap: 10px; }
+.condition-selection,.condition-review,.condition-stats article { border: 1px solid var(--border,#e2e8f0); background: var(--surface-2,#f8fafc); border-radius: 12px; padding: 14px; min-width: 0; }
+.condition-selection { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.condition-selection span { display: grid; gap: 5px; }.condition-selection small { color: var(--muted); }
+.condition-selection button { flex-shrink: 0; min-height: 44px; min-width: 44px; }
+.health-conditions-panel .condition-consent { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid var(--border,#e2e8f0); border-radius: 12px; }
+.health-conditions-panel .condition-consent input { width: 20px; height: 20px; flex: 0 0 20px; margin-top: 2px; }
+.condition-consent span { min-width: 0; }.condition-consent small { display: block; margin-top: 7px; font-weight: 400; line-height: 1.6; color: var(--muted); }
+.condition-note { color: var(--muted); font-size: .875rem; line-height: 1.65; }
+.condition-editor > button { justify-self: start; }
+.condition-reviews { display: grid; gap: 12px; margin-top: 24px; }
+.condition-review-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.condition-status { border: 1px solid currentColor; border-radius: 6px; padding: 4px 8px; font-size: .8rem; font-weight: 600; }
+.condition-confirmed { color: #087668; }.condition-pending { color: #986215; }.condition-not_confirmed { color: var(--muted); }
+.condition-review-actions { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.condition-review-actions label { flex: 1 1 240px; min-width: 0; }
+.condition-insights { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border,#e2e8f0); }
+.condition-insights > label { max-width: 440px; }
+.condition-stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,220px),1fr)); gap: 12px; margin-block: 18px; }
+.condition-stats article { display: grid; gap: 10px; }.condition-stats strong { font-size: 1.1rem; }
+html[data-theme="dark"] .condition-confirmed { color: #73d9c2; }html[data-theme="dark"] .condition-pending { color: #f3cc80; }
+@media(max-width:480px) { .condition-review-actions button,.condition-editor > button { width: 100%; }.condition-review-actions label { flex-basis: 100%; }.condition-insights .operations-actions button { width: 100%; white-space: normal; } }

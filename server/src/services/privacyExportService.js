@@ -10,7 +10,7 @@ const fail = (message, status = 400) => Object.assign(new Error(message), { stat
 const hash = (token) => crypto.createHash("sha256").update(token).digest("hex");
 const common = ["_id", "createdAt", "updatedAt"];
 const specs = Object.freeze([
-  ["patients", ["patientId", "name", "email", "phone", "dateOfBirth", "gender", "bloodGroup", "allergies", "medicalHistory", "currentMedications", "pastSurgeries", "emergencyContact", "profileCompleted"]],
+  ["patients", ["patientId", "name", "email", "phone", "dateOfBirth", "gender", "bloodGroup", "allergies", "medicalHistory", "currentMedications", "pastSurgeries", "emergencyContact", "profileCompleted", "conditionProfile"]],
   ["tokens", ["tokenNumber", "patientId", "patientName", "phone", "department", "assignedDoctor", "appointment", "referral", "reservation", "queueSource", "status", "urgency", "arrivalStatus", "calledAt", "completedAt", "billing", "queueControl", "isArchived"]],
   ["appointments", ["patientId", "patientName", "phone", "doctor", "doctorName", "department", "appointmentDate", "startTime", "endTime", "reason", "bookingSource", "status", "token", "followUpConsultation", "checkedInAt", "cancelledAt", "cancellationReason", "missedAt", "rescheduledAt", "rescheduleHistory", "billing"]],
   ["queuereservations", ["patientId", "patientName", "phone", "department", "doctor", "doctorName", "urgency", "reservationDate", "status", "token", "billing", "checkedInAt", "cancelledAt", "expiredAt"]],

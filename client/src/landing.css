@@ -73,7 +73,7 @@
 .landing-hero-grid { display: grid; grid-template-columns: minmax(0,.86fr) minmax(0,1.14fr); gap: clamp(34px,5vw,82px); align-items: center; }
 .landing-hero-copy { position: relative; z-index: 1; }
 .landing-eyebrow { display: inline-flex; align-items: center; gap: 9px; color: #087f88; font-size: .72rem; font-weight: 840; letter-spacing: .13em; text-transform: uppercase; }
-.landing-eyebrow-dot { width: 8px; height: 8px; border-radius: 50%; background: #0aa599; box-shadow: 0 0 0 5px #daf3ed; }
+.landing-medical-mark { width: 23px; height: 23px; display: grid; place-items: center; flex: 0 0 23px; color: #087f88; background: #dcf2ef; border: 1px solid #c2e7e1; border-radius: 7px; box-shadow: 0 3px 9px rgba(8,127,136,.1); }
 .landing-hero h1 { max-width: 620px; margin: 21px 0 22px; font-size: clamp(3.15rem,5.2vw,5.2rem); line-height: 1.06; font-weight: 790; letter-spacing: -.067em; }
 .landing-hero h1 em { display: block; color: #0b818b; font-style: normal; }
 .landing-hero-copy > p { max-width: 535px; color: var(--landing-muted); font-size: clamp(1.02rem,1.25vw,1.15rem); line-height: 1.7; }
@@ -266,6 +266,7 @@ html[data-theme="dark"] .landing { background: #101f2a; color: #e5f2f4; }
 html[data-theme="dark"] .landing :is(h1,h2,h3) { color: #eef8f8; }
 html[data-theme="dark"] .landing-hero { background: radial-gradient(ellipse at 75% 50%,#1b3b43 0%,#101f2a 70%); }
 html[data-theme="dark"] .landing-hero h1 em,html[data-theme="dark"] .landing-eyebrow,html[data-theme="dark"] .landing-inline-link { color: #81dbd5; }
+html[data-theme="dark"] .landing-medical-mark { color: #8ce3d8; background: #1d4548; border-color: #386a68; }
 html[data-theme="dark"] .landing :is(.landing-hero-copy > p,.landing-heading p,.landing-feature-copy p,.landing-steps p,.landing-feature-grid p,.landing-faq-list details p) { color: #acc5ce; }
 html[data-theme="dark"] .landing :is(.landing-proof span,.landing-feature-copy li,.landing-hero-assurance,.landing-preview-row small,.landing-workspace-cards small,.landing-operations-grid small,.landing-phone-list span) { color: #bed3da; }
 html[data-theme="dark"] .landing-proof,html[data-theme="dark"] .landing-section-soft,html[data-theme="dark"] .landing-patient-section { background: #142c37; border-color: #355363; }

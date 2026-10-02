@@ -14,7 +14,7 @@ import PrivacyRetentionPolicy from "../models/PrivacyRetentionPolicy.js";
 import PrivacyIncident from "../models/PrivacyIncident.js";
 import { issuePrivacyChallenge } from "../services/privacyRequestService.js";
 import { requestGuardianVerification, confirmGuardianEmail, revokeGuardian, guardianPublic, submitStructuredCorrection, resolveCorrection, validateRetentionPolicy, approveRetentionPolicy, validateIncident, appendIncidentEvent, privacyFailure } from "../services/privacyPhase3Service.js";
-import { sendSecurityAlert } from "../services/incidentResponseService.js";
+import { queueSecurityAlert } from "../services/incidentResponseService.js";
 const router = asyncRouter();
 const handle = (error, res) => res.status(error.status || 500).json({ message: publicErrorMessage(error, "Unable to process privacy operation.") });
 const id = value => { if (!mongoose.isValidObjectId(value)) throw privacyFailure("Invalid case ID."); return value; };
@@ -92,7 +92,7 @@ router.post("/admin/incidents", protectSuperAdmin, ownerLimit, wrap(async (req,r
  const input = validateIncident(req.body);
  if(input.tenantIds.length){const count=await mongoose.connection.db.collection("tenants").countDocuments({_id:{$in:input.tenantIds.map(value=>new mongoose.Types.ObjectId(value))}});if(count!==input.tenantIds.length)throw privacyFailure("One or more affected clinics do not exist.",404);}
  const [incident] = await PrivacyIncident.create([{ ...input, createdBy:req.superAdmin.id, source:"manual", events:[{kind:"created",note:"Incident case opened for assessment.",actor:req.superAdmin.id,actorType:"superadmin"}] }]);
- void sendSecurityAlert(incident);
+ void queueSecurityAlert(incident);
  event(req,"privacy_incident_created",{incidentId:String(incident._id)});res.status(201).json({id:incident._id,status:incident.status});
 }));
 router.get("/admin/incidents/:id", protectSuperAdmin, wrap(async (req,res) => {

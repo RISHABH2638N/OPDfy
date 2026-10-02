@@ -1,3 +1,4 @@
+import { getDoctorConditions, saveDoctorReview } from "./healthConditionHandlers.js";
 import { safeDiagnostic } from "../utils/privacySafeLog.js";
 import { asyncRouter, publicErrorMessage } from "../utils/httpSafety.js";
 import mongoose from "mongoose";
@@ -398,6 +399,9 @@ router.post("/reset",protect,requireRole("admin"),async(req,res)=>{
 
    Doctor/Admin only.
 ========================================================= */
+
+router.get("/:id/conditions", protect, requireRole("doctor"), getDoctorConditions);
+router.patch("/:id/conditions", protect, requireRole("doctor"), saveDoctorReview);
 
 router.get(
   "/:id/patient-profile",

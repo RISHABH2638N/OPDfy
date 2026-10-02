@@ -128,7 +128,7 @@ export async function executeAccountClosure({ requestId, ownerId, password, conf
     // Preserve clinic-owned medical/financial records and their stable historical references.
     // Do not erase, unlink, merge, reassign, or cancel any clinical record here.
     await mongoose.connection.db.collection("patients").updateMany({ globalPatientId: account._id },
-      { $set: { privacyContactDisabled: true } }, { session });
+      { $set: { privacyContactDisabled: true, "conditionProfile.analyticsConsent": false }, $inc: { "conditionProfile.revision": 1 } }, { session });
     await GlobalPatientOtp.deleteMany({ email: originalEmail }).session(session);
     await PrivacyVerification.deleteMany({ patient: account._id }).session(session);
     await PrivacyExportGrant.deleteMany({ patient: account._id }).session(session);

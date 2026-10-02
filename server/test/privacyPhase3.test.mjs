@@ -176,7 +176,7 @@ test("privileged routes bind actor and patient identities to authenticated recor
   "../utils/rateLimitStore.js":{createRateLimitStore:()=>({})},"../utils/securityEvents.js":{logSecurityEvent:noop},
   "../models/GlobalPatient.js":{default:{}},"../models/PrivacyGuardianCase.js":{default:{}},"../models/PrivacyRequest.js":{default:Request},"../models/PrivacyCorrectionReview.js":{default:{}},"../models/PrivacyRetentionPolicy.js":{default:{}},"../models/PrivacyIncident.js":{default:{}},
   "../services/privacyRequestService.js":{issuePrivacyChallenge:noop},
-  "../services/incidentResponseService.js":{sendSecurityAlert:noop},
+  "../services/incidentResponseService.js":{queueSecurityAlert:noop},
   "../services/privacyPhase3Service.js":{requestGuardianVerification:noop,confirmGuardianEmail:noop,revokeGuardian:noop,guardianPublic:noop,submitStructuredCorrection:noop,resolveCorrection:async args=>{captured.push(args);return{decision:"corrected",reviewedAt:new Date()};},validateRetentionPolicy:noop,approveRetentionPolicy:noop,validateIncident:noop,appendIncidentEvent:async args=>{captured.push(args);return{_id:ID.case,status:"triage",events:[]};},privacyFailure:(message,status=400)=>Object.assign(Error(message),{status})},
  };
  await load("src/routes/privacyPhase3Routes.js",deps);

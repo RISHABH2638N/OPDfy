@@ -492,3 +492,118 @@ License
 No open-source license is included in this repository. Unless a separate written licence states otherwise, the source code is proprietary and all rights are reserved by the project owner.
 
 Built with care for faster clinic operations and a clearer patient journey.
+
+
+## Verified health conditions update — 1 October 2026
+
+### Where to use it
+
+- **Patient:** select a clinic, then Sidebar → Health Conditions. Choose “I have known health conditions”, add one or more conditions from the dropdown, and save. “No known conditions” and “Prefer not to say” are separate declarations, not diagnoses. Conditions are initially patient-reported / pending review.
+- **Doctor:** call the registered patient, then Sidebar → Patient EHR. The “Review Health Conditions” card supports Confirm, Edit & Confirm, and Not confirmed. Review is available only for your assigned, actively called patient in your clinic. The reviewer, timestamp and source token are saved.
+- **Clinic Admin:** Clinic Settings → Data Export → Confirmed Condition Insights. Choose the existing from/to dates and a condition filter. Download the CSV, which opens in Excel. Refresh after a clinical review or consent change.
+
+The catalog contains diabetes, hypertension, heart disease, stroke history, chronic kidney disease, asthma, COPD/chronic breathing conditions, cancer, thyroid disorder, chronic liver disease and other chronic conditions.
+
+### Data and privacy rules
+
+- Structured conditions and doctor verification remain tenant-owned. Existing medical-history text and the global reusable profile continue to work; neither is automatically treated as a verified diagnosis.
+- Changing the selected condition list resets its reviews to pending. Resaving the same selection or changing analytics permission preserves existing reviews. Revision checks reject simultaneous/stale edits with HTTP 409.
+- Aggregate reporting requires both doctor confirmation **and** the patient's optional analytics permission. The default is no permission. Withdrawing permission removes the contribution from newly generated reports; previously downloaded files cannot be recalled.
+- Reports contain condition labels and distinct patient counts only, without names, contact details, patient IDs, reviewer IDs or individual clinical rows. Groups of 0–4 have the same withheld-count representation. A multi-condition patient may appear in multiple groups; group counts must not be added as a unique-patient total.
+- Dates select the latest condition review timestamp in UTC. This is a current profile snapshot, not a historical diagnosis register or a measure of population disease prevalence.
+- No locality/address is collected by this update, so area-wise disease analysis is not provided. Reports do not authorize AI model training. The new records are not added to the existing external AI prompt.
+- The patient's existing verified personal-data export includes their clinic condition profile. Account closure also withdraws condition analytics permission while retaining clinical records under the existing retention workflow.
+
+### Run locally
+
+Keep your existing server/client `.env` configuration. No database deletion, reseeding, migration or new dependency is required. Restart the server and client after replacing the source.
+
+Server, from the project root in one terminal:
+
+```bash
+cd server
+npm ci
+npm run dev
+```
+
+Client, in a second terminal from the project root:
+
+```bash
+cd client
+npm ci
+npm run dev
+```
+
+For a production client build, the existing Vite guard still requires your real HTTPS backend configuration:
+
+```dotenv
+VITE_API_URL=https://YOUR-BACKEND/api
+VITE_SOCKET_URL=https://YOUR-BACKEND
+```
+
+Then run `npm run build` in `client`. Verification here used non-routable HTTPS placeholders only to check compilation, not a deployed backend.
+
+### Verification results
+
+| Check | Result |
+|---|---|
+| Client privacy/session/localization suite | 34 passed |
+| Client appearance + new condition UI/auth/localization checks | 6 passed |
+| Client production build | Passed; existing large-chunk warning remains |
+| Server default unit/API suite, including 5 new condition checks | 143 passed |
+| Server privacy suites | 44 passed |
+| Server HTTP/realtime audit suite | 18 passed |
+| Source/import check | Passed |
+| Disposable MongoDB integration suites | Attempted; blocked at database startup by environment `Operation not permitted` (exit 100); not verified |
+| Browser viewport/interaction checks | Not completed: browser runtime unavailable and browser download failed |
+
+The new condition API tests use mocked model boundaries. They check authentication, assigned-doctor access, pending/confirmed transitions, revision conflicts, report filters and suppressed exports. The separate disposable-database test file covers actual persistence, clinic isolation, simultaneous saves, consent withdrawal and personal export, but its assertions could not execute in this environment.
+
+To run the database gate on a machine that can start MongoDB Memory Server, use `npm run test:integration` in `server`. It creates a disposable replica set and never uses your `MONGO_URI`. New client checks can be repeated with `node --test test/healthConditions.test.mjs` in `client`.
+
+### Changed files
+
+- `client/src/App.jsx`
+- `client/src/locales/en-hi.json`
+- `client/src/HealthConditions.jsx` (new)
+- `client/src/health-conditions.css` (new)
+- `client/test/healthConditions.test.mjs` (new)
+- `server/src/models/Patient.js`
+- `server/src/routes/patientRoutes.js`
+- `server/src/routes/tokenRoutes.js`
+- `server/src/routes/adminRoutes.js`
+- `server/src/routes/healthConditionHandlers.js` (new)
+- `server/src/services/healthConditions.js` (new)
+- `server/src/services/privacyExportService.js`
+- `server/src/services/privacyClosureService.js`
+- `server/test/healthConditions.test.js` (new)
+- `server/test/integration/healthConditions.test.js` (new)
+- `README.md`
+- `SECURITY_REVIEW.md`
+
+Existing landing page, floating chatbot, notification navigation, role workspaces, business APIs and Socket.IO event names are preserved. Styling additions are scoped to the new condition panels, with small-screen wrapping, keyboard/native controls, existing design tokens and English/Hindi labels.
+
+
+### Integration-test initialization correction — 2 October 2026
+
+The Windows run supplied by the operator passed all 23 database assertions, including the five new condition tests, but failed the health-condition test file with post-teardown `MongoNotConnectedError` activity attributed to its `before` hook. This is still a failed suite, not a fully green integration result.
+
+The condition test now imports all application models and awaits their `model.init()` promises before inserting fixtures or serving requests. Previously, automatic collection/index initialization from late model imports could remain pending when the suite disconnected. This correction changes test setup only; it does not alter production application behaviour.
+
+Repeat in `server`:
+
+```bash
+node --test test/integration/healthConditions.test.js
+npm run test:integration
+```
+
+Expected: the standalone file has 5 passing tests, and the combined integration run has 23 passing tests, with no post-test asynchronous error. The corrected database run remains unverified here because the disposable MongoDB binary cannot start in this environment.
+
+If the client build reports “Set VITE_API_URL and VITE_SOCKET_URL to your HTTPS backend before building”, configure `client/.env.production` with the actual deployed HTTPS backend API and Socket.IO origins. A localhost/HTTP development configuration does not meet the production guard. `npm run dev` remains the command for normal local testing. Do not replace real deployment settings with dummy URLs for release.
+
+
+## Security re-audit — 2 October 2026
+
+The health-condition edition has been reviewed again with focused security checks. The client lockfile now resolves Axios 1.20.0. Background incident-alert failures are caught safely, condition writes bind to the loaded revision, and condition/EHR reads use existing sensitive-access logging. UI, endpoints and database records are preserved. No reseed or migration is required.
+
+Current results: client 40 passed, server 208 passed; production client build passes; both registry audits report zero advisories. A new local Mongo integration attempt is blocked by this execution environment. Rerun `npm run test:integration` locally before deploying the final fixes. See SECURITY_REVIEW.md for scope, commands and limitations; CHANGED_FILES_SINCE_LAST_SECURITY_AUDIT.md lists the exact comparison with the previous audited ZIP. Preserve private `.env` files and use actual HTTPS production backend URLs when building.
