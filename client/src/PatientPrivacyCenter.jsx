@@ -152,7 +152,7 @@ export default function PatientPrivacyCenter() {
           {item.type === "erasure" && <PrivacyClosureStatus requestId={item.id} />}
         </article>)}
       </div>}
-      <p className="muted">{hi ? "सहायता: " : "Support: "}<a href="mailto:rishabhmishra263800@gmail.com">rishabhmishra263800@gmail.com</a></p>
+      <p className="muted">{hi ? "सहायता: " : "Support: "}<a href="mailto:opdfysupport@gmail.com">opdfysupport@gmail.com</a></p>
     </section>
     </div>
   </main>;
