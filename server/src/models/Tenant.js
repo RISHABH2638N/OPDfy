@@ -105,6 +105,13 @@ const tenantSchema = new mongoose.Schema(
         watermarkEnabled: { type: Boolean, default: true },
       },
     },
+    // Optional reporting terms; access and renewal rules stay in subscription.
+    analyticsTerms: {
+      plan: { type: String, enum: ["Starter", "Growth", "Enterprise", "Custom"] },
+      billingCycle: { type: String, enum: ["monthly", "yearly"] },
+      feePaise: { type: Number, min: 1, max: 100000000, validate: Number.isSafeInteger },
+      pilotEndsAt: { type: Date, default: null },
+    },
     subscription: {
       billingMode: { type: String, enum: ["manual"], default: "manual" },
       status: {

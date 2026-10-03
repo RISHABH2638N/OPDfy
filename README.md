@@ -607,3 +607,152 @@ If the client build reports “Set VITE_API_URL and VITE_SOCKET_URL to your HTTP
 The health-condition edition has been reviewed again with focused security checks. The client lockfile now resolves Axios 1.20.0. Background incident-alert failures are caught safely, condition writes bind to the loaded revision, and condition/EHR reads use existing sensitive-access logging. UI, endpoints and database records are preserved. No reseed or migration is required.
 
 Current results: client 40 passed, server 208 passed; production client build passes; both registry audits report zero advisories. A new local Mongo integration attempt is blocked by this execution environment. Rerun `npm run test:integration` locally before deploying the final fixes. See SECURITY_REVIEW.md for scope, commands and limitations; CHANGED_FILES_SINCE_LAST_SECURITY_AUDIT.md lists the exact comparison with the previous audited ZIP. Preserve private `.env` files and use actual HTTPS production backend URLs when building.
+
+## Super Admin analytics — 3 October 2026
+
+Base: `OPDfy_Clinic_Edition_Pricing_Update_Final.zip`.
+Open **Super Admin → Platform Analytics** (`/platform/analytics`).
+
+- Clinic overview: active/pending/suspended/expired/rejected clinics, configured pilots, doctor and staff counts.
+- Clinic-wise patients per day and per calendar month, with Today / 7 days / 30 days / custom dates and clinic filters. Patient identities are never returned by this API.
+- Counts use arrived/called/completed OPD tokens by token creation date in Asia/Kolkata. No-shows and unchecked waiting tokens are excluded; archived history is included. Linked patients are counted once per clinic per day or calendar month. Monthly totals start on the first day of the relevant month and run through the report end date. A record without a patient link/ID is counted as one token because identity deduplication is unavailable.
+- Configure actual agreed plan, fee per monthly/yearly billing cycle and optional pilot end date. Reporting terms do not change subscription access.
+- Record actual manual subscription/setup invoices as pending or paid. Confirm payment method/date or void a pending invoice. Request IDs protect retries; settlement is atomic and cannot be repeated.
+- Subscription collection totals use actual recorded payment dates. Outstanding totals include all pending invoices, independent of the report date filter. Historical renewal notes lack amounts and are not converted into invented revenue.
+- Renewals remain in **Active Clinics**. Recording an invoice/payment does not activate or renew a clinic. This edition has no payment gateway or automatic invoicing.
+- Feature adoption reports the number of clinics with appointment, queue, prescription or patient-booked appointment records in the selected period. Analytics screen views are not tracked.
+- Alerts show pending recorded payments, renewals within 7 days, pilots ending within 3 days and established active clinics without checked-in patients in the last 30 days. Alerts use the current date, not the historical report date.
+- Clinic counter payments are separate from OPDfy income. Token payments are counted once rather than adding mirrored appointment payments. The ledger shows the latest 100 invoices for the selected clinic(s); monetary totals include all matching invoices.
+
+### Run locally (Node.js 22.16+)
+
+Keep your private existing `.env` files. Do not replace them with public examples.
+
+Terminal 1, from project root:
+
+```powershell
+cd server
+npm ci
+npm run dev
+```
+
+Terminal 2, from project root:
+
+```powershell
+cd client
+npm ci
+npm run dev
+```
+
+Client: `http://localhost:5173`. Backend: `http://localhost:5000` unless your existing `PORT` differs.
+For local development, `client/.env` can use:
+
+```dotenv
+VITE_API_URL=http://localhost:5000/api
+VITE_SOCKET_URL=http://localhost:5000
+VITE_CLINIC_SLUG=demo-clinic
+```
+
+Use your actual clinic slug. For `npm run build`, set `VITE_API_URL` and `VITE_SOCKET_URL` to your **actual HTTPS production backend** in `client/.env.production`. HTTP localhost values intentionally do not pass the production guard.
+
+**Database reseeding/deletion: not required. No manual migration is required.** Optional `Tenant.analyticsTerms` and a platform-owned `subscriptioninvoices` collection are additive. Normal server startup creates model indexes, including the unique invoice request ID. No historic patient or subscription records are rewritten. An existing Super Admin account is sufficient.
+
+### Verification commands
+
+```powershell
+# In server
+npm test
+npm run test:privacy
+npm run test:audit
+npm run test:integration
+
+# In client
+npm run test:privacy
+node --experimental-vm-modules --test test/appearance.test.mjs test/healthConditions.test.mjs test/landingPage.test.mjs test/platformAnalytics.test.mjs
+npm run build
+```
+
+Integration tests create their own disposable MongoDB and never read `MONGO_URI`. The first run may download the test MongoDB binary.
+
+### Verified results for this update
+
+- Client privacy tests: **34 passed**. Appearance, health conditions, landing and platform analytics UI tests: **9 passed**.
+- Server core tests: **146 passed**. Full database integration suite: **27 passed**, including 4 new platform analytics tests. Existing privacy and HTTP/Socket.IO audit suites also passed.
+- Client production build: passed using non-deployable HTTPS test origins for compilation only. Use your real backend origins when building for release.
+- Browser checks: 320, 375, 768, 1024, 1440 and 1920px. No horizontal page overflow. Invoice creation, payment confirmation, keyboard dialog closing, mobile navigation, Hindi and dark mode passed with synthetic preview data; no browser errors were recorded.
+- Existing Vite large-bundle warning remains. Mocked email/monitoring tests emit expected failure diagnostics; external SMTP delivery was not exercised.
+- This verification covers the changed feature and existing regression suites. It does not certify every production configuration or replace a deployment security assessment.
+
+### Files changed since the latest pricing ZIP
+
+Modified:
+
+- `README.md`
+- `client/src/App.jsx`
+- `client/src/locales/en-hi.json`
+- `server/src/app.js`
+- `server/src/models/Tenant.js`
+
+New:
+
+- `client/src/PlatformAnalytics.jsx`
+- `client/src/platform-analytics.css`
+- `client/test/platformAnalytics.test.mjs`
+- `server/src/models/SubscriptionInvoice.js`
+- `server/src/routes/platformAnalyticsRoutes.js`
+- `server/src/services/platformAnalytics.js`
+- `server/test/integration/platformAnalytics.test.js`
+
+No dependencies, lockfiles, environment-variable names or existing API response properties were changed. New routes use the existing separate Super Admin credential and return aggregate clinic activity only. Existing clinic roles cannot use the platform analytics or subscription ledger endpoints.
+
+
+## Super Admin subscription invoice downloads
+
+In **Platform Analytics → Clinic activity & subscriptions**, use **Generate invoice** beside **Record invoice** (also available in each clinic row). Choose the clinic, payment type (monthly, yearly or setup), status and saved invoice, then select **Download PDF**. Older invoices can be loaded in pages of 50, including records beyond the analytics ledger's latest 100 rows.
+
+The PDF includes a stable `OPD-<full invoice ID>` number, issue/due dates, saved clinic billing details, plan, charge, recorded payment, balance, payment date/method and paid/pending/void status. Downloads only read the ledger: they never create a charge, record a payment or renew access. Clinic counter payments remain separate. Missing historical amounts are not inferred; record an invoice first. Labels in the portal support English/Hindi, and bundled fonts preserve English/Hindi clinic names in the English PDF. Long billing details continue onto a second page.
+
+Tax details are not configured. These subscription invoices are **not GST tax invoices**. PDF generation uses PDFKit on the server, embedded licensed fonts, no external rendering service and no stored PDF copies. Only authenticated Super Admin sessions can list/download these invoices. The existing private environment files stay unchanged. **No database migration or reseeding is required.**
+
+### Files changed for invoice generation (from Super Admin Analytics Final)
+
+- `README.md`
+- `client/src/PlatformAnalytics.jsx`
+- `client/src/platform-analytics.css`
+- `client/src/locales/en-hi.json`
+- `client/test/platformAnalytics.test.mjs`
+- `server/package.json` and `server/package-lock.json`
+- `server/src/routes/platformAnalyticsRoutes.js`
+- `server/test/integration/platformAnalytics.test.js`
+
+New: `server/src/services/subscriptionInvoicePdf.js` and five font/license files in `server/src/assets/invoice-fonts/`. No files removed.
+
+### Run
+
+Use Node.js 22.16+ and retain your existing private `.env` files. From the extracted project root, use separate terminals:
+
+```powershell
+cd server
+npm ci
+npm run dev
+```
+
+```powershell
+cd client
+npm ci
+npm run dev
+```
+
+For local development the client backend URLs may use HTTP localhost. A production build still requires your real HTTPS `VITE_API_URL` and `VITE_SOCKET_URL`; do not deploy the example compilation URLs used in automated checks.
+
+### Verification of this delivery
+
+- Client production build passed; existing large-bundle warning remains.
+- Client privacy suite: 34 passed; appearance/health conditions/landing/platform checks: 9 passed.
+- Server unit suite: 146 passed; privacy suites and HTTP/realtime audit suites passed.
+- Server disposable database integration suite: 29 passed, including six platform analytics/invoice checks.
+- Production dependency audit: zero reported vulnerabilities at verification time.
+- Browser checked at 320, 375, 768, 1024, 1440 and 1920px: no page or dialog horizontal overflow, actual PDF download, payment filters, empty state, Escape close and Hindi/dark mode.
+- PDF visual review checked paid/pending/void amounts, Hindi clinic names, long billing details and a real browser-downloaded invoice.
+
+These are regression and feature checks, not a fresh comprehensive penetration audit of a deployed server.

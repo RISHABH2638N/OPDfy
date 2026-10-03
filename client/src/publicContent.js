@@ -1,5 +1,5 @@
 export const POLICY_VERSION = '2026-09-09';
-export const SUPPORT_EMAIL = 'opdfysupport@gmail.com';
+export const SUPPORT_EMAIL = 'rishabhmishra263800@gmail.com';
 export const publicNavigation = [
   ['/faqs', 'FAQs', 'अक्सर पूछे जाने वाले प्रश्न'],
   ['/privacy', 'Privacy Policy', 'गोपनीयता नीति'],

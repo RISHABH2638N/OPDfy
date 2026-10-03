@@ -9,6 +9,7 @@ import PatientPrivacyCenter from "./PatientPrivacyCenter";
 import PatientClinicalSummary from './PatientClinicalSummary';
 import ClinicalConsentCenter from "./ClinicalConsentCenter";
 import PlatformBrandingPage from "./PlatformBrandingPage";
+import PlatformAnalytics from "./PlatformAnalytics";
 import "./followup-notifications.css";
 import { useLanguage, Trans } from "./LanguageContext";
 import { localizeUi } from "./i18n.js";
@@ -942,6 +943,7 @@ function AppLayout({ children }) {
       nav: [
         { group: "PLATFORM" },
         { to: "/platform", label: "Platform Overview", icon: <LayoutDashboard size={17} /> },
+        { to: "/platform/analytics", label: "Platform Analytics", icon: <BarChart3 size={17} /> },
         { group: "CLINICS & SUBSCRIPTIONS" },
         { to: "/platform?view=pending", label: "Pending Clinics", icon: <Clock3 size={17} /> },
         { to: "/platform?view=active", label: "Active Clinics", icon: <HeartPulse size={17} /> },
@@ -11111,6 +11113,7 @@ export default function App() {
         <Route path="/platform/privacy/governance" element={<PlatformProtectedRoute><PrivacyPhase3Governance /></PlatformProtectedRoute>} />
         <Route path="/platform/privacy/operations" element={<PlatformProtectedRoute><PrivacyPhase4Operations /></PlatformProtectedRoute>} />
         <Route path="/platform/branding" element={<PlatformProtectedRoute><PlatformBrandingPage /></PlatformProtectedRoute>} />
+        <Route path="/platform/analytics" element={<PlatformProtectedRoute><PlatformAnalytics /></PlatformProtectedRoute>} />
         <Route
           path="/platform"
           element={

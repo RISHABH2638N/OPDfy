@@ -30,6 +30,7 @@ import receptionRoutes from "./routes/receptionRoutes.js";
 import checkInRoutes from "./routes/checkInRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import platformRoutes from "./routes/platformRoutes.js";
+import platformAnalyticsRoutes from "./routes/platformAnalyticsRoutes.js";
 import displayRoutes from "./routes/displayRoutes.js";
 import onboardingRoutes from "./routes/onboardingRoutes.js";
 import clinicalConsentRoutes from "./routes/clinicalConsentRoutes.js";
@@ -169,6 +170,7 @@ installRealtimeGateway(io);
 // Platform owner APIs are intentionally outside clinic tenantContext.
 // They use a separate Super Admin identity and never expose clinical records.
 app.use("/api/platform", platformRoutes);
+app.use("/api/platform", platformAnalyticsRoutes);
 
 // Clinic self-registration is public and creates its own server-resolved tenant.
 app.use("/api/onboarding", onboardingRoutes);
