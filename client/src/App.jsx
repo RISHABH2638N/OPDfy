@@ -1178,8 +1178,8 @@ function AppLayout({ children }) {
           <nav className="premium-nav public-patient-nav" aria-label={t("Primary navigation")}>
             {location.pathname === "/" ? <>
               <a href="#workflow">{t("How it works")}</a>
-              <a href="#platform">{t("Platform")}</a>
               <a href="#features">{t("Features")}</a>
+              <a href="#pricing">{t("Pricing")}</a>
               <a href="#questions">{t("FAQs")}</a>
             </> : <Link className="patient-portal-link" to={getPatientToken() ? "/patient/clinics" : "/patient-login"} aria-current={isCurrentPage("/patient-login") || isCurrentPage("/patient/clinics") ? "page" : undefined}>
               <User size={15} /> <Trans text={"Patient Portal"} /></Link>}
@@ -1242,8 +1242,8 @@ function AppLayout({ children }) {
               <span className="public-menu-section-label"><Trans text="Account and clinic access" /></span>
               {location.pathname === "/" && <>
                 <a className="public-menu-link" href="#workflow" onClick={() => setIsPublicMenuOpen(false)}>{t("How it works")}</a>
-                <a className="public-menu-link" href="#platform" onClick={() => setIsPublicMenuOpen(false)}>{t("Platform")}</a>
                 <a className="public-menu-link" href="#features" onClick={() => setIsPublicMenuOpen(false)}>{t("Features")}</a>
+                <a className="public-menu-link" href="#pricing" onClick={() => setIsPublicMenuOpen(false)}>{t("Pricing")}</a>
                 <Link to={getPatientToken() ? "/patient/clinics" : "/patient-login"} className="public-menu-link" onClick={() => setIsPublicMenuOpen(false)}><User size={18}/><span><strong>{t("Patient Portal")}</strong></span><ChevronRight size={17}/></Link>
               </>}
               <Link to="/clinic/register" className="public-menu-link register" onClick={() => setIsPublicMenuOpen(false)}>
@@ -1688,9 +1688,13 @@ function PatientLoginPage() {
 function PatientClinicMarketplacePage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const [globalPatient, setGlobalPatient] = useState(null);
   const [clinics, setClinics] = useState([]);
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState(() => {
+    const query = new URLSearchParams(location.search).get("q") || "";
+    return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(query) && query.length <= 80 ? query : "";
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [selectingSlug, setSelectingSlug] = useState("");
   const [errorMessage, setErrorMessage] = useState("");

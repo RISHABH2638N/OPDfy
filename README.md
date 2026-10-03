@@ -1,3 +1,82 @@
+# OPDfy Clinic Edition — Landing Pricing Update
+
+This release uses `OPDfy_Clinic_Edition_Landing_Redesign_Final.zip` as its base, which carries the 2 October 2026 security-reviewed Clinic Edition backend. This update changes the landing pricing section, its related pilot FAQ, translations and regression check. Every server file is byte-for-byte identical to the base.
+
+## Pricing and presentation
+
+| Plan | Doctors | Monthly billing | Monthly equivalent on annual billing | Annual subscription total |
+|---|---|---:|---:|---:|
+| Starter | 1–2 | ₹1,299 | ₹1,049 | ₹12,588 |
+| Growth | 3–5 | ₹1,899 | ₹1,599 | ₹19,188 |
+| Enterprise | 6–8 | ₹3,499 | ₹3,099 | ₹37,188 |
+
+- A keyboard-accessible monthly/yearly selector updates all three cards. Annual cards show the crossed-out monthly rate, discounted monthly equivalent, total upfront payment and annual savings.
+- Benefits highlight existing Clinic Edition use cases for different team sizes. Every plan includes the core workflow; the benefits do not impose new feature restrictions.
+- A ₹1,999 one-time setup fee covers clinic configuration and staff onboarding when the clinic continues after the 14-day free pilot. It is additional to the subscription. Taxes and final subscription terms are confirmed during the demo.
+- Pilot buttons open the existing support page. This is a landing-page pricing presentation, not an automated subscription purchase or billing implementation.
+- English/Hindi, light/dark modes, visible focus, reduced motion and responsive layouts are supported.
+
+## Files changed since the landing redesign ZIP
+
+- `README.md`
+- `client/src/LandingPage.jsx`
+- `client/src/landing.css`
+- `client/src/locales/en-hi.json`
+- `client/test/landingPage.test.mjs`
+
+Keep your existing `.git` directory and private environment files when copying this release into your repository. No new dependency or backend change is required.
+
+## Run locally
+
+Use Node.js **22.16 or newer**. Keep your existing server environment and MongoDB replica-set configuration. **No migration, database deletion or reseeding is required.**
+
+From the extracted `OPDfy` directory, start the server:
+
+```powershell
+cd server
+npm ci
+npm run dev
+```
+
+In a second terminal, starting again from `OPDfy`, start the client:
+
+```powershell
+cd client
+npm ci
+npm run dev
+```
+
+Local `client/.env`:
+
+```dotenv
+VITE_API_URL=http://localhost:5000/api
+VITE_SOCKET_URL=http://localhost:5000
+VITE_CLINIC_SLUG=demo-clinic
+```
+
+Use your actual existing clinic slug. Open `http://localhost:5173/` and scroll to Pricing. Select Yearly to view the annual offer.
+
+Production builds still require your deployed HTTPS backend in `client/.env.production`:
+
+```dotenv
+VITE_API_URL=https://YOUR-BACKEND-DOMAIN/api
+VITE_SOCKET_URL=https://YOUR-BACKEND-DOMAIN
+VITE_CLINIC_SLUG=YOUR-CLINIC-SLUG
+```
+
+Then run `npm run build` from `client`. Keep these private environment files out of Git.
+
+## Verification of this update
+
+- Client privacy suite: **34/34 passed**.
+- Client appearance, health-condition and landing checks: **7/7 passed**.
+- Client production build: **passed**, using a reserved HTTPS verification origin. The existing large-bundle warning remains.
+- Server default tests: **146/146 passed**. No server file changed.
+- Browser: **48** checks covering monthly/yearly × English/Hindi × light/dark × 320/375/768/1024/1440/1920px widths. Prices, annual totals, savings, keyboard controls and support links passed, with no horizontal page overflow or browser JavaScript errors.
+- MongoDB integration tests, live email/AI-provider services and deployed infrastructure were not rerun for this landing update. It retains the audited backend; it is not a new security certification.
+
+---
+
 OPDfy
 
 Real-time OPD queue, clinic operations and patient-care coordination platform
