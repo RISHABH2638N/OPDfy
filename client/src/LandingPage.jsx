@@ -22,7 +22,7 @@ const workflow = [
 // Doctor-count tiers share the Clinic Edition workflow; lists highlight use cases.
 const pricingPlans = [
   {
-    name: "Starter", Icon: Stethoscope, doctors: "1–2 doctors", monthly: 1299, yearlyMonthly: 1049,
+    name: "Starter", Icon: Stethoscope, doctors: "1–2 doctors", monthly: 1299, yearlyMonthly: 1099,
     description: "For solo practitioners & small clinics", benefit: "Keep everyday visits organised.",
     features: ["Appointments & walk-in check-in", "Doctor-wise live token queues", "Digital prescriptions & follow-ups", "Patient portal & notifications", "Clinic analytics & payment records"],
   },
