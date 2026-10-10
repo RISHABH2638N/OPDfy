@@ -17,7 +17,11 @@ export async function protectGlobalPatient(req, res, next) {
       return res.status(403).json({ message: "This account is not a global patient account." });
     }
 
+    const perfStarted = process.env.PERF_TRACE_CLINICS === "1" ? performance.now() : 0;
     const patient = await GlobalPatient.findOne({ _id: decoded.id, status: "active" }).select("+tokenVersion");
+    if (perfStarted) {
+      console.info(`[ClinicPerf] patient_auth_db=${(performance.now() - perfStarted).toFixed(1)}ms`);
+    }
     if (!patient || Number(decoded.ver || 0) !== Number(patient.tokenVersion || 0)) {
       return res.status(401).json({ message: "Patient account no longer exists." });
     }

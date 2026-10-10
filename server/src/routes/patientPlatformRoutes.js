@@ -30,7 +30,10 @@ async function rosterForTenant(tenantId) {
 
 router.get("/clinics", protectGlobalPatient, async (req, res) => {
   try {
+    const trace = process.env.PERF_TRACE_CLINICS === "1";
+    const t0 = trace ? performance.now() : 0;
     await expireDueSubscriptions();
+    const t1 = trace ? performance.now() : 0;
     const search = String(req.query?.q || "").trim();
     const filter = { status: "active" };
     if (search) {
@@ -41,10 +44,12 @@ router.get("/clinics", protectGlobalPatient, async (req, res) => {
       ];
     }
 
+    const tBeforeTenants = trace ? performance.now() : 0;
     const tenants = await Tenant.find(filter)
       .select("_id name slug contactEmail contactPhone timezone settings legalVerification createdAt")
       .sort({ name: 1 })
       .lean();
+    const tAfterTenants = trace ? performance.now() : 0;
 
     const clinics = await Promise.all(tenants.map(async (tenant) => {
       const doctors = await rosterForTenant(tenant._id);
@@ -65,6 +70,10 @@ router.get("/clinics", protectGlobalPatient, async (req, res) => {
       };
     }));
 
+    if (trace) {
+      const tDone = performance.now();
+      console.info(`[ClinicPerf] list expiry=${(t1 - t0).toFixed(1)}ms tenant_query=${(tAfterTenants - tBeforeTenants).toFixed(1)}ms doctor_rosters=${(tDone - tAfterTenants).toFixed(1)}ms clinics=${clinics.length}`);
+    }
     res.json({ clinics, count: clinics.length });
   } catch (error) {
     console.error("Patient clinic discovery error:", safeDiagnostic(error));
@@ -74,14 +83,23 @@ router.get("/clinics", protectGlobalPatient, async (req, res) => {
 
 router.get("/clinics/:slug", protectGlobalPatient, async (req, res) => {
   try {
+    const trace = process.env.PERF_TRACE_CLINICS === "1";
+    const t0 = trace ? performance.now() : 0;
     await expireDueSubscriptions();
+    const t1 = trace ? performance.now() : 0;
     const slug = String(req.params.slug || "").trim().toLowerCase();
+    const tBeforeTenant = trace ? performance.now() : 0;
     const tenant = await Tenant.findOne({ slug, status: "active" })
       .select("_id name slug contactEmail contactPhone timezone settings legalVerification")
       .lean();
+    const tAfterTenant = trace ? performance.now() : 0;
     if (!tenant) return res.status(404).json({ message: "Clinic not found or unavailable." });
 
     const doctors = await rosterForTenant(tenant._id);
+    if (trace) {
+      const tDone = performance.now();
+      console.info(`[ClinicPerf] detail expiry=${(t1 - t0).toFixed(1)}ms tenant_query=${(tAfterTenant - tBeforeTenant).toFixed(1)}ms doctor_roster=${(tDone - tAfterTenant).toFixed(1)}ms`);
+    }
     res.json({
       clinic: {
         id: tenant._id,

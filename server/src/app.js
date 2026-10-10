@@ -143,6 +143,19 @@ app.get("/health/ready", (req, res) => {
   res.status(payload.ok ? 200 : 503).json(payload);
 });
 
+// Opt-in, PII-free timings for clinic discovery diagnostics. OFF by default.
+// Includes time spent in global rate limiter, patient auth, and route.
+if (process.env.PERF_TRACE_CLINICS === "1") {
+  app.use((req, res, next) => {
+    if (!/^\/api\/patient-platform\/clinics(?:\/|$)/.test(req.path)) return next();
+    const started = performance.now();
+    res.once("finish", () => {
+      console.info(`[ClinicPerf] request_total=${(performance.now() - started).toFixed(1)}ms status=${res.statusCode}`);
+    });
+    next();
+  });
+}
+
 app.use(
   rateLimit({
     windowMs: 60 * 1000,

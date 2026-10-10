@@ -27,6 +27,7 @@ class MongoRateLimitStore {
     const now = new Date();
     const resetAt = new Date(now.getTime() + this.windowMs);
     const id = `${this.namespace}:${String(key)}`;
+    const perfStarted = process.env.PERF_TRACE_CLINICS === "1" ? performance.now() : 0;
     const document = await this.collection().findOneAndUpdate(
       { _id: id },
       [
@@ -51,6 +52,9 @@ class MongoRateLimitStore {
       ],
       { upsert: true, returnDocument: "after" }
     );
+    if (perfStarted) {
+      console.info(`[ClinicPerf] rate_limit_store=${(performance.now() - perfStarted).toFixed(1)}ms`);
+    }
     const value = document?.value || document;
     return { totalHits: Number(value?.totalHits || 1), resetTime: new Date(value?.resetAt || resetAt) };
   }
