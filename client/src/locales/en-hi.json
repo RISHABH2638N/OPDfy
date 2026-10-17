@@ -2773,5 +2773,15 @@
   "Unable to load invoices.": "इनवॉइस लोड नहीं हो पाए।",
   "Loading invoices...": "इनवॉइस लोड हो रहे हैं...",
   "Choose valid invoice filters.": "सही इनवॉइस फ़िल्टर चुनें।",
-  "Invoice not found.": "इनवॉइस नहीं मिला।"
+  "Invoice not found.": "इनवॉइस नहीं मिला।",
+  "Daily Online Token Reservation Limit": "दैनिक ऑनलाइन टोकन आरक्षण सीमा",
+  "Maximum online reservations per day": "प्रतिदिन अधिकतम ऑनलाइन आरक्षण",
+  "Save Online Limit": "ऑनलाइन सीमा सहेजें",
+  "Only online QR reservations are capped. Reception walk-in tokens have no fixed numerical limit; clinic hours and queue rules still apply.": "सिर्फ ऑनलाइन QR आरक्षण पर सीमा लागू होगी। रिसेप्शन के वॉक-इन टोकन पर कोई तय संख्या सीमा नहीं है; क्लिनिक के समय और कतार नियम लागू रहेंगे।",
+  "Lowering the limit never cancels confirmed reservations. 0 closes new online bookings.": "सीमा घटाने से पहले से पुष्टि हुए आरक्षण रद्द नहीं होंगे। 0 करने से नए ऑनलाइन आरक्षण बंद होंगे।",
+  " — Limit reached": " — सीमा पूरी",
+  "Walk-ins: No fixed limit": "वॉक-इन: कोई तय सीमा नहीं",
+  "Online today:": "आज के ऑनलाइन आरक्षण:",
+  "Enter a whole number between 0 and 10000. Zero disables new online reservations only.": "0 से 10000 के बीच पूर्ण संख्या डालें। 0 सिर्फ नए ऑनलाइन आरक्षण बंद करता है।",
+  "Unable to save online reservation limit.": "ऑनलाइन आरक्षण सीमा सहेजी नहीं जा सकी।"
 }

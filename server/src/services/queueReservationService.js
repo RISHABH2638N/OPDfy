@@ -1,4 +1,5 @@
 import { databaseTransaction } from "../utils/databaseTransaction.js";
+import { onlineReservationLimit } from "../utils/onlineReservationPolicy.js";
 import QueueReservation from "../models/QueueReservation.js";
 import Token from "../models/Token.js";
 import User from "../models/User.js";
@@ -18,10 +19,8 @@ export function hospitalDate(now = new Date(), timeZone = DEFAULT_TIMEZONE) {
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
-export function onlineReservationLimit() {
-  const configured = Number(process.env.ONLINE_RESERVATION_LIMIT_PER_DOCTOR || 70);
-  return Number.isFinite(configured) && configured > 0 ? Math.floor(configured) : 70;
-}
+// Kept as a named export for existing callers of this service.
+export { onlineReservationLimit } from "../utils/onlineReservationPolicy.js";
 
 export async function expireOldQueueReservations() {
   const today = hospitalDate();
@@ -61,36 +60,53 @@ export async function createOnlineQueueReservation({ tenantId, patient, doctor, 
     throw error;
   }
 
-  const usedOnlinePlaces = await QueueReservation.countDocuments({
-    doctor: doctor._id,
-    reservationDate: today,
-    status: { $in: ["reserved", "checked_in"] },
-  });
-  const limit = onlineReservationLimit();
-  if (usedOnlinePlaces >= limit) {
-    const error = new Error(
-      `Online reservations for Dr. ${doctor.name} are full today. Walk-in patients can still check in at reception subject to clinic availability.`
-    );
-    error.status = 409;
-    error.code = "ONLINE_RESERVATION_LIMIT";
-    throw error;
-  }
-
+  // Price calculation is outside the lock/transaction to reduce contention.
   const feeQuote = await quoteVisitFee({ doctor, tenant, department, patientId: patient._id, visitType: "reservation", urgency, consultationKind, serviceDate: today });
-  return QueueReservation.create({
-    tenantId,
-    patient: patient._id,
-    patientId: patient.patientId,
-    patientName: patient.name,
-    phone: patient.phone || "",
-    department,
-    doctor: doctor._id,
-    doctorName: doctor.name,
-    urgency: urgency === "emergency" ? "emergency" : "normal",
-    patientRequestedUrgency: patientRequestedUrgency === "emergency" ? "emergency" : "",
-    reservationDate: today,
-    status: "reserved",
-    billing: { feeType: feeQuote.feeType, quotedAmount: feeQuote.amount, status: "pending" },
+
+  // All online bookings for this doctor acquire a transactional write lock on
+  // the SAME doctor document BEFORE counting & inserting. MongoDB serializes
+  // those transactions (or retries transient write conflicts), so simultaneous
+  // requests cannot all pass a stale count. Reads include legacy reservations
+  // and checked-in reservations; no counter migration or manual backfill needed.
+  // Admin limit edits touch the same document, serializing against bookings too.
+  return databaseTransaction(async () => {
+    const capacityDoctor = await User.findOneAndUpdate(
+      { _id: doctor._id, role: "doctor" },
+      { $inc: { reservationCapacityRevision: 1 } },
+      { new: true }
+    ).select("name onlineReservationLimit");
+    if (!capacityDoctor) {
+      throw Object.assign(new Error("Doctor is no longer registered with this clinic."), { status: 409 });
+    }
+    const usedOnlinePlaces = await QueueReservation.countDocuments({
+      doctor: doctor._id,
+      reservationDate: today,
+      status: { $in: ["reserved", "checked_in"] },
+    });
+    const limit = onlineReservationLimit(capacityDoctor);
+    if (usedOnlinePlaces >= limit) {
+      const error = new Error(
+        `Online reservations for Dr. ${capacityDoctor.name} are full today. Walk-in patients can still check in at reception subject to clinic availability.`
+      );
+      error.status = 409;
+      error.code = "ONLINE_RESERVATION_LIMIT";
+      throw error;
+    }
+    return QueueReservation.create({
+      tenantId,
+      patient: patient._id,
+      patientId: patient.patientId,
+      patientName: patient.name,
+      phone: patient.phone || "",
+      department,
+      doctor: doctor._id,
+      doctorName: capacityDoctor.name,
+      urgency: urgency === "emergency" ? "emergency" : "normal",
+      patientRequestedUrgency: patientRequestedUrgency === "emergency" ? "emergency" : "",
+      reservationDate: today,
+      status: "reserved",
+      billing: { feeType: feeQuote.feeType, quotedAmount: feeQuote.amount, status: "pending" },
+    });
   });
 }
 

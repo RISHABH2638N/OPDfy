@@ -77,6 +77,11 @@ const schema = new mongoose.Schema(
       emergencyFee: { type: Number, default: null, min: 0, max: 1000000 },
     },
 
+    // Null means legacy/environment fallback (70 by default). 0 closes ONLINE bookings only.
+    onlineReservationLimit: { type: Number, default: null, min: 0, max: 10000 },
+    // Serializes competing online reservation allocations on this doctor document.
+    reservationCapacityRevision: { type: Number, default: 0, select: false },
+
     doctorSchedule: {
       workingDays: {
         type: [String],

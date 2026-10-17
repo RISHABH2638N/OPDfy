@@ -10388,3 +10388,10 @@ body { overflow-x: hidden; }
     min-width: 54px;
   }
 }
+
+/* Doctor-wise online reservation limits (admin schedule card). */
+.doctor-online-limit-block { display: flex; flex-direction: column; gap: 9px; }
+.doctor-online-limit-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.doctor-online-limit-controls label { flex: 1 1 155px; display: flex; flex-direction: column; gap: 5px; }
+.doctor-online-limit-controls input { width: 100%; min-width: 0; }
+.doctor-online-limit-controls button { flex: 0 0 auto; }

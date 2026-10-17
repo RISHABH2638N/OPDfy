@@ -9466,6 +9466,9 @@ function AdminDashboardPage() {
   const [doctorScheduleDrafts, setDoctorScheduleDrafts] = useState({});
   const [doctorBillingDrafts, setDoctorBillingDrafts] = useState({});
   const [savingDoctorBilling, setSavingDoctorBilling] = useState("");
+  const [doctorOnlineLimitDrafts, setDoctorOnlineLimitDrafts] = useState({});
+  const [doctorOnlineUsage, setDoctorOnlineUsage] = useState({});
+  const [savingDoctorOnlineLimit, setSavingDoctorOnlineLimit] = useState("");
   const [savingDoctorSchedule, setSavingDoctorSchedule] = useState("");
   const [scheduleMessage, setScheduleMessage] = useState("");
   const [feedbackDoctorId, setFeedbackDoctorId] = useState("");
@@ -9586,6 +9589,9 @@ function AdminDashboardPage() {
   };
 
   const fetchAdminData = () => {
+    api.get("/admin/online-reservation-usage")
+      .then(({ data }) => setDoctorOnlineUsage(Object.fromEntries((data?.doctors || []).map((item) => [String(item.doctorId), item]))))
+      .catch(() => setDoctorOnlineUsage({}));
     api
       .get("/tokens/stats")
       .then((response) => setHospitalStats(response.data))
@@ -9655,6 +9661,30 @@ function AdminDashboardPage() {
         localizeUi(error.response?.data?.message ||
           "Could not provision staff account.")
       );
+    }
+  };
+
+  const saveDoctorOnlineLimit = async (doctor) => {
+    const raw = String(doctorOnlineLimitDrafts[doctor._id] ?? "").trim();
+    const limit = Number(raw);
+    if (!raw || !Number.isSafeInteger(limit) || limit < 0 || limit > 10000) {
+      alert(localizeUi("Enter a whole number between 0 and 10000. Zero disables new online reservations only."));
+      return;
+    }
+    setSavingDoctorOnlineLimit(doctor._id);
+    setScheduleMessage("");
+    try {
+      const { data } = await api.patch(`/admin/users/${doctor._id}/online-reservation-limit`, { onlineReservationLimit: limit });
+      setStaffAccountsList((current) => current.map((item) => String(item._id) === String(doctor._id)
+        ? { ...item, onlineReservationLimit: data.doctor.onlineReservationLimit } : item));
+      setDoctorOnlineLimitDrafts((current) => ({ ...current, [doctor._id]: String(data.doctor.onlineReservationLimit) }));
+      const { data: usage } = await api.get("/admin/online-reservation-usage");
+      setDoctorOnlineUsage(Object.fromEntries((usage?.doctors || []).map((item) => [String(item.doctorId), item])));
+      setScheduleMessage(data.message || "Online reservation limit saved. Existing reservations remain valid.");
+    } catch (error) {
+      alert(localizeUi(error.response?.data?.message || "Unable to save online reservation limit."));
+    } finally {
+      setSavingDoctorOnlineLimit("");
     }
   };
 
@@ -10878,6 +10908,29 @@ function AdminDashboardPage() {
                   >
                     {t(schedule.isOnBreak ? "ON BREAK" : "AVAILABLE")}
                   </span>
+                </div>
+
+                <div className="schedule-form-block doctor-online-limit-block">
+                  <span className="schedule-field-title"><Trans text={"Daily Online Token Reservation Limit"} /></span>
+                  <p className="muted"><Trans text={"Only online QR reservations are capped. Reception walk-in tokens have no fixed numerical limit; clinic hours and queue rules still apply."} /></p>
+                  <div className="doctor-online-limit-controls">
+                    <label>
+                      <Trans text={"Maximum online reservations per day"} />
+                      <input type="number" min="0" max="10000" step="1"
+                        value={doctorOnlineLimitDrafts[doctor._id] ?? String(doctorOnlineUsage[doctor._id]?.onlineReservationLimit ?? doctor.onlineReservationLimit ?? 70)}
+                        onChange={(e) => setDoctorOnlineLimitDrafts((current) => ({ ...current, [doctor._id]: e.target.value }))} />
+                    </label>
+                    <button type="button" className="ghost" disabled={savingDoctorOnlineLimit === doctor._id}
+                      onClick={() => saveDoctorOnlineLimit(doctor)}>
+                      {t(savingDoctorOnlineLimit === doctor._id ? "Saving..." : "Save Online Limit")}
+                    </button>
+                  </div>
+                  <small className="muted">
+                    Online today: {doctorOnlineUsage[doctor._id]?.booked ?? "—"} / {doctorOnlineUsage[doctor._id]?.onlineReservationLimit ?? doctor.onlineReservationLimit ?? 70}
+                    {doctorOnlineUsage[doctor._id]?.booked >= doctorOnlineUsage[doctor._id]?.onlineReservationLimit ? " — Limit reached" : ""}
+                    {" · Walk-ins: No fixed limit"}
+                  </small>
+                  <small className="muted"><Trans text={"Lowering the limit never cancels confirmed reservations. 0 closes new online bookings."} /></small>
                 </div>
 
                 <div className="schedule-form-block">
