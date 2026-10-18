@@ -3,7 +3,7 @@
   "version": "2.1.0",
   "type": "module",
   "scripts": {
-    "dev": "nodemon src/index.js",
+    "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "seed": "node src/seed.js",
     "tenant:bootstrap": "node scripts/bootstrapTenant.js",
@@ -39,7 +39,6 @@
   },
   "devDependencies": {
     "mongodb-memory-server": "^11.2.0",
-    "nodemon": "^3.1.14",
     "socket.io-client": "^4.8.3"
   },
   "overrides": {

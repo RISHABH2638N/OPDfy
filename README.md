@@ -1,5 +1,7 @@
 OPDfy
 
+Security update — 18 October 2026: Super Admin account throttling, bounded realtime admission and booking queues, expanded sensitive-read auditing, and updated development dependencies. See `SECURITY_HARDENING_2026-10-18.md` for the exact changes, verification limits and run commands. Existing UI, database schemas and API payloads are retained. No reseeding is required.
+
 Real-time OPD queue, clinic operations and patient-care coordination platform
 
 
@@ -311,7 +313,7 @@ Purpose
 
 npm run dev
 
-Start with Nodemon
+Start with Node.js built-in watch mode (Node.js 22.16+)
 
 npm start
 

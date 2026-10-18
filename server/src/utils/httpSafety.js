@@ -19,6 +19,25 @@ export function publicErrorMessage(error, fallback = "Unable to complete request
     ? error.message || fallback : fallback;
 }
 
+// Only waiting bookings are cancellable; executing DB transactions finish normally.
+export function requestAbortSignal(req, res) {
+  const controller = new AbortController();
+  const cleanup = () => {
+    req.off("aborted", abort);
+    res.off("close", abort);
+    res.off("finish", cleanup);
+  };
+  const abort = () => {
+    if (!res.writableEnded) controller.abort();
+    cleanup();
+  };
+  req.once("aborted", abort);
+  res.once("close", abort);
+  res.once("finish", cleanup);
+  if (req.aborted || res.destroyed) abort();
+  return controller.signal;
+}
+
 export function csvCell(value) {
   let text = value == null ? "" : String(value);
   // Spreadsheet apps execute formulas even inside correctly quoted CSV cells.

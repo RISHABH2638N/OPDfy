@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { assertVerifiedMembership } from '../src/services/patientMembershipService.js';
+import { createSocketAdmission } from '../src/utils/socketAdmission.js';
 
 async function harness() {
   let resolveMember;
@@ -12,6 +13,7 @@ async function harness() {
   const account = { _id: 'global-patient', tokenVersion: 0 };
   const context = vm.createContext({ console, Date, setTimeout, clearTimeout, setInterval, clearInterval });
   const dependencies = {
+    '../utils/socketAdmission.js': { createSocketAdmission },
     '../models/Tenant.js': { default: {} },
     '../models/User.js': { default: {} },
     '../models/Patient.js': { default: {} },

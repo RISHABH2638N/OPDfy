@@ -1,4 +1,5 @@
 import { safeDiagnostic } from "../utils/privacySafeLog.js";
+import crypto from "node:crypto";
 import { revokeSocketSessions } from "../utils/sessionTokens.js";
 import { asyncRouter, publicErrorMessage } from "../utils/httpSafety.js";
 import express from "express";
@@ -46,6 +47,18 @@ const loginLimiter = rateLimit({
   message: { message: "Too many failed platform login attempts. Please try again later." },
 });
 
+// Shared Mongo-backed account counters also cover attempts from rotating IPs.
+const loginAccountLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  store: createRateLimitStore("platform-login-account"),
+  keyGenerator: req => crypto.createHash("sha256").update(String(req.body?.email || "").trim().toLowerCase()).digest("hex"),
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { message: "Too many failed platform login attempts. Please try again later." },
+});
+
 // Public branding contains no tenant, account, or clinical information. It is
 // intentionally available before sign-in so login and landing screens can use
 // the platform owner's current logo.
@@ -57,7 +70,7 @@ router.get("/branding/public", async (req, res) => {
   return res.json({ branding: platformBrandingView(setting) });
 });
 
-router.post("/auth/login", loginLimiter, async (req, res) => {
+router.post("/auth/login", loginLimiter, loginAccountLimiter, async (req, res) => {
   try {
     const email = String(req.body?.email || "").trim().toLowerCase();
     const password = String(req.body?.password || "");

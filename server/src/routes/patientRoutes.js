@@ -1,6 +1,6 @@
 import { getPatientConditions, savePatientConditions } from "./healthConditionHandlers.js";
 import { safeDiagnostic } from "../utils/privacySafeLog.js";
-import { asyncRouter, publicErrorMessage } from "../utils/httpSafety.js";
+import { asyncRouter, publicErrorMessage, requestAbortSignal } from "../utils/httpSafety.js";
 import express from "express";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -662,6 +662,7 @@ router.post("/me/tokens", protectPatient, async (req, res) => {
       urgency: requestedUrgency,
       consultationKind,
       patientRequestedUrgency: patientUrgencyFlag ? "emergency" : "",
+      signal: requestAbortSignal(req, res),
     });
 
     emitOperationalUpdate(req.app.get("io"), ["reservations"]);
@@ -678,6 +679,7 @@ router.post("/me/tokens", protectPatient, async (req, res) => {
     });
   } catch (error) {
     console.error("Patient queue reservation error:", safeDiagnostic(error));
+    if (error.retryAfter) res.set("Retry-After", String(error.retryAfter));
     if (error?.code === 11000) {
       return res.status(409).json({
         message: "You already have an active online reservation for today.",

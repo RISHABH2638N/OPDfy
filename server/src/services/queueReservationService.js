@@ -38,7 +38,7 @@ export async function expireOldQueueReservations({ patientId = null, timeZone = 
   );
 }
 
-export async function createOnlineQueueReservation({ tenantId, patient, doctor, department, urgency = "normal", consultationKind = "normal", patientRequestedUrgency = "" }) {
+export async function createOnlineQueueReservation({ tenantId, patient, doctor, department, urgency = "normal", consultationKind = "normal", patientRequestedUrgency = "", signal }) {
   // Old dates cannot block today's reservation: the date is part of both
   // duplicate detection and capacity checks. Expiry is handled separately.
   const reservationStartedAt = performance.now();
@@ -136,7 +136,7 @@ export async function createOnlineQueueReservation({ tenantId, patient, doctor, 
       }
       throw error;
     }
-  });
+  }, { signal });
 }
 
 async function broadcastQueue(io) {
