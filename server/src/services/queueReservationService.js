@@ -1,5 +1,6 @@
 import { performance } from "node:perf_hooks";
 import { databaseTransaction } from "../utils/databaseTransaction.js";
+import { reserveOnlineQueueInBatch } from "./onlineReservationBatchService.js";
 import { withKeyedQueue } from "../utils/keyedAsyncQueue.js";
 import { onlineReservationLimit } from "../utils/onlineReservationPolicy.js";
 import QueueReservation from "../models/QueueReservation.js";
@@ -72,6 +73,15 @@ export async function createOnlineQueueReservation({ tenantId, patient, doctor, 
 
   // Price calculation is outside the lock/transaction to reduce contention.
   const feeQuote = await quoteVisitFee({ doctor, tenant, department, patientId: patient._id, visitType: "reservation", urgency, consultationKind, serviceDate: today });
+
+  // Phase 2 opt-in (staging first). Preserve the Phase 1 path as rollback.
+  if (process.env.BOOKING_BATCH_ENABLED === "1") {
+    return reserveOnlineQueueInBatch({
+      tenantId, patient, doctor, department, urgency, patientRequestedUrgency,
+      date: today, timezone: tenant?.timezone || DEFAULT_TIMEZONE, feeQuote,
+      signal: arguments[0]?.signal, startedAt: reservationStartedAt,
+    });
+  }
 
   // Reduce same-process write conflicts without weakening the DB guarantee.
   // This queue is an optimization ONLY; across Render instances the transaction
