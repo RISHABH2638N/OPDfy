@@ -45,6 +45,7 @@ import GlobalPatient from "./models/GlobalPatient.js";
 import GlobalPatientOtp from "./models/GlobalPatientOtp.js";
 import Appointment from "./models/Appointment.js";
 import QueueReservation from "./models/QueueReservation.js";
+import { expireOldQueueReservations } from "./services/queueReservationService.js";
 import Notification from "./models/Notification.js";
 import WaitingLoungeDisplay from "./models/WaitingLoungeDisplay.js";
 import SecurityEvent from "./models/SecurityEvent.js";
@@ -133,9 +134,9 @@ mongoose.connection.on("error", (error) =>
     }
 
     const runForEveryActiveTenant = async (task) => {
-      const tenants = await Tenant.find({ status: "active" }).select("_id").lean();
+      const tenants = await Tenant.find({ status: "active" }).select("_id timezone").lean();
       for (const tenant of tenants) {
-        await runWithTenant(tenant._id, () => task(io));
+        await runWithTenant(tenant._id, () => task(io, tenant));
       }
     };
 
@@ -160,14 +161,22 @@ mongoose.connection.on("error", (error) =>
       { onSuccess: started => recordMaintenanceRun("missed_appointments", "success", started), onFailure: (started, error) => recordMaintenanceRun("missed_appointments", "failure", started, error) }
     );
 
+    const reservationExpiryJob = createResilientJob(
+      "Old online reservation expiry",
+      () => runForEveryActiveTenant((_io, tenant) => expireOldQueueReservations({ timeZone: tenant.timezone || undefined })),
+      { onSuccess: started => recordMaintenanceRun("reservation_expiry", "success", started), onFailure: (started, error) => recordMaintenanceRun("reservation_expiry", "failure", started, error) }
+    );
+
     const maintenanceTimers = [
       setInterval(appointmentReminderJob, 60 * 1000),
       setInterval(followUpReminderJob, 60 * 60 * 1000),
       setInterval(subscriptionExpiryJob, 15 * 60 * 1000),
       setInterval(missedAppointmentJob, 5 * 60 * 1000),
+      setInterval(reservationExpiryJob, 10 * 60 * 1000),
       setInterval(() => runScheduledBackup().catch(error => console.error(`Scheduled backup check failed (${error?.code || error?.name || "ERROR"}).`)), 15 * 60 * 1000),
     ];
     setTimeout(() => runScheduledBackup().catch(error => console.error(`Scheduled backup startup check failed (${error?.code || error?.name || "ERROR"}).`)), 5000).unref?.();
+    setTimeout(reservationExpiryJob, 15 * 1000).unref?.();
     maintenanceTimers.forEach((timer) => timer.unref?.());
 
     console.log("MongoDB connected and indexes synchronized");

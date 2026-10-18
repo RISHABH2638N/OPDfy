@@ -701,7 +701,12 @@ router.get(
   protectPatient,
   async (req, res) => {
     try {
-      await expireOldQueueReservations();
+      // Refresh only this patient's past records. Never run a global
+      // updateMany on every history fetch / load-test preflight request.
+      await expireOldQueueReservations({
+        patientId: req.patient._id,
+        timeZone: req.tenant?.timezone || undefined,
+      });
 
       const tokens =
         await Token.find({
@@ -749,8 +754,9 @@ router.get(
 ========================================================= */
 router.get("/me/lounge-access", protectPatient, async (req, res) => {
   try {
-    await expireOldQueueReservations();
-    const today = hospitalDate();
+    // Historical reservations are excluded by today's date filter; no
+    // global expiry update is needed to determine lounge access.
+    const today = hospitalDate(new Date(), req.tenant?.timezone || undefined);
 
     const [reservation, activeToken] = await Promise.all([
       QueueReservation.findOne({

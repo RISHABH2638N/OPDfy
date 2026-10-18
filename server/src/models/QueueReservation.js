@@ -44,6 +44,16 @@ const queueReservationSchema = new mongoose.Schema(
 );
 
 queueReservationSchema.index({ tenantId: 1, doctor: 1, reservationDate: 1, createdAt: 1 });
+// Covers the exact hot-path online-capacity count, including checked-in places.
+queueReservationSchema.index(
+  { tenantId: 1, doctor: 1, reservationDate: 1, status: 1 },
+  { name: "tenant_doctor_date_status_capacity" }
+);
+// Covers the scheduled tenant-wide historical reservation expiry.
+queueReservationSchema.index(
+  { tenantId: 1, status: 1, reservationDate: 1 },
+  { name: "tenant_status_date_reservation_expiry" }
+);
 queueReservationSchema.index({ tenantId: 1, patient: 1, reservationDate: 1, status: 1 });
 queueReservationSchema.index(
   { tenantId: 1, patient: 1, reservationDate: 1 },
