@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-class MongoRateLimitStore {
+export class MongoRateLimitStore {
   constructor(namespace) {
     this.namespace = String(namespace || "api").replace(/[^a-z0-9_-]/gi, "_");
     this.windowMs = 60000;

@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { assertVerifiedMembership } from '../src/services/patientMembershipService.js';
-import { createSocketAdmission } from '../src/utils/socketAdmission.js';
 
 async function harness() {
   let resolveMember;
@@ -13,7 +12,6 @@ async function harness() {
   const account = { _id: 'global-patient', tokenVersion: 0 };
   const context = vm.createContext({ console, Date, setTimeout, clearTimeout, setInterval, clearInterval });
   const dependencies = {
-    '../utils/socketAdmission.js': { createSocketAdmission },
     '../models/Tenant.js': { default: {} },
     '../models/User.js': { default: {} },
     '../models/Patient.js': { default: {} },
@@ -35,6 +33,7 @@ async function harness() {
   const socket = {
     connected: true, data: { tenantId: 'clinic-a' }, rooms: new Set(['socket-id']),
     join(room) { this.rooms.add(room); }, leave(room) { this.rooms.delete(room); },
+    use(callback) { this.packetMiddleware = callback; },
     on(name, callback) { handlers.set(name, callback); },
     emit(name, value) { events.push({ name, value }); },
     disconnect() { this.connected = false; handlers.get('disconnect')?.(); },

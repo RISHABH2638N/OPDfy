@@ -15,10 +15,10 @@ test("clinical consent requests use the correct patient or staff credential", ()
 });
 
 test("consent center routes retain patient and staff role guards", () => {
-  assert.match(app, /path="\/patient\/consents"[^\n]+PatientClinicRequiredRoute/);
-  assert.match(app, /path="\/doctor\/consents"[^\n]+allowedRoles=\{\["doctor"\]\}/);
-  assert.match(app, /path="\/reception\/consents"[^\n]+allowedRoles=\{\["receptionist"\]\}/);
-  assert.match(app, /path="\/admin\/consents"[^\n]+allowedRoles=\{\["admin"\]\}/);
+  assert.match(app, /path="\/patient\/consents"\s+element=\{\s*<PatientClinicRequiredRoute>\s*<ClinicalConsentCenter\s*\/>\s*<\/PatientClinicRequiredRoute>/);
+  assert.match(app, /path="\/doctor\/consents"\s+element=\{\s*<StaffProtectedRoute\s+allowedRoles=\{\["doctor"\]\}/);
+  assert.match(app, /path="\/reception\/consents"\s+element=\{\s*<StaffProtectedRoute\s+allowedRoles=\{\["receptionist"\]\}/);
+  assert.match(app, /path="\/admin\/consents"\s+element=\{\s*<StaffProtectedRoute\s+allowedRoles=\{\["admin"\]\}/);
 });
 
 test("consent UI has Hindi copy and explicit dark-mode coverage", () => {
@@ -36,7 +36,7 @@ test("patient decision failures stay visible inside the consent modal", () => {
 });
 
 test("clinic admin has a guarded bilingual patient identity review workflow", () => {
-  assert.match(app, /path="\/admin\/privacy\/identity"[^\n]+allowedRoles=\{\["admin"\]\}/);
+  assert.match(app, /path="\/admin\/privacy\/identity"\s+element=\{\s*<StaffProtectedRoute\s+allowedRoles=\{\["admin"\]\}/);
   assert.match(identityReview, /\/privacy-clinic\/identity-reviews/);
   assert.match(identityReview, /रोगी पहचान समीक्षा/);
   assert.match(identityReview, /evidenceReference/);

@@ -42,7 +42,7 @@ test("only a 401 for the current matching session can expire it", () => {
 });
 
 test("login, OTP and logout requests never trigger global session expiry", () => {
-  for (const url of ["/auth/login","/auth/logout","/patient-auth/send-otp",
+  for (const url of ["/auth/login","/auth/logout","/patient-auth/login","/patient-auth/complete-registration","/patient-auth/reset-password","/patient-auth/send-otp",
     "/patient-auth/verify-otp","/patient-auth/refresh","/patient-auth/forget-device","/patient-auth/logout","/platform/auth/login"]) {
     assert.equal(isSessionExpiryEligible(url),false,url);
   }

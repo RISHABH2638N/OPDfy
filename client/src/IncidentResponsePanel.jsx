@@ -3,7 +3,7 @@ import { AlertTriangle, BellRing, Download, FileLock2, RefreshCw, Send, ShieldCh
 import { platformApi } from "./api";
 import { useLanguage } from "./LanguageContext.jsx";
 
-const messageOf = error => error.response?.data?.message || "Request failed. Please try again.";
+const messageOf = error => error.userMessage || error.response?.data?.message || "Request failed. Please try again.";
 
 export default function IncidentResponsePanel({ incidentId, onChanged }) {
   const { language, t } = useLanguage();

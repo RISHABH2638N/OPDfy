@@ -82,6 +82,14 @@ router.get("/operations-status", async (req, res) => {
    Search registered patients for front-desk registration.
    Only non-clinical identity/contact fields are returned.
 --------------------------------------------------------- */
+const FRONT_DESK_FIELDS = "_id patientId name email phone dateOfBirth gender profileCompleted createdAt";
+function frontDeskPatient(patient) {
+  // Response allowlist is separate from projection: future schema additions and
+  // mocked/populated documents cannot silently expand front-desk permissions.
+  return Object.fromEntries(FRONT_DESK_FIELDS.split(" ").filter(key => patient[key] !== undefined)
+    .map(key => [key, patient[key]]));
+}
+
 router.get("/patients", async (req, res) => {
   try {
     const search = String(req.query.search || "").trim();
@@ -98,12 +106,12 @@ router.get("/patients", async (req, res) => {
     }
 
     const patients = await Patient.find(query)
-      .select("_id patientId name email phone dateOfBirth gender profileCompleted createdAt")
+      .select(FRONT_DESK_FIELDS)
       .sort({ updatedAt: -1 })
       .limit(25)
       .lean();
 
-    res.json(patients);
+    res.json(patients.map(frontDeskPatient));
   } catch (error) {
     console.error("RECEPTION SEARCH PATIENTS:", safeDiagnostic(error));
     res.status(500).json({ message: "Unable to search patients." });
@@ -121,7 +129,7 @@ router.get("/patients/:id/reservations", async (req, res) => {
     }
     const reservations = await QueueReservation.find({
       patient: req.params.id,
-      reservationDate: hospitalDate(),
+      reservationDate: hospitalDate(new Date(), req.tenant?.timezone),
       status: "reserved",
     })
       .sort({ createdAt: 1 })
@@ -190,11 +198,11 @@ router.post("/patients", async (req, res) => {
     if (email) duplicateOr.push({ email });
 
     if (duplicateOr.length) {
-      const existing = await Patient.findOne({ $or: duplicateOr }).lean();
+      const existing = await Patient.findOne({ $or: duplicateOr }).select(FRONT_DESK_FIELDS).lean();
       if (existing) {
         return res.status(409).json({
           message: "A patient with this phone/email already exists. Select the existing patient instead.",
-          patient: existing,
+          patient: frontDeskPatient(existing),
         });
       }
     }
@@ -211,16 +219,7 @@ router.post("/patients", async (req, res) => {
 
     const patient = await Patient.create(payload);
 
-    res.status(201).json({
-      _id: patient._id,
-      patientId: patient.patientId,
-      name: patient.name,
-      email: patient.email || "",
-      phone: patient.phone || "",
-      dateOfBirth: patient.dateOfBirth,
-      gender: patient.gender,
-      profileCompleted: patient.profileCompleted,
-    });
+    res.status(201).json(frontDeskPatient(patient));
   } catch (error) {
     console.error("RECEPTION CREATE PATIENT:", safeDiagnostic(error));
     if (error?.code === 11000) {
@@ -341,7 +340,7 @@ router.post("/tokens", async (req, res) => {
 
     const pendingReservation = await QueueReservation.findOne({
       patient: patient._id,
-      reservationDate: hospitalDate(),
+      reservationDate: hospitalDate(new Date(), req.tenant?.timezone),
       status: "reserved",
     }).lean();
 

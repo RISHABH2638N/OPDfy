@@ -123,6 +123,7 @@ export async function executeAccountClosure({ requestId, ownerId, password, conf
         allergies: [], medicalHistory: [], currentMedications: [], pastSurgeries: [], emergencyContact: { name: "", phone: "" },
         profileCompleted: false, profileUpdatedAt: closedAt, closedAt, closureRequest: request._id, lastLoginAt: null },
       $inc: { tokenVersion: 1, privacyRevision: 1 },
+      $unset: { username: 1, passwordHash: 1, credentialsSetAt: 1 },
     }, { session, runValidators: true });
     if (update.matchedCount !== 1) throw fail("Account changed during closure. Review again.", 409);
     // Preserve clinic-owned medical/financial records and their stable historical references.

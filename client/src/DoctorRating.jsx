@@ -15,7 +15,7 @@ export function doctorRatingText(doctor) {
 
 export function doctorOptionText(doctor) {
   const profile = doctor.prescriptionProfile || {};
-  return [`Dr. ${doctor.name}`, profile.qualification, profile.designation, doctorRatingText(doctor)].filter(Boolean).join(" — ");
+  return [`Dr. ${doctor.name}`, profile.qualification, profile.designation].filter(Boolean).join(" — ");
 }
 
 export default function DoctorRating({ doctor }) {
@@ -33,7 +33,9 @@ export default function DoctorRating({ doctor }) {
     {(profile.qualification || profile.designation) && <span>{[profile.qualification, profile.designation].filter(Boolean).join(" · ")}</span>}
     <b>{doctorRatingText(doctor)}</b>
     <span className={`doctor-registration-badge verification-${verification.status || "not_submitted"}`}><Trans text={verificationText} /></span>
-    <small><Trans text={"Patient feedback from completed visits at this clinic."} /></small>
-    <small><Trans text={"Registration review is recorded by the clinic and is not a government certification."} /></small>
+    <details className="doctor-rating-explanation">
+      <summary>{t("About ratings and registration")}</summary>
+      <p>{t("Ratings come from completed visits at this clinic. Registration is reviewed by the clinic, not certified by a government authority here.")}</p>
+    </details>
   </div>;
 }

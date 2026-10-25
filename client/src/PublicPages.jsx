@@ -47,7 +47,6 @@ export default function PublicInfoPage({ kind }) {
   const [query, setQuery] = useState('');
   const title = publicNavigation.find(([path])=>path === `/${kind}`)?.[hi ? 2 : 1] || 'OPDfy';
   useEffect(()=>{ setQuery(''); window.scrollTo(0,0); },[kind]);
-  useEffect(()=>{ const previous=document.title; document.title=`${title} · OPDfy`; return ()=>{document.title=previous;}; },[title]);
   const sections = page.sections.filter(row=>kind!=='faqs'||row.join(' ').toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
   return <main className="public-info" id="public-info">
     <header className="info-hero">

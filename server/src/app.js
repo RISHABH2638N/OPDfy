@@ -29,6 +29,7 @@ import "./models/FollowUpPlan.js";
 import receptionRoutes from "./routes/receptionRoutes.js";
 import checkInRoutes from "./routes/checkInRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
+import platformMfaRoutes from "./routes/platformMfaRoutes.js";
 import platformRoutes from "./routes/platformRoutes.js";
 import platformAnalyticsRoutes from "./routes/platformAnalyticsRoutes.js";
 import displayRoutes from "./routes/displayRoutes.js";
@@ -64,13 +65,14 @@ import {
 import { reconcileLinkedAppointmentStatuses, markMissedAppointments } from "./services/appointmentLifecycleService.js";
 
 
+import { createRealtimeAdmission } from "./services/realtimeAdmission.js";
 import { installRealtimeGateway } from "./services/realtimeGateway.js";
 import { requestSafety } from "./middleware/requestSafety.js";
 import { sensitiveAccessAudit } from "./middleware/sensitiveAccessAudit.js";
 import { publicErrorMessage } from "./utils/httpSafety.js";
 import { safeDiagnostic } from "./utils/privacySafeLog.js";
 
-export function createApplication() {
+export function createApplication(options = {}) {
 const app = express();
 const server = http.createServer(app);
 const client = process.env.CLIENT_URL || "http://localhost:5173";
@@ -115,6 +117,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
+app.use("/api", sensitiveAccessAudit);
 app.use("/api", requestSafety);
 
 // Health probes must not depend on the database-backed API rate-limit store.
@@ -166,9 +169,16 @@ app.use(
   })
 );
 
+const admission = createRealtimeAdmission({ ...options.realtime,
+  resolveIp: req => { req.app = app; return Object.getOwnPropertyDescriptor(express.request, "ip").get.call(req); },
+});
 const io = new Server(server, {
+  connectTimeout: 10000,
   maxHttpBufferSize: 16384,
-  allowRequest: (req, callback) => callback(null, !req.headers.origin || allowedOrigins.includes(req.headers.origin)),
+  allowRequest: (req, callback) => {
+    if (req.headers.origin && !allowedOrigins.includes(req.headers.origin)) return callback("Origin not allowed", false);
+    admission.allow(req, callback);
+  },
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
@@ -178,10 +188,22 @@ const io = new Server(server, {
 
 app.set("io", io);
 
-installRealtimeGateway(io);
+io.engine.on("connection", admission.connected);
+io.engine.use(admission.polling);
+const stopRealtime = installRealtimeGateway(io);
+const originalClose = io.close.bind(io);
+io.close = callback => new Promise((resolve, reject) => {
+  const result = originalClose(async () => {
+    try { stopRealtime?.(); await admission.close(); callback?.(); resolve(io); }
+    catch (error) { reject(error); }
+  });
+  result?.catch?.(reject);
+});
+app.set("realtimeAdmission", admission);
 
 // Platform owner APIs are intentionally outside clinic tenantContext.
 // They use a separate Super Admin identity and never expose clinical records.
+app.use("/api/platform", platformMfaRoutes);
 app.use("/api/platform", platformRoutes);
 app.use("/api/platform", platformAnalyticsRoutes);
 
@@ -203,7 +225,7 @@ app.use("/api/display", displayRoutes);
 
 app.use("/api", tenantContext);
 app.use("/api", activityAuditMiddleware);
-app.use("/api", sensitiveAccessAudit);
+
 
 app.get("/api/tenant/current", (req, res) => {
   res.json({

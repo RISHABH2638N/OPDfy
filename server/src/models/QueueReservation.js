@@ -12,6 +12,7 @@ const queueReservationSchema = new mongoose.Schema(
     doctor: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
     doctorName: { type: String, required: true, trim: true },
     urgency: { type: String, enum: ["normal", "emergency"], default: "normal", index: true },
+    bookingFingerprint: { type: String, select: false },
     patientRequestedUrgency: { type: String, enum: ["", "emergency"], default: "" },
     reservationDate: { type: String, required: true, match: /^\d{4}-\d{2}-\d{2}$/, index: true },
     status: {
@@ -44,16 +45,6 @@ const queueReservationSchema = new mongoose.Schema(
 );
 
 queueReservationSchema.index({ tenantId: 1, doctor: 1, reservationDate: 1, createdAt: 1 });
-// Covers the exact hot-path online-capacity count, including checked-in places.
-queueReservationSchema.index(
-  { tenantId: 1, doctor: 1, reservationDate: 1, status: 1 },
-  { name: "tenant_doctor_date_status_capacity" }
-);
-// Covers the scheduled tenant-wide historical reservation expiry.
-queueReservationSchema.index(
-  { tenantId: 1, status: 1, reservationDate: 1 },
-  { name: "tenant_status_date_reservation_expiry" }
-);
 queueReservationSchema.index({ tenantId: 1, patient: 1, reservationDate: 1, status: 1 });
 queueReservationSchema.index(
   { tenantId: 1, patient: 1, reservationDate: 1 },
@@ -62,6 +53,10 @@ queueReservationSchema.index(
     name: "tenant_patient_daily_queue_reservation_unique",
     partialFilterExpression: { status: "reserved" },
   }
+);
+queueReservationSchema.index(
+  { tenantId: 1, status: 1, reservationDate: 1 },
+  { name: "tenant_status_date_reservation_expiry" }
 );
 queueReservationSchema.plugin(tenantScopedPlugin);
 

@@ -7,11 +7,13 @@ const LanguageContext = createContext({ language: "en", setLanguage: () => {}, t
 
 export function useLanguage() { return useContext(LanguageContext); }
 
-export function LanguageProvider({ children }) {
+export function LanguageProvider({ children, deferPreferences = false }) {
   const [language, setLanguageState] = useState(() => {
+    if (deferPreferences) return "en";
     try { return localStorage.getItem(STORAGE_KEY) === "hi" ? "hi" : "en"; }
     catch { return "en"; }
   });
+  useEffect(() => { if (deferPreferences) { try { setLanguageState(localStorage.getItem(STORAGE_KEY) === "hi" ? "hi" : "en"); } catch {} } }, []);
   setUiLanguage(language);
   const setLanguage = (next) => setLanguageState(next === "hi" ? "hi" : "en");
   useEffect(() => {

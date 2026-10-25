@@ -28,7 +28,7 @@ export default function PlatformBrandingPage() {
       setSavedLogoUrl(currentLogo);
       setUpdatedAt(data?.branding?.updatedAt || null);
     } catch (requestError) {
-      setError(requestError.response?.data?.message || "Unable to load platform branding.");
+      setError(requestError.userMessage || requestError.response?.data?.message || "Unable to load platform branding.");
     } finally {
       setLoading(false);
     }
@@ -70,7 +70,7 @@ export default function PlatformBrandingPage() {
       setMessage(data?.message || "Platform branding saved.");
       window.dispatchEvent(new CustomEvent("opdfy:branding-updated", { detail: { branding } }));
     } catch (requestError) {
-      setError(requestError.response?.data?.message || "Unable to save platform branding.");
+      setError(requestError.userMessage || requestError.response?.data?.message || "Unable to save platform branding.");
     } finally {
       setSaving(false);
     }

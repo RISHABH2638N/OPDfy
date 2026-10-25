@@ -16,9 +16,9 @@ async function createHarness() {
   };
   const clients = [];
   const sent = [];
-  function createClient() {
+  function createClient(options = {}) {
     const client = {
-      defaults: {},
+      defaults: { ...options },
       interceptors: {
         request: { handlers: [], use(fn, reject) { this.handlers.push({fn,reject}); } },
         response: { handlers: [], use(fn, reject) { this.handlers.push({fn,reject}); } },
@@ -47,9 +47,10 @@ async function createHarness() {
     context,identifier:"api.js",initializeImportMeta(meta){meta.env={PROD:false,DEV:true,VITE_API_URL:"",VITE_SOCKET_URL:"",VITE_CLINIC_SLUG:""};},
   });
   const routing = new vm.SourceTextModule(readFileSync(new URL("../src/authRouting.js",import.meta.url),"utf8"),{context,identifier:"authRouting.js"});
+  const requestErrors = new vm.SourceTextModule(readFileSync(new URL("../src/requestErrors.js",import.meta.url),"utf8"),{context,identifier:"requestErrors.js"});
   const axios = new vm.SyntheticModule(["default"],function(){this.setExport("default",{create:createClient});},{context,identifier:"axios"});
   const socketModule = new vm.SyntheticModule(["socket"],function(){this.setExport("socket",socket);},{context,identifier:"socket"});
-  await main.link(specifier=>({axios,"./socket":socketModule,"./authRouting.js":routing})[specifier]);
+  await main.link(specifier=>({axios,"./socket":socketModule,"./authRouting.js":routing,"./requestErrors.js":requestErrors})[specifier]);
   await main.evaluate();
   return {api:main.namespace, clients,store,events,socket,socketHandlers,sent};
 }
@@ -101,6 +102,9 @@ test("old requests, public authentication, 403 and 500 cannot log out the patien
   await reject(h.api.api,403,request(h.api.api,"/referrals/patient/me"));
   await reject(h.api.api,500,request(h.api.api,"/referrals/patient/me"));
   await reject(h.api.patientPlatformApi,401,request(h.api.patientPlatformApi,"/patient-auth/verify-otp"));
+  for (const path of ["/patient-auth/login", "/patient-auth/complete-registration", "/patient-auth/reset-password"]) {
+    await reject(h.api.patientPlatformApi,401,request(h.api.patientPlatformApi,path));
+  }
   assert.equal(h.store.get("opd_patient_token"),"patient-2");
   assert.equal(h.store.get("opd_token"),"staff-1");
   assert.equal(h.events.filter(e=>e.type==="opd:session-expired").length,0);
@@ -127,3 +131,10 @@ for (const [kind, key, method, endpoint] of [
     assert.equal(h.store.get(key), "new-session");
   });
 }
+
+
+test("primary API clients use bounded deadlines while logout keeps its independent deadline", async () => {
+  const h = await createHarness();
+  for (const client of [h.api.api, h.api.platformApi, h.api.onboardingApi, h.api.patientPlatformApi]) assert.equal(client.defaults.timeout, 20000);
+  assert.equal(h.clients.at(-1).defaults.timeout, 20000);
+});

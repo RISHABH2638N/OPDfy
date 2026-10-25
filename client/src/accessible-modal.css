@@ -1,0 +1,13 @@
+/* Keep existing overlay/panel designs while resetting native dialog sizing. */
+dialog.accessible-modal {
+  margin: 0;
+  border: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  box-sizing: border-box;
+  color: inherit;
+}
+dialog.accessible-modal:not([open]) { display: none; }
+dialog.accessible-modal::backdrop { background: transparent; }

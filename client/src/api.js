@@ -1,3 +1,4 @@
+import { requestFailureMessage } from "./requestErrors.js";
 import { sessionKindForRequest, shouldExpireSession, patientSessionSummary } from "./authRouting.js";
 import axios from "axios";
 import { socket } from "./socket";
@@ -212,7 +213,7 @@ function persistPatientAuth(data, { resetClinicContext = false } = {}) {
 }
 
 export function savePatientAuth(data) {
-  // A fresh OTP login starts with no inherited clinic context.
+  // A fresh patient login starts with no inherited clinic context.
   persistPatientAuth(data, { resetClinicContext: true });
 }
 
@@ -381,3 +382,12 @@ socket.on("session:expired", async ({ kind } = {}) => {
   }
   if (["staff", "platform"].includes(kind)) expireLocalSession(kind);
 });
+
+// Never retry network failures/timeouts automatically: a mutation may already
+// have committed. The existing one-shot patient refresh retries only a 401.
+for (const client of [api, platformApi, onboardingApi, patientPlatformApi]) {
+  client.interceptors.response.use(response => response, error => {
+    error.userMessage = requestFailureMessage(error, error.config?.method);
+    return Promise.reject(error);
+  });
+}

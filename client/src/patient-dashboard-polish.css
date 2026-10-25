@@ -1,0 +1,128 @@
+/* Patient tasks render one at a time at every viewport. Keep details reachable
+   without requiring patients to scan duplicated forms or technical status copy. */
+.portal-patient .patient-workspace .patient-premium-snapshot {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 20px;
+}
+.portal-patient .patient-workspace .patient-snapshot-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.portal-patient .patient-workspace .patient-snapshot-grid article {
+  padding: 12px;
+}
+.portal-patient .patient-workspace .patient-snapshot-grid :is(span,strong,small) {
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: normal;
+}
+.portal-patient .patient-workspace .patient-snapshot-grid strong {
+  overflow: visible;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+.portal-patient .patient-workspace .patient-snapshot-grid a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.portal-patient .patient-workspace .patient-premium-snapshot.has-active-visit {
+  grid-template-columns: 1fr;
+}
+.portal-patient .patient-workspace .patient-snapshot-grid.has-live-token {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.portal-patient .patient-workspace .patient-live-summary-card {
+  grid-column: 1 / -1;
+}
+.portal-patient .patient-workspace .patient-live-summary-card .patient-live-token-number {
+  font-size: 2rem;
+}
+.portal-patient .patient-workspace .patient-snapshot-actions:empty {
+  display: none;
+}
+.portal-patient .patient-workspace .patient-booking-identity {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 18px;
+  margin: 8px 0 18px;
+  font-size: .875rem;
+  color: var(--accessible-muted);
+}
+.portal-patient .patient-workspace .patient-booking-identity span {
+  overflow-wrap: anywhere;
+}
+.portal-patient .patient-workspace .patient-booking-note {
+  margin: 14px 0 8px;
+  color: var(--accessible-muted);
+  font-size: .875rem;
+  line-height: 1.6;
+}
+.portal-patient .patient-workspace .patient-visit-details {
+  margin-bottom: 0;
+  padding: 16px;
+}
+.portal-patient .patient-workspace .patient-visit-details > summary {
+  padding: 4px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.portal-patient .patient-workspace .patient-visit-details .live {
+  margin: 16px 0 0;
+}
+.portal-patient .patient-workspace .referral-workspace {
+  margin-top: 18px;
+}
+.portal-patient .patient-referral-status {
+  color: var(--accessible-muted);
+  font-size: .875rem;
+}
+.doctor-rating-explanation {
+  margin-top: 6px;
+  font-weight: 400;
+}
+.doctor-rating-explanation summary {
+  cursor: pointer;
+  padding: 6px 0;
+  font-size: .8125rem;
+}
+.doctor-rating-explanation p {
+  margin: 8px 0 0;
+  font-size: .8125rem;
+  line-height: 1.6;
+}
+.portal-patient .patient-workspace :is(summary,a,button):focus-visible {
+  outline: 3px solid var(--accessible-accent);
+  outline-offset: 3px;
+}
+@media (max-width: 1100px) {
+  .portal-patient .patient-workspace .patient-premium-snapshot {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .portal-patient .patient-workspace .patient-snapshot-grid.has-live-token {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .portal-patient .patient-workspace .patient-snapshot-grid.has-live-token > article:last-child {
+    grid-column: 1 / -1;
+  }
+  .portal-patient .patient-workspace .patient-visit-details { padding: 12px; }
+  .portal-patient .patient-workspace .patient-booking-identity { display: grid; }
+}
+@media (max-width: 600px) {
+  /* Every destination stays visible without horizontal discovery gestures. */
+  .portal-patient .patient-workspace .patient-command-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+    gap: 6px;
+  }
+  .portal-patient .patient-workspace .patient-command-tabs button {
+    min-width: 0;
+    width: 100%;
+    min-height: 44px;
+  }
+  .portal-patient .patient-workspace .patient-command-tabs button b {
+    white-space: normal;
+  }
+}

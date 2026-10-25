@@ -255,15 +255,17 @@ export function ReceptionReferrals({ expanded = false }) {
   </details>;
 }
 
-export function PatientReferrals() {
+export function PatientReferrals({ hideWhenEmpty = false }) {
   const { t } = useLanguage();
   const [referrals, setReferrals] = useState([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
   const refresh = useCallback(async () => {
     try {
       const { data } = await api.get("/referrals/patient/me");
       setReferrals(data.referrals || []); setError("");
     } catch (error) { setError(message(error)); }
+    finally { setLoading(false); }
   }, []);
   useEffect(() => {
     refresh();
@@ -276,9 +278,12 @@ export function PatientReferrals() {
       socket.off("connect", refresh);
     };
   }, [refresh]);
-  return <details className="card referral-workspace">
+  if (loading && !referrals.length && !error) return <p className="patient-referral-status" role="status">{t("Loading referrals...")}</p>;
+  if (hideWhenEmpty && !loading && !error && !referrals.length) return null;
+  if (error && !referrals.length) return <section className="card referral-workspace"><p className="login-error" role="alert">{t(error)}</p><button type="button" className="ghost" onClick={() => { setLoading(true); refresh(); }}>{t("Retry")}</button></section>;
+  return <details className="card referral-workspace" open={error ? true : undefined}>
     <summary><strong><Trans text={"My Department Referrals"} /></strong><span className="muted"><Trans text={"Specialist recommendations and destination tokens"} /></span></summary>
-    {error && <p className="login-error" role="alert">{t(error)}</p>}
+    {error && <div><p className="login-error" role="alert">{t(error)}</p><button type="button" className="ghost" onClick={refresh}>{t("Retry")}</button></div>}
     {!referrals.length && <p className="muted"><Trans text={"No referrals recorded for this clinic."} /></p>}
     <div className="referral-list">{referrals.map((r) => <article key={r._id} className="referral-entry">
       <div className="referral-entry-head"><strong>{r.fromDepartment} → {r.toDepartment}</strong><ReferralStatus status={r.status} /></div>

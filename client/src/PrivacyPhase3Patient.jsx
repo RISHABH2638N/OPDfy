@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ShieldCheck, RefreshCw } from "lucide-react";
 import { patientPlatformApi } from "./api";
 import { useLanguage } from "./LanguageContext";
-const msg = error => error.response?.data?.message || "The request could not be completed.";
+const msg = error => error.userMessage || error.response?.data?.message || "The request could not be completed.";
 const label = (hi,en,hindi) => hi ? hindi : en;
 
 export function PrivacyGuardianControls() {

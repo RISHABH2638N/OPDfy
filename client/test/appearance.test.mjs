@@ -31,7 +31,7 @@ test('dark rules are screen scoped and contain no application behaviour or layou
 });
 test('public navigation retains language and theme preferences',()=>{
   const app=read('src/App.jsx');
-  assert.match(app,/<section className="public-menu-preferences"[^>]*>[\s\S]*?<LanguageSwitcher \/>\s*<ThemeToggle \/>/);
+  assert.match(app,/<section\s+className="public-menu-preferences"[^>]*>[\s\S]*?<LanguageSwitcher \/>\s*<ThemeToggle \/>/);
   assert.match(app,/aria-controls="public-mobile-navigation"/);
   assert.match(read('src/main.jsx'),/import "\.\/dark-contrast.css"/);
   assert.match(read('src/appearance-controls.css'),/\.public-mode \.theme-toggle span \{ display: inline;/);

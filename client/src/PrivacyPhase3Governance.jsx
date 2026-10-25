@@ -5,7 +5,7 @@ import { platformApi } from "./api";
 import { useLanguage } from "./LanguageContext.jsx";
 import "./privacy-center.css";
 
-const messageOf = error => error.response?.data?.message || "Request failed.";
+const messageOf = error => error.userMessage || error.response?.data?.message || "Request failed.";
 const tabs = [["retention", "Retention registry"], ["incidents", "Incident register"], ["corrections", "Global corrections"]];
 const policyFields = [
   ["category", "Data category"], ["version", "Policy version"], ["legalBasis", "Legal basis"],

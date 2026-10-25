@@ -1,6 +1,14 @@
 OPDfy
 
-Security update — 18 October 2026: Super Admin account throttling, bounded realtime admission and booking queues, expanded sensitive-read auditing, and updated development dependencies. See `SECURITY_HARDENING_2026-10-18.md` for the exact changes, verification limits and run commands. Existing UI, database schemas and API payloads are retained. No reseeding is required.
+> Current release: see [SEO_PERFORMANCE_REPORT.md](SEO_PERFORMANCE_REPORT.md) and [SEO_DEPLOYMENT_CHECKLIST.md](SEO_DEPLOYMENT_CHECKLIST.md). Production builds require the operator-verified PUBLIC_SITE_ORIGIN; earlier reports remain historical evidence.
+
+> Current release: see [ACCESSIBILITY_REPORT.md](ACCESSIBILITY_REPORT.md) and `ACCESSIBILITY_EVIDENCE/` for accessibility corrections and the latest executed QA results. The previous QA report/evidence describes the historical baseline.
+
+Current QA automation release: read [QA_REPORT.md](QA_REPORT.md) for actual results/remaining defects and [QA_GUIDE.md](QA_GUIDE.md) for the complete isolated test command. Application behavior is unchanged from the security-hardened baseline. Historical release notes below retain their original scope.
+
+Current release: **Clinic security hardening, 24 October 2026**. Read [SECURITY_HARDENING_REPORT.md](SECURITY_HARDENING_REPORT.md) for verified changes, test results, MFA enrollment, deployment precautions and rollback limits. This includes the patient password release below. No production deployment was performed.
+
+Current patient authentication release: username/email + password login, one-time email verification for registration, and email OTP password setup/recovery. See [PATIENT_PASSWORD_LOGIN.md](PATIENT_PASSWORD_LOGIN.md) for the upgrade procedure and executed checks. Older day-by-day notes below describe historical releases.
 
 Real-time OPD queue, clinic operations and patient-care coordination platform
 
@@ -22,7 +30,7 @@ Product highlights
 
 Multi-tenant clinic workspaces with role-based access
 
-Patient email OTP sign-in and staff password recovery using registered email
+Patient username/email + password sign-in, email-verified registration and password recovery; staff password recovery using registered email
 
 Live token and queue updates through authenticated Socket.IO sessions
 
@@ -56,7 +64,7 @@ Main capabilities
 
 Patient
 
-Email OTP login, clinic discovery, doctor rating and qualification, token/appointment booking, live queue, health profile, prescriptions, referrals, follow-ups, notifications, treatment consent and privacy requests
+Username/email + password login, email OTP recovery, clinic discovery, doctor rating and qualification, token/appointment booking, live queue, health profile, prescriptions, referrals, follow-ups, notifications, treatment consent and privacy requests
 
 Doctor
 
@@ -313,7 +321,7 @@ Purpose
 
 npm run dev
 
-Start with Node.js built-in watch mode (Node.js 22.16+)
+Start with Nodemon
 
 npm start
 

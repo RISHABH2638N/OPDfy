@@ -45,7 +45,7 @@ test("future client revisions cannot write a stale patient declaration or clinic
   assert.equal(patient.conditionProfile.entries[0].status, "pending");
 });
 
-test("condition and EHR reads are audited only after authorized success with no health data or query values", async t => {
+test("condition and EHR reads audit success and denial without health data or query values", async t => {
   const records = [];
   t.mock.method(SecurityEvent, "create", async record => { records.push(record); return {}; });
   const actor = String(new mongoose.Types.ObjectId()), tenant = new mongoose.Types.ObjectId();
@@ -60,11 +60,13 @@ test("condition and EHR reads are audited only after authorized success with no 
     finish(path); finish(path, 403); finish(path, 200, false);
   }
   await new Promise(resolve => setImmediate(resolve));
-  assert.equal(records.length, 3);
+  assert.equal(records.length, 9);
   for (const record of records) {
     assert.equal(record.event, "patient_data_access");
-    assert.equal(record.actorId, actor); assert.equal(String(record.tenantId), String(tenant));
-    assert.deepEqual(record.metadata, {});
+    assert.ok([actor, ""].includes(record.actorId)); assert.equal(String(record.tenantId), String(tenant));
+    assert.ok(["success", "blocked"].includes(record.outcome));
+    assert.ok([200, 403].includes(record.metadata.status));
+    assert.ok(record.metadata.resourceType);
     assert.doesNotMatch(record.route, /private-name|diabetes|\?|[a-f0-9]{24}/);
   }
 });

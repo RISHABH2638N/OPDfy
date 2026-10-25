@@ -63,7 +63,7 @@ export default function HealthConditions({ tokenId }) {
           <span><strong>{label(code)}</strong><small>{t(changed ? statusLabel.pending : statusLabel[data.profile.entries.find(item => item.code === code)?.status] || statusLabel.pending)}</small></span>
           <button type="button" className="ghost" disabled={busy} onClick={() => setCodes(current => current.filter(item => item !== code))} aria-label={t("Remove {condition}", { condition: label(code) })}><X size={16} aria-hidden="true"/></button>
         </div>)}</div>
-        <p className="condition-note">{t("Changing your selection requires a new doctor review. Removing a selection does not delete your consultation records.")}</p>
+        <p className="condition-note">{t("Changes need a new doctor review. Removing a selection keeps your consultation records.")}</p>
         <label className="condition-consent"><input type="checkbox" checked={consent} disabled={busy} onChange={e => setConsent(e.target.checked)}/><span>{t("Allow this clinic to use my doctor-confirmed conditions in aggregate condition reports.")}<small>{t("Optional. Your care is unaffected. Reports hide names, contacts and IDs; small counts are withheld. This does not permit AI model training. You can withdraw here anytime.")}</small></span></label>
         <button type="button" className="primary" disabled={busy || (declaration === "conditions" && !codes.length)} onClick={() => save()}><CheckCircle size={16} aria-hidden="true"/>{t(busy ? "Saving..." : "Save Health Conditions")}</button>
       </div>}
@@ -83,7 +83,6 @@ export default function HealthConditions({ tokenId }) {
           </div>}
         </article>)}
       </div>
-      <p className="condition-note">{t("Review applies only to this clinic. It is not a diagnosis from the patient assistant.")}</p>
     </>}
     {error && <div className="login-error" role="alert">{t(error)}{!data && <button type="button" className="ghost" onClick={() => setAttempt(current => current + 1)}>{t("Retry")}</button>}</div>}
     {success && <p className="success" role="status">{t(success)}</p>}

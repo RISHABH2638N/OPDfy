@@ -82,7 +82,7 @@ export async function buildPrivacyExport(patientId) {
       unverifiedClinicMemberships: unverified,
       notice: "Historical or unverified clinic records require an assisted identity review. This export is not a complete legal disclosure or a certified medical record. Contact support for additional records, processing information or corrections.",
     },
-    account: pick(account, ["_id", "email", "name", "phone", "dateOfBirth", "gender", "bloodGroup", "allergies", "medicalHistory", "currentMedications", "pastSurgeries", "emergencyContact", "profileCompleted", "profileUpdatedAt", "createdAt", "updatedAt"]),
+    account: pick(account, ["_id", "email", "username", "credentialsSetAt", "name", "phone", "dateOfBirth", "gender", "bloodGroup", "allergies", "medicalHistory", "currentMedications", "pastSurgeries", "emergencyContact", "profileCompleted", "profileUpdatedAt", "createdAt", "updatedAt"]),
     consents, clinics,
   };
   const body = JSON.stringify(exported, null, 2);

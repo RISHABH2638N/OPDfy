@@ -13,8 +13,9 @@ function initialTheme() {
   } catch { return "light"; }
 }
 
-export function ThemeProvider({ children }) {
-  const [theme, setThemeState] = useState(initialTheme);
+export function ThemeProvider({ children, deferPreferences = false }) {
+  const [theme, setThemeState] = useState(() => deferPreferences ? "light" : initialTheme());
+  useEffect(() => { if (deferPreferences) setThemeState(initialTheme()); }, []);
   const setTheme = (value) => setThemeState(value === "dark" ? "dark" : "light");
   useEffect(() => {
     document.documentElement.dataset.theme = theme;

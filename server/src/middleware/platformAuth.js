@@ -1,3 +1,4 @@
+import { mfaRequired } from "../services/platformMfa.js";
 import { safeDiagnostic } from "../utils/privacySafeLog.js";
 import { verifySessionToken } from "../utils/sessionTokens.js";
 import jwt from "jsonwebtoken";
@@ -24,16 +25,23 @@ export async function protectSuperAdmin(req, res, next) {
     }
 
     const account = await SuperAdmin.findOne({ _id: decoded.id, status: "active" })
-      .select("_id name email status +tokenVersion")
+      .select("_id name email status mfaEnabled +tokenVersion")
       .lean();
 
     if (!account || Number(decoded.ver || 0) !== Number(account.tokenVersion || 0)) return res.status(401).json({ message: "Platform account is disabled or unavailable." });
 
+    if (account.mfaEnabled && decoded.mfa !== true) return res.status(401).json({ message: "Platform MFA verification required." });
+    const enrollmentRequired = mfaRequired() && !account.mfaEnabled;
+    if (enrollmentRequired && !/^\/api\/platform\/(?:me$|auth\/logout$|auth\/mfa(?:\/|$))/.test(String(req.originalUrl || "").split("?", 1)[0])) {
+      return res.status(403).json({ message: "Enroll platform MFA before using the console.", code: "MFA_ENROLLMENT_REQUIRED" });
+    }
     req.superAdmin = {
       id: String(account._id),
       name: account.name,
       email: account.email,
       role: "superadmin",
+      mfaEnabled: Boolean(account.mfaEnabled),
+      mfaEnrollmentRequired: enrollmentRequired,
     };
     next();
   } catch (error) {

@@ -12,6 +12,11 @@ const globalPatientSchema = new mongoose.Schema(
       index: true,
     },
     name: { type: String, default: "", trim: true, maxlength: 120 },
+    // Absent on legacy accounts until email-verified password setup. The partial
+    // unique index allows those accounts while enforcing global, normalized names.
+    username: { type: String, lowercase: true, trim: true, match: /^[a-z0-9][a-z0-9_.]{2,29}$/ },
+    passwordHash: { type: String, select: false },
+    credentialsSetAt: { type: Date, default: null },
     phone: { type: String, default: "", trim: true, maxlength: 20 },
 
     // SaaS Day 7: one patient-owned health profile shared by the patient
@@ -53,5 +58,7 @@ const globalPatientSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+globalPatientSchema.index({ username: 1 }, { unique: true, partialFilterExpression: { username: { $type: "string" } } });
 
 export default mongoose.model("GlobalPatient", globalPatientSchema);

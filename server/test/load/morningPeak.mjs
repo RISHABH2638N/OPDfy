@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {performance} from 'node:perf_hooks';import {io} from 'socket.io-client';import mongoose from 'mongoose';
+import {startQaFixture} from '../helpers/qaFixture.js';import {runWithTenant} from '../../src/services/tenantExecutionContext.js';import Token from '../../src/models/Token.js';import QueueReservation from '../../src/models/QueueReservation.js';
+const output=process.env.QA_ARTIFACTS_DIR||fs.mkdtempSync(path.join(os.tmpdir(),'opdfy-qa-load-'));fs.mkdirSync(output,{recursive:true});
+const budget=Number(process.env.QA_LOAD_DEADLINE_MS||60000);if(!Number.isInteger(budget)||budget<1||budget>60000)throw Error('QA load budget can only reduce the 60-second ceiling.');
+const deadlineController=new AbortController();let deadline;
+const ceilings={clinics:3,patientsPerClinic:10,readRequests:240,httpConcurrency:12,sockets:18,maximumRuntimeMs:budget};
+const report={scenario:'Bounded synthetic morning burst, loopback only',ceilings,checks:[],errors:[],productionCapacityClaim:false};let f,timer,sockets=[];
+const quantile=(values,p)=>{const sorted=[...values].sort((a,b)=>a-b);return sorted[Math.min(sorted.length-1,Math.ceil(p*sorted.length)-1)]||0;};
+const stats=values=>({n:values.length,p50Ms:quantile(values,.5),p95Ms:quantile(values,.95),p99Ms:quantile(values,.99),maxMs:Math.max(0,...values)});
+try{
+ f=await startQaFixture({distributed:true});let peakRss=process.memoryUsage().rss,peakHeap=process.memoryUsage().heapUsed,inUse=0,peakInUse=0,created=0;
+ const driver=mongoose.connection.getClient();driver.on('connectionCreated',()=>created++);driver.on('connectionCheckedOut',()=>{inUse++;peakInUse=Math.max(peakInUse,inUse);});driver.on('connectionCheckedIn',()=>{inUse=Math.max(0,inUse-1);});
+ const clinics=[];for(let i=0;i<ceilings.clinics;i++){const clinic=await f.clinic(),doctor=await f.staff(clinic,'doctor',{onlineReservationCapacity:5}),reception=await f.staff(clinic,'receptionist'),patients=await Promise.all(Array.from({length:10},()=>f.patient(clinic)));clinics.push({clinic,doctor,reception,patients});}
+ created=0;peakInUse=0;const cpu=process.cpuUsage(),memoryBefore=process.memoryUsage(),started=performance.now();timer=setInterval(()=>{const m=process.memoryUsage();peakRss=Math.max(peakRss,m.rss);peakHeap=Math.max(peakHeap,m.heapUsed);},50);
+ deadline=setTimeout(()=>{report.deadlineExpired=true;deadlineController.abort();console.error('QA load ceiling exceeded');process.exitCode=1;sockets.forEach(s=>s.disconnect());},ceilings.maximumRuntimeMs);deadline.unref();
+ const request=(url,options)=>f.request(url,{...options,signal:deadlineController.signal});
+ const bookingTimes=[];
+ const booking=await Promise.all(clinics.flatMap(c=>c.patients.map(async p=>{const start=performance.now();const r=await request('/api/patients/me/tokens',{slug:c.clinic.slug,headers:{'X-Forwarded-For':'198.18.0.'+(clinics.indexOf(c)+1)},token:p.token,body:{doctorId:String(c.doctor._id),department:'General OPD'}});bookingTimes.push(performance.now()-start);return {clinic:String(c.clinic._id),status:r.status,code:r.body.code};})));
+ for(const c of clinics){const own=booking.filter(r=>r.clinic===String(c.clinic._id));assert.equal(own.filter(r=>r.status===201).length,5);assert.equal(own.filter(r=>r.status===409&&r.code==='ONLINE_RESERVATION_LIMIT').length,5);assert.equal(await runWithTenant(c.clinic._id,()=>QueueReservation.countDocuments({status:'reserved'})),5);assert.equal(await runWithTenant(c.clinic._id,()=>Token.countDocuments({})),0);}
+ report.booking={...stats(bookingTimes),accepted:booking.filter(r=>r.status===201).length,expectedConflicts:booking.filter(r=>r.status===409).length,unexpected:booking.filter(r=>![201,409].includes(r.status)).length};report.checks.push('three_clinic_strict_capacity');
+ let cursor=0;const reads=[],statuses=[];const readStarted=performance.now();
+ await Promise.all(Array.from({length:ceilings.httpConcurrency},async()=>{while(cursor<ceilings.readRequests){const index=cursor++,c=clinics[index%3],start=performance.now();const result=await request(index%2?'/api/tokens/private':'/api/tokens',{slug:c.clinic.slug,headers:{'X-Forwarded-For':'198.18.0.'+(index%3+1)},...(index%2?{token:f.signStaff(c.reception,c.clinic)}:{})});reads.push(performance.now()-start);statuses.push(result.status);}}));
+ const readSeconds=(performance.now()-readStarted)/1000;report.reads={...stats(reads),seconds:readSeconds,requestsPerSecond:reads.length/readSeconds,unexpectedFailures:statuses.filter(s=>s!==200).length};assert.equal(report.reads.unexpectedFailures,0);report.checks.push('bounded_reads');
+ const connectTimes=[],events=[];
+ for(let i=0;i<ceilings.sockets;i++){deadlineController.signal.throwIfAborted();
+  const clinicIndex=i%3,start=performance.now();const socket=io(f.origin,{auth:{clinicSlug:clinics[clinicIndex].clinic.slug},transports:['websocket'],forceNew:true,reconnection:false,timeout:5000});sockets.push(socket);
+  socket.on('queue:updated',rows=>events.push({socket:i,clinicIndex,time:performance.now(),numbers:rows.map(r=>r.tokenNumber)}));
+  await new Promise((resolve,reject)=>{socket.once('connect',resolve);socket.once('connect_error',reject);});connectTimes.push(performance.now()-start);
+ }
+ const c=clinics[0],walkIn=await f.patient(c.clinic),mutationStarted=performance.now();const response=await request('/api/reception/tokens',{slug:c.clinic.slug,token:f.signStaff(c.reception,c.clinic),body:{patientMongoId:String(walkIn.local._id),doctorId:String(c.doctor._id),department:'General OPD'}});assert.equal(response.status,201);
+ const relevant=()=>events.filter(e=>e.time>=mutationStarted&&e.numbers.includes(response.body.tokenNumber));
+ for(let i=0;i<100&&new Set(relevant().filter(e=>e.clinicIndex===0).map(e=>e.socket)).size<6;i++)await new Promise(r=>setTimeout(r,10));
+ const delivered=relevant().filter(e=>e.clinicIndex===0);assert.equal(new Set(delivered.map(e=>e.socket)).size,6);assert.equal(relevant().filter(e=>e.clinicIndex!==0).length,0);
+ const active=f.app.app.get('realtimeAdmission').snapshot().active;assert.equal(active,18);sockets.forEach(s=>s.disconnect());for(let i=0;i<100&&f.app.app.get('realtimeAdmission').snapshot().active;i++)await new Promise(r=>setTimeout(r,10));assert.equal(f.app.app.get('realtimeAdmission').snapshot().active,0);
+ report.socket={connections:18,connect:stats(connectTimes),queueUpdate:stats(delivered.map(e=>e.time-mutationStarted)),crossClinicLeaks:0,activeAfterDisconnect:0};report.checks.push('multi_clinic_socket_latency_and_cleanup');
+ let databaseConnections;try{databaseConnections=(await mongoose.connection.db.admin().command({serverStatus:1,extra_info:0,mem:0,tcmalloc:0})).connections.current;}catch{databaseConnections={status:'unavailable',reason:'MongoDB serverStatus cannot access procfs in this isolated container'};}
+ report.resources={nodeRssBeforeBytes:memoryBefore.rss,nodeRssPeakBytes:peakRss,nodeHeapPeakBytes:peakHeap,nodeCpuMicroseconds:process.cpuUsage(cpu),driverMaxCheckedOutObserved:peakInUse,driverConnectionsCreatedDuringMeasurement:created,driverPoolConfiguredMaximum:12,databaseConnections};report.elapsedSeconds=(performance.now()-started)/1000;clearTimeout(deadline);assert.ok(report.elapsedSeconds*1000<ceilings.maximumRuntimeMs);report.status='passed';
+}catch(error){report.status='failed';report.errors.push(String(error.message));process.exitCode=1;}finally{clearTimeout(deadline);clearInterval(timer);sockets.forEach(s=>s.disconnect());if(f)await f.close();fs.writeFileSync(path.join(output,'load-results.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));}

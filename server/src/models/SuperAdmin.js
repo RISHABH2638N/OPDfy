@@ -6,6 +6,12 @@ const superAdminSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
     passwordHash: { type: String, required: true, select: false },
     status: { type: String, enum: ["active", "disabled"], default: "active", index: true },
+    mfaEnabled: { type: Boolean, default: false },
+    mfa: { type: new mongoose.Schema({
+      secretEncrypted: String, pendingEncrypted: String, pendingExpiresAt: Date,
+      recoveryHashes: [String], lastCounter: { type: Number, default: -1 },
+      challengeHash: String, challengeExpiresAt: Date,
+    }, { _id: false }), select: false },
     tokenVersion: { type: Number, default: 0, min: 0, select: false },
   },
   { timestamps: true }

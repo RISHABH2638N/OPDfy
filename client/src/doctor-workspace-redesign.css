@@ -1,6 +1,6 @@
 /* OPDfy doctor workspace: clinic UI, no third-party template assets. */
 .portal-doctor {
-  --doctor-ink: #183a4b; --doctor-muted: #607b88; --doctor-line: #dbe7eb;
+  --doctor-ink: #183a4b; --doctor-muted: var(--accessible-muted); --doctor-line: #dbe7eb;
   --doctor-teal: #087f87; --doctor-canvas: #f3f7f8; --doctor-shadow: 0 7px 24px rgba(20,55,72,.045);
   --portal-sidebar-w: 260px; --portal-topbar-h: 72px;
 }
@@ -9,7 +9,7 @@
 .portal-doctor .portal-brand, .portal-doctor .portal-brand strong { color: var(--doctor-ink); }
 .portal-doctor .portal-topbar .brand-mark { background: #e7f5f3; color: var(--doctor-teal); border-color: #cde7e3; border-radius: 11px; }
 .portal-doctor .portal-topbar-context { border-left: 1px solid #e5eef0; padding-left: 20px; }
-.portal-doctor .portal-topbar-context > span { color: #78929d; font-size: .66rem; letter-spacing: .1em; }
+.portal-doctor .portal-topbar-context > span { color: var(--accessible-muted); font-size: .66rem; letter-spacing: .1em; }
 .portal-doctor .portal-topbar-context b { color: #264a5b; }
 .portal-doctor .portal-role-chip { background: #f2f8f8; border-color: var(--doctor-line); color: #42616e; }
 .portal-doctor .portal-sidebar { padding: 18px 12px; background: #102b3d; border-right: 1px solid #183a4d; box-shadow: none; scrollbar-width: thin; scrollbar-color: #406371 transparent; }
@@ -23,7 +23,7 @@
 .portal-doctor .portal-sidebar-nav a svg:first-child { color: #91b4c1; }
 .portal-doctor .portal-sidebar-nav a:hover { background: #1a4255; color: #fff; transform: none; }
 .portal-doctor .portal-sidebar-nav a.active { background: #e9f6f4; color: #086e77; border-color: #d7edeb; box-shadow: inset 3px 0 0 #0a9294; }
-.portal-doctor .portal-sidebar-nav a.active svg:first-child, .portal-doctor .portal-sidebar-nav a.active .portal-nav-arrow { color: #087f86; }
+.portal-doctor .portal-sidebar-nav a.active svg:first-child, .portal-doctor .portal-sidebar-nav a.active .portal-nav-arrow { color: var(--accessible-accent); }
 .portal-doctor .portal-sidebar-preferences { border-color: rgba(230,245,249,.14); }
 .portal-doctor .portal-sidebar-language .platform-preference-title, .portal-doctor .portal-security-note b { color: #e7f4f7; }
 .portal-doctor .portal-sidebar-language .language-switcher, .portal-doctor .portal-security-note, .portal-doctor .portal-logout { background: #18394b; color: #e3f1f5; border-color: #315365; }

@@ -1,7 +1,7 @@
 /* Patient portal: one calm visual language across care, records, and account pages. */
 .portal-patient {
   --patient-navy: #123548;
-  --patient-teal: #087f88;
+  --patient-teal: var(--accessible-accent);
   --patient-line: #dce7eb;
   --patient-canvas: #f5f8fa;
   --patient-shadow: 0 5px 22px rgba(23, 60, 78, .045);
@@ -17,10 +17,10 @@
 .portal-patient .portal-header-inner { padding-inline: 24px; }
 .portal-patient .portal-brand { color: var(--patient-navy); }
 .portal-patient .portal-brand strong { color: var(--patient-navy); font-size: 1.16rem; letter-spacing: -.035em; }
-.portal-patient .portal-brand small { color: #718d9c; opacity: 1; }
+.portal-patient .portal-brand small { color: var(--accessible-muted); opacity: 1; }
 .portal-patient .portal-brand .brand-mark { color: var(--patient-teal); background: #e4f4f2; border-color: #cce7e4; }
 .portal-patient .portal-topbar-context { padding-left: 20px; border-left: 1px solid var(--patient-line); }
-.portal-patient .portal-topbar-context span { color: #718b99; font-size: .67rem; }
+.portal-patient .portal-topbar-context span { color: var(--accessible-muted); font-size: .67rem; }
 .portal-patient .portal-topbar-context b { color: var(--patient-navy); font-size: .88rem; }
 .portal-patient .portal-role-chip,.portal-patient .system-status { color: #426373; background: #f2f7f8; border-color: #e0eaed; }
 .portal-patient .system-status i { background: #0a9c78; box-shadow: none; }
@@ -50,7 +50,7 @@
 .portal-patient .page > .head::after,.portal-patient .premium-page > .head::after { content: none; }
 .portal-patient .head .eyebrow,.portal-patient .patient-section-toolbar .eyebrow { color: var(--patient-teal); background: transparent; border: 0; font-size: .7rem; letter-spacing: .12em; font-weight: 820; }
 .portal-patient .head h1 { margin: 5px 0 7px; color: var(--patient-navy); font-size: clamp(1.9rem, 2.45vw, 2.55rem); line-height: 1.15; letter-spacing: -.04em; }
-.portal-patient .page-subtitle { color: #66808d; font-size: .88rem; line-height: 1.6; }
+.portal-patient .page-subtitle { color: var(--accessible-muted); font-size: .88rem; line-height: 1.6; }
 .portal-patient .dashboard-actions { gap: 8px; }
 .portal-patient .patient-head-action { min-height: 40px; padding: 9px 12px; white-space: nowrap; }
 /* Keep header actions in normal flow, including the unread count. */
@@ -90,7 +90,7 @@
 .portal-patient .ai-triage-card { top: 94px; max-height: calc(100vh - 112px); }
 .portal-patient .patient-section-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 19px; padding: 17px 20px; border: 1px solid var(--patient-line); border-radius: 11px; background: #fff; }
 .portal-patient .patient-section-toolbar p { margin: 0; }
-.portal-patient .patient-section-toolbar p:last-child { margin-top: 3px; color: #66808d; font-size: .84rem; }
+.portal-patient .patient-section-toolbar p:last-child { margin-top: 3px; color: var(--accessible-muted); font-size: .84rem; }
 .portal-patient .patient-section-card { margin: 0; }
 .portal-patient .patient-section-card > summary { cursor: pointer; }
 .portal-patient .patient-section-card .patient-feedback-dropdown-content { padding-top: 18px; }

@@ -2,7 +2,6 @@
   "Appointment rescheduled to {date} at {time}.": "अपॉइंटमेंट {date} को {time} बजे के लिए पुनर्निर्धारित किया गया।",
   "Appointment confirmed with Dr. {doctor} on {date} at {time}.": "डॉ. {doctor} के साथ {date} को {time} बजे अपॉइंटमेंट की पुष्टि हो गई।",
   "Reason for cancelling your appointment with Dr. {doctor}?": "डॉ. {doctor} के साथ अपॉइंटमेंट रद्द करने का कारण?",
-  "Online reservation confirmed with Dr. {doctor}. Your FCFS token will be issued only after hospital check-in{priority}.": "डॉ. {doctor} के साथ ऑनलाइन रिज़र्वेशन की पुष्टि हो गई। अस्पताल में चेक-इन के बाद ही आपका FCFS टोकन जारी होगा{priority}।",
   "Please select a {department} specialist.": "कृपया {department} विभाग के विशेषज्ञ चुनें।",
   "Appointment booked for {patient} with Dr. {doctor} on {date} at {time}.": "{patient} का डॉ. {doctor} के साथ {date} को {time} बजे अपॉइंटमेंट बुक हो गया।",
   "Payment confirmed. Appointment converted to live {department} token #{token}. Receipt {receipt}.": "भुगतान की पुष्टि हो गई। अपॉइंटमेंट का {department} विभाग में लाइव टोकन #{token} बन गया। रसीद {receipt}।",
@@ -77,11 +76,11 @@
   "Available today until {time}.": "आज {time} बजे तक उपलब्ध।",
   "Unable to load the configured doctor fee. Retry before booking.": "निर्धारित डॉक्टर शुल्क लोड नहीं हो सका। बुकिंग से पहले फिर प्रयास करें।",
   "Age unavailable": "आयु उपलब्ध नहीं",
-  "No upcoming booking": "कोई आगामी बुकिंग नहीं",
   "No completed consultation yet": "अभी कोई पूर्ण परामर्श नहीं है",
   "Assigned doctor": "असाइन किए गए डॉक्टर",
   "{name} registered successfully ({patientId}). You can issue the OPD token now.": "{name} का पंजीकरण सफल रहा ({patientId})। अब OPD टोकन जारी कर सकते हैं।",
   "Reception {action} for {department} token #{token}: {reason}": "रिसेप्शन ने {department} विभाग के टोकन #{token} पर {action} किया: {reason}",
   "★ {rating}/5 · {count} verified {reviews}": "★ {rating}/5 · {count} सत्यापित {reviews}",
-  "{count} verified {reviews}": "{count} सत्यापित {reviews}"
+  "{count} verified {reviews}": "{count} सत्यापित {reviews}",
+  "Reservation confirmed with Dr. {name}. Check in at reception on arrival.": "डॉ. {name} के साथ रिज़र्वेशन पक्का हो गया है। पहुँचने पर रिसेप्शन पर चेक-इन करें।"
 }

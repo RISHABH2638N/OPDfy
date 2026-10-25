@@ -1,6 +1,6 @@
 import { getPatientConditions, savePatientConditions } from "./healthConditionHandlers.js";
 import { safeDiagnostic } from "../utils/privacySafeLog.js";
-import { asyncRouter, publicErrorMessage, requestAbortSignal } from "../utils/httpSafety.js";
+import { asyncRouter, publicErrorMessage } from "../utils/httpSafety.js";
 import express from "express";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -584,7 +584,7 @@ router.get(
         .sort({ department: 1, name: 1 })
         .lean();
 
-      return res.json({ doctors: await withDoctorRatings(onlyAvailableDoctors(doctors)) });
+      return res.json({ doctors: await withDoctorRatings(onlyAvailableDoctors(doctors, new Date(), req.tenant?.timezone)) });
     } catch (error) {
       console.error("Patient doctor roster error:", safeDiagnostic(error));
       return res.status(500).json({ message: "Unable to load available doctors." });
@@ -646,7 +646,7 @@ router.post("/me/tokens", protectPatient, async (req, res) => {
       });
     }
 
-    const doctorAvailability = getDoctorAvailability(selectedDoctor);
+    const doctorAvailability = getDoctorAvailability(selectedDoctor, new Date(), req.tenant?.timezone);
     if (!doctorAvailability.isAvailable) {
       return res.status(409).json({
         message: doctorAvailability.reason,
@@ -662,12 +662,11 @@ router.post("/me/tokens", protectPatient, async (req, res) => {
       urgency: requestedUrgency,
       consultationKind,
       patientRequestedUrgency: patientUrgencyFlag ? "emergency" : "",
-      signal: requestAbortSignal(req, res),
     });
 
     emitOperationalUpdate(req.app.get("io"), ["reservations"]);
 
-    return res.status(201).json({
+    return res.status(reservation.idempotentReplay ? 200 : 201).json({
       message:
         "Online reservation confirmed. Your final FCFS token will be issued only after you arrive and check in at reception/QR scanner.",
       reservation,
@@ -679,7 +678,6 @@ router.post("/me/tokens", protectPatient, async (req, res) => {
     });
   } catch (error) {
     console.error("Patient queue reservation error:", safeDiagnostic(error));
-    if (error.retryAfter) res.set("Retry-After", String(error.retryAfter));
     if (error?.code === 11000) {
       return res.status(409).json({
         message: "You already have an active online reservation for today.",
@@ -688,6 +686,7 @@ router.post("/me/tokens", protectPatient, async (req, res) => {
     return res.status(error.status || 500).json({
       message: error.status ? error.message : "Unable to reserve OPD queue place.",
       reservation: error.reservation,
+      ...(error.code ? { code: error.code } : {}),
     });
   }
 });
@@ -703,12 +702,7 @@ router.get(
   protectPatient,
   async (req, res) => {
     try {
-      // Refresh only this patient's past records. Never run a global
-      // updateMany on every history fetch / load-test preflight request.
-      await expireOldQueueReservations({
-        patientId: req.patient._id,
-        timeZone: req.tenant?.timezone || undefined,
-      });
+      await expireOldQueueReservations({ patientId: req.patient._id });
 
       const tokens =
         await Token.find({
@@ -756,9 +750,8 @@ router.get(
 ========================================================= */
 router.get("/me/lounge-access", protectPatient, async (req, res) => {
   try {
-    // Historical reservations are excluded by today's date filter; no
-    // global expiry update is needed to determine lounge access.
-    const today = hospitalDate(new Date(), req.tenant?.timezone || undefined);
+    await expireOldQueueReservations({ patientId: req.patient._id });
+    const today = hospitalDate(new Date(), req.tenant?.timezone);
 
     const [reservation, activeToken] = await Promise.all([
       QueueReservation.findOne({
@@ -798,6 +791,7 @@ router.patch("/me/reservations/:id/cancel", protectPatient, async (req, res) => 
       patient: req.patient._id,
     });
     if (!reservation) return res.status(404).json({ message: "Reservation not found." });
+    if (reservation.status === "cancelled") return res.json({ message: "Online queue reservation cancelled.", reservation });
     if (reservation.status !== "reserved") {
       return res.status(409).json({ message: "Only an unconfirmed reservation can be cancelled." });
     }
@@ -808,7 +802,7 @@ router.patch("/me/reservations/:id/cancel", protectPatient, async (req, res) => 
     return res.json({ message: "Online queue reservation cancelled.", reservation });
   } catch (error) {
     console.error("PATIENT RESERVATION CANCELLATION:", safeDiagnostic(error));
-    return res.status(500).json({ message: "Unable to cancel reservation." });
+    return res.status(error.name === "VersionError" ? 409 : 500).json({ message: error.name === "VersionError" ? "Reservation changed. Refresh its status before trying again." : "Unable to cancel reservation." });
   }
 });
 
@@ -818,7 +812,7 @@ router.get("/me/reservations/:id/check-in-qr", protectPatient, async (req, res) 
       _id: req.params.id,
       patient: req.patient._id,
       status: "reserved",
-      reservationDate: hospitalDate(),
+      reservationDate: hospitalDate(new Date(), req.tenant?.timezone),
     }).lean();
     if (!reservation) {
       return res.status(404).json({ message: "Today's active reservation was not found." });

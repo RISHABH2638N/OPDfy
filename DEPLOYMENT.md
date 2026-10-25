@@ -1,10 +1,30 @@
 # Deployment and upgrade guide
 
+> Current release: see [SEO_PERFORMANCE_REPORT.md](SEO_PERFORMANCE_REPORT.md) and [SEO_DEPLOYMENT_CHECKLIST.md](SEO_DEPLOYMENT_CHECKLIST.md). Production builds require the operator-verified PUBLIC_SITE_ORIGIN; earlier reports remain historical evidence.
+
+> Current release: see [ACCESSIBILITY_REPORT.md](ACCESSIBILITY_REPORT.md) and `ACCESSIBILITY_EVIDENCE/` for accessibility corrections and the latest executed QA results. The previous QA report/evidence describes the historical baseline.
+
+Current QA gate: run the isolated procedure in [QA_GUIDE.md](QA_GUIDE.md), and review [QA_REPORT.md](QA_REPORT.md) before staging. Test automation does not grant production approval. No runtime schema or deployment changes were introduced by this QA release.
+
+## Current clinic security hardening release — 24 October 2026
+
+Start with [SECURITY_HARDENING_REPORT.md](SECURITY_HARDENING_REPORT.md), especially its upgrade, MFA enrollment and rollback instructions. Deploy the matching client/server with one backend instance. Shared reservation capacity, socket admission and backup admission do not make Socket.IO broadcasts or scheduled jobs cluster-ready.
+
+For installations already running the patient password release, this hardening update adds optional fields, system quota/admission collections and a non-unique reservation lookup index. It needs no clinical-data backfill, database reset, account reseed or generic `db:migrate` run. Startup checks/creates model indexes before listening; review index changes and resources on a staging copy first. Do not bypass index errors. The legacy migration procedure below concerns older database upgrades and invalidates pending OTPs.
+
+To activate owner MFA, first set the new private, distinct `PLATFORM_MFA_ENCRYPTION_SECRET` (32+ random characters) and retain it securely. Keep `PLATFORM_MFA_REQUIRED=false` during initial rollout, enroll through `/platform/security`, store recovery codes and verify a second-factor login. Then set `PLATFORM_MFA_REQUIRED=true`. An enrolled account always requires MFA regardless of this flag. The flag restricts unenrolled owners to enrollment/status/logout, so confirm legitimate owners can enroll before enforcing it. Do not rotate or remove an enrolled account's encryption key without a reviewed recovery plan.
+
+`SOCKET_MAX_CONNECTIONS_PER_IP=200`, `SOCKET_MAX_CONNECTIONS=1000` and `SOCKET_ATTEMPTS_PER_MINUTE=240` are conservative source defaults, not measured capacity. Configure exact trusted proxy hops, test clinic NAT/display traffic and monitor rejection/store-failure counts. `ONLINE_RESERVATION_LIMIT_PER_DOCTOR` now treats `0` as closed; confirm intended production settings before upgrade.
+
+## Current patient password release
+
+Read [PATIENT_PASSWORD_LOGIN.md](PATIENT_PASSWORD_LOGIN.md) before upgrading. Deploy the matching client and server together. This release adds unique partial indexes for patient usernames and credential grants. Startup creates them before listening; do not bypass index errors. Existing accounts and clinic memberships remain in place. Pending codes from the old OTP-login flow are intentionally incompatible; patients must request a new registration/recovery code.
+
 ## Release gate
 
-See `SECURITY_AUDIT_REPORT.md` for this release's executed checks and remaining risks. The client production build, server startup against a disposable MongoDB replica set, and local HTTP/Socket.IO/database regression checks were verified. Complete the staging checklist below: your actual Render/Atlas settings, SMTP delivery, external Gemini service and real-device/browser workflows were not verified against a live deployment.
+See `SECURITY_HARDENING_REPORT.md` for this release's executed checks and remaining risks. Earlier `SECURITY_AUDIT_REPORT.md` describes its own historical snapshot. Complete the staging checklist below: actual Render/Atlas settings, SMTP delivery, external Gemini service, backup recoverability and real clinic/network workflows were not verified against a live deployment.
 
-## Existing database upgrade
+## Older database upgrade procedure (not required just for hardening)
 
 1. Back up the database and confirm you can restore it. Keep the old source release for rollback.
 2. Stop the old backend and its background workers during migration. Point a staging copy at a separate database first.
@@ -21,7 +41,7 @@ Use the `server` directory as the service root. Build/install command: `npm ci -
 
 For UptimeRobot, monitor `https://YOUR-BACKEND-HOST/health/live` using an HTTP(S) monitor (GET, expected HTTP 200). `/api/health` is an existing liveness alias. Both return only `{"ok":true}`, require no authentication/clinic header, and bypass the database-backed API limiter. Keep Render's own health check path as `/health/ready`, which returns 503 when the MongoDB connection is unavailable. The real backend hostname was not supplied in this source release; replace the placeholder with the deployed service URL. External monitoring does not guarantee free-tier uptime or bypass hosting quotas. Render's free services block outbound SMTP ports 25, 465 and 587; this SMTP-based OTP implementation needs a host/plan/provider connection that permits delivery. See https://render.com/docs/free and https://render.com/docs/health-checks.
 
-This security update requires no database reset, reseeding or new schema/index migration. Existing links without verified identity provenance now require the clinic's existing identity-review workflow before patient access to clinic records. Use `npm run privacy:identity-report` on a staging/backup copy to count affected links. Do not bulk-mark historical links verified or delete medical records. Fresh verified memberships continue working normally.
+The earlier identity-review security update required no database reset or reseeding. The current password release additionally requires the new username and credential-grant indexes described above. Existing links without verified identity provenance now require the clinic's existing identity-review workflow before patient access to clinic records. Use `npm run privacy:identity-report` on a staging/backup copy to count affected links. Do not bulk-mark historical links verified or delete medical records. Fresh verified memberships continue working normally.
 
 Set these private server variables:
 

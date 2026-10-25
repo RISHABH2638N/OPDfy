@@ -1,3 +1,4 @@
+import { withSharedAdmission } from "./sharedAdmission.js";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
@@ -67,7 +68,7 @@ async function decryptArchive(source, target, key, encryption) {
 }
 async function alertFailure(kind, recordId, code) {
   const recipient = String(process.env.SECURITY_ALERT_EMAIL || "").trim(); if (!recipient) return;
-  try { await sendEmail({ to: recipient, subject: `OPDfy ${kind} failure`, text: `${kind} ${recordId} failed with diagnostic code ${code}. Review the protected Platform Admin backup dashboard. No patient data is included in this email.`, html: `<p><strong>OPDfy ${kind} failure</strong></p><p>Reference: ${recordId}</p><p>Diagnostic: ${code}</p><p>Review the protected backup dashboard. No patient data is included in this email.</p>` }); } catch {}
+  try { await sendEmail({ to: recipient, subject: `OPDfy ${kind} failure`, text: `${kind} ${recordId} failed with diagnostic code ${code}. Review the protected Platform Admin backup dashboard. No patient data is included in this email.`, html: `<p><strong>OPDfy ${kind} failure</strong></p><p>Reference: ${recordId}</p><p>Diagnostic: ${code}</p><p>Review the protected backup dashboard. No patient data is included in this email.</p>` }); } catch (error) { console.warn("Backup failure notification delivery failed:", safeDiagnostic(error)); }
 }
 
 async function queueBackupUnlocked({ trigger, requestedBy = null, scheduleSlot = undefined }) {
@@ -75,7 +76,7 @@ async function queueBackupUnlocked({ trigger, requestedBy = null, scheduleSlot =
   if (await BackupRecord.exists({ status: { $in: ["queued", "running"] } })) throw fail("A backup is already queued or running.", 409);
   const now = new Date(), policy = retention(now);
   try { return await BackupRecord.create({ trigger, requestedBy, scheduleSlot, database, provider: config.provider, ...policy }); }
-  catch (error) { if (error.code === 11000) return null; throw error; }
+  catch (error) { throw error; }
 }
 export async function executeBackup(recordId) {
   const record = await BackupRecord.findOneAndUpdate({ _id: recordId, status: "queued" }, { $set: { status: "running", startedAt: new Date(), failureCode: "" } }, { new: true });
@@ -172,7 +173,8 @@ export function launchRecoveryJob(kind, id) {
 }
 
 // Serialize admission inside this server process so simultaneous clicks cannot
-// both pass the exists/create check. Multiple workers need a distributed lease.
+// both pass the exists/create check. Shared transactional admission below also
+// serializes distinct workers without changing existing backup record formats.
 const admissionQueues = new Map();
 async function serializeAdmission(kind, work) {
   const previous = admissionQueues.get(kind) || Promise.resolve();
@@ -187,8 +189,11 @@ async function serializeAdmission(kind, work) {
   }
 }
 export function queueBackup(options) {
-  return serializeAdmission("backup", () => queueBackupUnlocked(options));
+  return serializeAdmission("backup", async () => {
+    try { return await withSharedAdmission("backup-admission", () => queueBackupUnlocked(options)); }
+    catch (error) { if (error.code === 11000 && options.scheduleSlot) return null; throw error; }
+  });
 }
 export function queueRestoreDrill(backupId, ownerId) {
-  return serializeAdmission("restore", () => queueRestoreDrillUnlocked(backupId, ownerId));
+  return serializeAdmission("restore", () => withSharedAdmission("restore-admission", () => queueRestoreDrillUnlocked(backupId, ownerId)));
 }

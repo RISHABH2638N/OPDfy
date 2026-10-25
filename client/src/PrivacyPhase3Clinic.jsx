@@ -5,7 +5,7 @@ import { api } from "./api";
 import { useLanguage, Trans } from "./LanguageContext";
 import "./privacy-center.css";
 
-const msg = (error) => error.response?.data?.message || "Request failed.";
+const msg = (error) => error.userMessage || error.response?.data?.message || "Request failed.";
 
 export default function PrivacyPhase3Clinic() {
   const navigate = useNavigate();

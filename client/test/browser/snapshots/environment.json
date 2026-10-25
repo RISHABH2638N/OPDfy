@@ -1,0 +1,11 @@
+{
+  "browser": "153.0.8010.0",
+  "platform": "linux",
+  "viewport": {
+    "width": 1366,
+    "height": 768
+  },
+  "pixelDifferenceLimit": 0.002,
+  "colorThreshold": 0.15,
+  "fontRenderHinting": "slight"
+}

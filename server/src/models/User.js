@@ -18,6 +18,8 @@ const schema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true, select: false },
+    onlineReservationCapacity: { type: Number, default: null, min: 0, max: 100000, validate: { validator: value => value === null || Number.isInteger(value) } },
+    reservationCapacityRevision: { type: Number, default: 0, select: false },
     tokenVersion: { type: Number, default: 0, min: 0, select: false },
     passwordReset: {
       type: new mongoose.Schema({
@@ -76,11 +78,6 @@ const schema = new mongoose.Schema(
       appointmentFee: { type: Number, default: null, min: 0, max: 1000000 },
       emergencyFee: { type: Number, default: null, min: 0, max: 1000000 },
     },
-
-    // Null means legacy/environment fallback (70 by default). 0 closes ONLINE bookings only.
-    onlineReservationLimit: { type: Number, default: null, min: 0, max: 10000 },
-    // Serializes competing online reservation allocations on this doctor document.
-    reservationCapacityRevision: { type: Number, default: 0, select: false },
 
     doctorSchedule: {
       workingDays: {

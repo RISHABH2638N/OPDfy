@@ -39,7 +39,7 @@ export function InvoiceGenerator({ clinic, clinics, onClose, t }) {
     const controller = new AbortController(); setLoading(true); setError("");
     platformApi.get("/platform/subscription-invoices", { params: { clinicId, ...(cycle ? { billingCycle: cycle } : {}), ...(status ? { status } : {}), ...(before ? { before } : {}) }, signal: controller.signal })
       .then(({ data }) => { if (!controller.signal.aborted) { setRows(current => before ? [...current, ...data.invoices] : data.invoices); setCursor(data.nextCursor); } })
-      .catch(err => { if (!controller.signal.aborted) setError(err.response?.data?.message || "Unable to load invoices."); })
+      .catch(err => { if (!controller.signal.aborted) setError(err.userMessage || err.response?.data?.message || "Unable to load invoices."); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [clinicId, cycle, status, before]);
@@ -123,7 +123,7 @@ export default function PlatformAnalytics() {
     setLoading(true);
     platformApi.get("/platform/analytics", { params: { ...(range === "custom" ? { startDate: start, endDate: end } : { range }), ...(clinicId ? { clinicId } : {}) }, signal: controller.signal })
       .then(response => { if (!controller.signal.aborted) { setData(response.data); setOptions(response.data.clinicOptions || []); } })
-      .catch(err => { if (!controller.signal.aborted) setError(err.response?.data?.message || "Unable to load platform analytics."); })
+      .catch(err => { if (!controller.signal.aborted) setError(err.userMessage || err.response?.data?.message || "Unable to load platform analytics."); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [range, start, end, clinicId, refresh]);
@@ -137,14 +137,14 @@ export default function PlatformAnalytics() {
       else if (editor.kind === "settle") response = await platformApi.patch(`/platform/subscription-invoices/${editor.invoice._id}`, { status: "paid", method: form.method, paidDate: form.paidDate });
       else response = await platformApi.post("/platform/subscription-invoices", { clinicId: form.clinicId, plan: form.plan, billingCycle: form.billingCycle, amountPaise, dueDate: form.dueDate, status: form.status, method: form.method, paidDate: form.paidDate, requestId: editor.requestId });
       setEditor(null); setNotice(response.data.message); setRefresh(value => value + 1);
-    } catch (err) { setEditor(current => ({ ...current, error: err.response?.data?.message || "Unable to save subscription record." })); }
+    } catch (err) { setEditor(current => ({ ...current, error: err.userMessage || err.response?.data?.message || "Unable to save subscription record." })); }
     finally { setBusy(false); }
   }
   async function voidInvoice(invoice) {
     if (!window.confirm(t("Void this pending invoice?"))) return;
     setBusy(true); setNotice("");
     try { const result = await platformApi.patch(`/platform/subscription-invoices/${invoice._id}`, { status: "void" }); setNotice(result.data.message); setRefresh(value => value + 1); }
-    catch (err) { setError(err.response?.data?.message || "Unable to save subscription record."); }
+    catch (err) { setError(err.userMessage || err.response?.data?.message || "Unable to save subscription record."); }
     finally { setBusy(false); }
   }
   const o = data?.overview;

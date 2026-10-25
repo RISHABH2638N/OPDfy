@@ -1,3 +1,4 @@
+import {validateSiteOrigin} from "./src/seo.js";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -19,6 +20,7 @@ function landingTailwind() {
 export default defineConfig(({ command, mode }) => {
   const env = { ...loadEnv(mode, process.cwd(), ""), ...process.env };
   const production = command === "build";
+  const siteOrigin = production ? validateSiteOrigin(env.PUBLIC_SITE_ORIGIN, env.QA_SYNTHETIC_BUILD === "1") : "";
   const api = env.VITE_API_URL || "";
   const socket = env.VITE_SOCKET_URL || (api ? new URL(api).origin : "");
   if (production && (!api || !socket || [api, socket].some((url) => {
@@ -28,6 +30,7 @@ export default defineConfig(({ command, mode }) => {
   const allowed = production ? [...new Set([new URL(api).origin, new URL(socket).origin, new URL(socket).origin.replace(/^https:/, "wss:")])].join(" ") : "http: https: ws: wss:";
   const csp = `default-src 'self'; script-src 'self'${production ? "" : " 'unsafe-inline'"}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' ${allowed}; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:`;
   return {
+    define: {"import.meta.env.VITE_SITE_ORIGIN": JSON.stringify(siteOrigin), "import.meta.env.VITE_BUILD_YEAR": JSON.stringify(String(new Date().getUTCFullYear()))},
     plugins: [react(), landingTailwind(), { name: "opd-content-security-policy", transformIndexHtml() {
       return [{ tag: "meta", attrs: { "http-equiv": "Content-Security-Policy", content: csp }, injectTo: "head-prepend" }];
     } }],

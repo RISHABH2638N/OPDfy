@@ -9,7 +9,7 @@ async function fixture(decisions){
  const router={post(path,...handlers){routes.set(path,handlers.at(-1));}};
  const deps={
   "../services/privacyConsentService.js":{hasExternalAiConsent:async id=>{assert.equal(id,"own-global-account");return decisions.shift()??false;}},
-  "../utils/httpSafety.js":{asyncRouter:()=>router,publicErrorMessage:e=>e.message,requestAbortSignal:noop},
+  "../utils/httpSafety.js":{asyncRouter:()=>router,publicErrorMessage:e=>e.message},
   express:{default:{}},"express-rate-limit":{default:()=>noop},
   "../models/Token.js":{default:{}},"../models/User.js":{default:{}},
   "../middleware/patientAuth.js":{protectPatient:noop},

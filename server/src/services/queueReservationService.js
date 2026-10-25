@@ -1,8 +1,6 @@
-import { performance } from "node:perf_hooks";
+import crypto from "node:crypto";
+import { currentTenantId } from "./tenantExecutionContext.js";
 import { databaseTransaction } from "../utils/databaseTransaction.js";
-import { reserveOnlineQueueInBatch } from "./onlineReservationBatchService.js";
-import { withKeyedQueue } from "../utils/keyedAsyncQueue.js";
-import { onlineReservationLimit } from "../utils/onlineReservationPolicy.js";
 import QueueReservation from "../models/QueueReservation.js";
 import Token from "../models/Token.js";
 import User from "../models/User.js";
@@ -22,131 +20,64 @@ export function hospitalDate(now = new Date(), timeZone = DEFAULT_TIMEZONE) {
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
-// Kept as a named export for existing callers of this service.
-export { onlineReservationLimit } from "../utils/onlineReservationPolicy.js";
-
-// Bulk expiry runs in a scheduled tenant-scoped maintenance job, NOT on each
-// booking. Patient history may request an inexpensive patient-scoped refresh.
-export async function expireOldQueueReservations({ patientId = null, timeZone = DEFAULT_TIMEZONE } = {}) {
-  const today = hospitalDate(new Date(), timeZone);
-  return QueueReservation.updateMany(
-    {
-      status: "reserved",
-      reservationDate: { $lt: today },
-      ...(patientId ? { patient: patientId } : {}),
-    },
-    { $set: { status: "expired", expiredAt: new Date() } }
-  );
+export function onlineReservationLimit(doctor = {}) {
+  const fallback = process.env.ONLINE_RESERVATION_LIMIT_PER_DOCTOR;
+  const configured = doctor.onlineReservationCapacity ?? (fallback === undefined || fallback === "" ? 70 : Number(fallback));
+  if (!Number.isInteger(configured) || configured < 0 || configured > 100000) {
+    throw Object.assign(new Error("Online reservation capacity is not configured correctly."), { status: 503 });
+  }
+  return configured; // Zero closes online reservations; null/absent inherits.
 }
 
-export async function createOnlineQueueReservation({ tenantId, patient, doctor, department, urgency = "normal", consultationKind = "normal", patientRequestedUrgency = "", signal }) {
-  // Old dates cannot block today's reservation: the date is part of both
-  // duplicate detection and capacity checks. Expiry is handled separately.
-  const reservationStartedAt = performance.now();
-  const trace = process.env.PERF_TRACE_CLINICS === "1";
-  const tenant = await Tenant.findById(tenantId).select("timezone settings.operations settings.billing").lean();
-  if (tenant) assertSameDayReservationAllowed(tenant);
-  const today = hospitalDate(new Date(), tenant?.timezone || DEFAULT_TIMEZONE);
+export async function expireOldQueueReservations({ patientId = null, reservationId = null, now = new Date() } = {}) {
+  const tenant = await Tenant.findById(currentTenantId()).select("timezone").lean();
+  if (!tenant) throw Object.assign(new Error("Clinic is unavailable."), { status: 404 });
+  const today = hospitalDate(now, tenant.timezone || DEFAULT_TIMEZONE);
+  return QueueReservation.updateMany({ status: "reserved", reservationDate: { $lt: today },
+    ...(patientId ? { patient: patientId } : {}), ...(reservationId ? { _id: reservationId } : {}),
+  }, { $set: { status: "expired", expiredAt: now } });
+}
 
-  const activeToken = await Token.findOne({
-    patient: patient._id,
-    isArchived: { $ne: true },
-    status: { $in: ["waiting", "called"] },
-  }).lean();
-  if (activeToken) {
-    const error = new Error(`You already have active token #${activeToken.tokenNumber}.`);
-    error.status = 409;
-    throw error;
-  }
-
-  const existing = await QueueReservation.findOne({
-    patient: patient._id,
-    reservationDate: today,
-    status: "reserved",
-  }).lean();
-  if (existing) {
-    const error = new Error(`You already have an online reservation for ${existing.department}. Check in at reception when you arrive.`);
-    error.status = 409;
-    error.reservation = existing;
-    throw error;
-  }
-
-  // Price calculation is outside the lock/transaction to reduce contention.
-  const feeQuote = await quoteVisitFee({ doctor, tenant, department, patientId: patient._id, visitType: "reservation", urgency, consultationKind, serviceDate: today });
-
-  // Phase 2 opt-in (staging first). Preserve the Phase 1 path as rollback.
-  if (process.env.BOOKING_BATCH_ENABLED === "1") {
-    return reserveOnlineQueueInBatch({
-      tenantId, patient, doctor, department, urgency, patientRequestedUrgency,
-      date: today, timezone: tenant?.timezone || DEFAULT_TIMEZONE, feeQuote,
-      signal: arguments[0]?.signal, startedAt: reservationStartedAt,
-    });
-  }
-
-  // Reduce same-process write conflicts without weakening the DB guarantee.
-  // This queue is an optimization ONLY; across Render instances the transaction
-  // still serializes doctor changes and the count + insert remain atomic.
-  const queueStartedAt = performance.now();
-  const queueKey = `${tenantId}:${doctor._id}:${today}`;
-  return withKeyedQueue(queueKey, async () => {
-    const queueWaitMs = performance.now() - queueStartedAt;
-    const transactionStartedAt = performance.now();
-    let countMs = 0;
-    let transactionAttempts = 0;
-    try {
-      const result = await databaseTransaction(async () => {
-        transactionAttempts += 1;
-        const capacityDoctor = await User.findOneAndUpdate(
-          { _id: doctor._id, role: "doctor" },
-          { $inc: { reservationCapacityRevision: 1 } },
-          { new: true }
-        ).select("name onlineReservationLimit");
-        if (!capacityDoctor) {
-          throw Object.assign(new Error("Doctor is no longer registered with this clinic."), { status: 409 });
-        }
-        const countStartedAt = performance.now();
-        const usedOnlinePlaces = await QueueReservation.countDocuments({
-          doctor: doctor._id,
-          reservationDate: today,
-          status: { $in: ["reserved", "checked_in"] },
-        });
-        countMs += performance.now() - countStartedAt;
-        const limit = onlineReservationLimit(capacityDoctor);
-        if (usedOnlinePlaces >= limit) {
-          const error = new Error(
-            `Online reservations for Dr. ${capacityDoctor.name} are full today. Walk-in patients can still check in at reception subject to clinic availability.`
-          );
-          error.status = 409;
-          error.code = "ONLINE_RESERVATION_LIMIT";
-          throw error;
-        }
-        return QueueReservation.create({
-          tenantId,
-          patient: patient._id,
-          patientId: patient.patientId,
-          patientName: patient.name,
-          phone: patient.phone || "",
-          department,
-          doctor: doctor._id,
-          doctorName: capacityDoctor.name,
-          urgency: urgency === "emergency" ? "emergency" : "normal",
-          patientRequestedUrgency: patientRequestedUrgency === "emergency" ? "emergency" : "",
-          reservationDate: today,
-          status: "reserved",
-          billing: { feeType: feeQuote.feeType, quotedAmount: feeQuote.amount, status: "pending" },
-        });
-      });
-      if (trace) {
-        console.info(`[ClinicPerf] online_booking total=${(performance.now() - reservationStartedAt).toFixed(1)}ms queue_wait=${queueWaitMs.toFixed(1)}ms transaction=${(performance.now() - transactionStartedAt).toFixed(1)}ms count=${countMs.toFixed(1)}ms attempts=${transactionAttempts} outcome=success`);
-      }
-      return result;
-    } catch (error) {
-      if (trace) {
-        console.info(`[ClinicPerf] online_booking total=${(performance.now() - reservationStartedAt).toFixed(1)}ms queue_wait=${queueWaitMs.toFixed(1)}ms transaction=${(performance.now() - transactionStartedAt).toFixed(1)}ms count=${countMs.toFixed(1)}ms attempts=${transactionAttempts} outcome=${error?.status === 409 ? "conflict" : "failure"}`);
-      }
-      throw error;
+export async function createOnlineQueueReservation({ tenantId, patient, doctor, department, urgency = "normal", consultationKind = "normal", patientRequestedUrgency = "" }) {
+  if (String(tenantId) !== currentTenantId()) throw Object.assign(new Error("Clinic context mismatch."), { status: 403 });
+  return databaseTransaction(async () => {
+    // An actual write shared by ALL reservations for this doctor prevents
+    // snapshot write-skew. Concurrent transactions conflict here and the MongoDB
+    // driver retries them against a fresh snapshot before counting capacity.
+    // Admin cap changes touch this same document and therefore serialize too.
+    const lockedDoctor = await User.findOneAndUpdate({ _id: doctor._id, role: "doctor", department },
+      { $inc: { reservationCapacityRevision: 1 } }, { new: true })
+      .select("_id name department doctorSchedule billingProfile onlineReservationCapacity");
+    if (!lockedDoctor) throw Object.assign(new Error("Selected doctor is unavailable."), { status: 409 });
+    const tenant = await Tenant.findById(tenantId).select("timezone settings.operations settings.billing").lean();
+    if (!tenant) throw Object.assign(new Error("Clinic is unavailable."), { status: 404 });
+    assertSameDayReservationAllowed(tenant);
+    const today = hospitalDate(new Date(), tenant.timezone || DEFAULT_TIMEZONE);
+    const fingerprint = crypto.createHash("sha256").update(JSON.stringify([String(tenantId), String(patient._id), String(lockedDoctor._id), today,
+      department, urgency === "emergency" ? "emergency" : "normal", consultationKind === "follow_up" ? "follow_up" : "normal", patientRequestedUrgency === "emergency" ? "emergency" : ""])).digest("hex");
+    const existing = await QueueReservation.findOne({ patient: patient._id, reservationDate: today, status: "reserved" }).select("+bookingFingerprint").lean();
+    if (existing) {
+      const { bookingFingerprint, ...view } = existing;
+      if (bookingFingerprint === fingerprint) return { ...view, idempotentReplay: true };
+      throw Object.assign(new Error(`You already have an online reservation for ${existing.department}. Check in at reception when you arrive.`), { status: 409, reservation: view });
     }
-  }, { signal });
+    const activeToken = await Token.findOne({ patient: patient._id, isArchived: { $ne: true }, status: { $in: ["waiting", "called"] } }).lean();
+    if (activeToken) throw Object.assign(new Error(`You already have active token #${activeToken.tokenNumber}.`), { status: 409 });
+    const availability = getDoctorAvailability(lockedDoctor, new Date(), tenant.timezone || DEFAULT_TIMEZONE);
+    if (!availability.isAvailable) throw Object.assign(new Error(availability.reason), { status: 409, availability });
+    const limit = onlineReservationLimit(lockedDoctor);
+    const used = await QueueReservation.countDocuments({ doctor: lockedDoctor._id, reservationDate: today, status: { $in: ["reserved", "checked_in"] } });
+    if (used >= limit) throw Object.assign(new Error(`Online reservations for Dr. ${lockedDoctor.name} are full today. Walk-in patients can still check in at reception subject to clinic availability.`), { status: 409, code: "ONLINE_RESERVATION_LIMIT" });
+    const feeQuote = await quoteVisitFee({ doctor: lockedDoctor, tenant, department, patientId: patient._id, visitType: "reservation", urgency, consultationKind, serviceDate: today });
+    const reservation = await QueueReservation.create({ tenantId, patient: patient._id, patientId: patient.patientId,
+      patientName: patient.name, phone: patient.phone || "", department, doctor: lockedDoctor._id, doctorName: lockedDoctor.name,
+      urgency: urgency === "emergency" ? "emergency" : "normal",
+      patientRequestedUrgency: patientRequestedUrgency === "emergency" ? "emergency" : "",
+      reservationDate: today, bookingFingerprint: fingerprint, status: "reserved", billing: { feeType: feeQuote.feeType, quotedAmount: feeQuote.amount, status: "pending" },
+    });
+    const { bookingFingerprint, ...view } = reservation.toObject();
+    return view;
+  });
 }
 
 async function broadcastQueue(io) {
@@ -161,8 +92,6 @@ async function broadcastQueue(io) {
 }
 
 async function checkInQueueReservationRecords({ reservationId, io = null, payment = {}, actorId = null }) {
-  // The check-in path already rejects non-today reservations below. A global
-  // expiry update here would slow every reception check-in unnecessarily.
   const reservation = await QueueReservation.findById(reservationId);
   if (!reservation) {
     const error = new Error("Online queue reservation not found.");
@@ -216,7 +145,7 @@ async function checkInQueueReservationRecords({ reservationId, io = null, paymen
     error.status = 409;
     throw error;
   }
-  const availability = getDoctorAvailability(doctor);
+  const availability = getDoctorAvailability(doctor, new Date(), tenant?.timezone || DEFAULT_TIMEZONE);
   if (!availability.isAvailable) {
     const error = new Error(availability.reason);
     error.status = 409;

@@ -6,7 +6,7 @@ import {
   Pause, Play, Plus, QrCode, Search, ShieldCheck, Stethoscope, Ticket, Users, X,
 } from "lucide-react";
 import { useLanguage } from "./LanguageContext.jsx";
-import { getPatientToken } from "./api.js";
+import { getPatientToken } from "./publicSession.js";
 
 const clinicFeatures = [
   [Ticket, "Automated Queue Management", "One doctor-wise queue for appointments and walk-ins. Call, hold, skip and complete each visit with connected updates."],
@@ -119,11 +119,6 @@ export default function LandingPage() {
   const [queueError, setQueueError] = useState("");
   const [billingCycle, setBillingCycle] = useState("monthly");
   const yearlyBilling = billingCycle === "yearly";
-  useEffect(() => {
-    const previous = document.title;
-    document.title = "OPDfy · Paperless clinic management & live queues";
-    return () => { document.title = previous; };
-  }, []);
   const openQueue = event => {
     event.preventDefault();
     const destination = queueDestination(queueQuery);
@@ -181,7 +176,7 @@ export default function LandingPage() {
           </div>
           <p className="op-plan-benefit">{t(benefit)}</p>
           <ul role="list">{features.map(item => <li key={item}><Check size={17} aria-hidden="true" />{t(item)}</li>)}</ul>
-          <Link className={`op-button ${name === "Growth" ? "op-button-primary" : "op-button-outline"}`} to="/support" aria-label={t("Start a 14-day pilot for {plan}", { plan: t(name) })}>{t("Start your 14-day pilot")}<ArrowRight size={17} aria-hidden="true" /></Link>
+          <Link className={`op-button ${name === "Growth" ? "op-button-primary" : "op-button-outline"}`} to="/support" aria-label={`${t("Start your 14-day pilot")} · ${t(name)}`}>{t("Start your 14-day pilot")}<ArrowRight size={17} aria-hidden="true" /></Link>
         </article>)}
       </div>
       <div className="op-pricing-inclusions"><ShieldCheck size={20} aria-hidden="true" /><p><strong>{t("One connected product, on every plan.")}</strong>{t("All plans include the core Clinic Edition workflow. Benefits above highlight how each clinic size uses it; they are not feature restrictions.")}</p></div>
@@ -195,7 +190,7 @@ export default function LandingPage() {
     <section className="op-section op-section-soft op:py-16 op:lg:py-24" id="questions" aria-labelledby="op-faq-title"><div className="op-container op-faq-grid"><div className="op-section-heading"><span className="op-kicker">{t("QUESTIONS, ANSWERED")}</span><h2 id="op-faq-title">{t("A clear start,")}<br />{t("without the guesswork.")}</h2><p>{t("A few practical answers before you bring OPDfy into your clinic.")}</p><Link className="op-text-link" to="/faqs">{t("See all FAQs")}<ArrowRight size={17} aria-hidden="true" /></Link></div><div className="op-faq-list">{faq.map(([question, answer]) => <details key={question}><summary>{t(question)}<ChevronDown size={18} aria-hidden="true" /></summary><p>{t(answer)}</p></details>)}</div></div></section>
 
     <section className="op-final-cta"><div className="op-container"><span className="op-pilot-badge"><Plus size={15} aria-hidden="true" />{t("14-Day Free Pilot")}</span><h2>{t("Your next OPD day,")}<br />{t("better connected.")}</h2><p>{t("See how OPDfy fits your reception, doctor queues and patient experience.")}</p><div className="op-actions"><Link className="op-button op-button-primary" to="/support">{t("Book a Demo")}<ArrowRight size={18} aria-hidden="true" /></Link><Link className="op-button op-button-outline" to="/clinic/register">{t("Register Clinic")}<ArrowRight size={17} aria-hidden="true" /></Link></div></div></section>
-    <footer className="op-footer"><div className="op-container op-footer-grid"><div className="op-footer-brand"><span><HeartPulse size={23} aria-hidden="true" /><strong>OPDfy</strong></span><p>{t("Your Smart Simplified Queue")}</p><small>{t("Appointments, care and clinic operations. Connected.")}</small></div><nav aria-label={t("Product links")}><b>{t("Product")}</b><a href="#features">{t("Features")}</a><a href="#workflow">{t("How it works")}</a><a href="#pricing">{t("Pricing")}</a><Link to="/faqs">{t("FAQs")}</Link></nav><nav aria-label={t("Access links")}><b>{t("Access")}</b><Link to="/patient-login">{t("Patient Portal")}</Link><Link to="/login">{t("Staff Sign In")}</Link><Link to="/clinic/register">{t("Register Clinic")}</Link><Link to="/platform/login">{t("Platform Admin")}</Link></nav><nav aria-label={t("Help and policies")}><b>{t("Help & legal")}</b><Link to="/support">{t("Contact / Support")}</Link><Link to="/privacy">{t("Privacy Policy")}</Link><Link to="/terms">{t("Terms & Conditions")}</Link></nav></div><div className="op-container op-footer-bottom"><span>© {new Date().getFullYear()} OPDfy</span><span>{t("Clinic Edition · Built for outpatient care")}</span></div></footer>
+    <footer className="op-footer"><div className="op-container op-footer-grid"><div className="op-footer-brand"><span><HeartPulse size={23} aria-hidden="true" /><strong>OPDfy</strong></span><p>{t("Your Smart Simplified Queue")}</p><small>{t("Appointments, care and clinic operations. Connected.")}</small></div><nav aria-label={t("Product links")}><b>{t("Product")}</b><a href="#features">{t("Features")}</a><a href="#workflow">{t("How it works")}</a><a href="#pricing">{t("Pricing")}</a><Link to="/faqs">{t("FAQs")}</Link></nav><nav aria-label={t("Access links")}><b>{t("Access")}</b><Link to="/patient-login">{t("Patient Portal")}</Link><Link to="/login">{t("Staff Sign In")}</Link><Link to="/clinic/register">{t("Register Clinic")}</Link><Link to="/platform/login">{t("Platform Admin")}</Link></nav><nav aria-label={t("Help and policies")}><b>{t("Help & legal")}</b><Link to="/support">{t("Contact / Support")}</Link><Link to="/privacy">{t("Privacy Policy")}</Link><Link to="/terms">{t("Terms & Conditions")}</Link></nav></div><div className="op-container op-footer-bottom"><span>© {import.meta.env?.VITE_BUILD_YEAR || new Date().getFullYear()} OPDfy</span><span>{t("Clinic Edition · Built for outpatient care")}</span></div></footer>
     <GuidedDemo open={demoOpen} onClose={() => setDemoOpen(false)} />
   </main>;
 }

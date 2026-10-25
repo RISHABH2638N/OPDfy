@@ -1,9 +1,9 @@
 /* OPDfy reception workspace. Original visual treatment, scoped to the receptionist role. */
 .portal-reception {
   --reception-ink: #173748;
-  --reception-muted: #617c89;
+  --reception-muted: var(--accessible-muted);
   --reception-line: #dce8eb;
-  --reception-teal: #087f86;
+  --reception-teal: var(--accessible-accent);
   --reception-canvas: #f3f7f8;
   --reception-shadow: 0 8px 24px rgba(22, 56, 71, .045);
   --portal-sidebar-w: 260px;
@@ -14,7 +14,7 @@
 .portal-reception .portal-brand, .portal-reception .portal-brand strong { color: var(--reception-ink); }
 .portal-reception .portal-topbar .brand-mark { background: #e8f5f4; color: var(--reception-teal); border-color: #d1eae7; border-radius: 11px; }
 .portal-reception .portal-topbar-context { border-left: 1px solid #e6edef; padding-left: 20px; }
-.portal-reception .portal-topbar-context > span { color: #718c98; font-size: .66rem; letter-spacing: .1em; }
+.portal-reception .portal-topbar-context > span { color: var(--accessible-muted); font-size: .66rem; letter-spacing: .1em; }
 .portal-reception .portal-topbar-context b { color: #234657; }
 .portal-reception .portal-role-chip { background: #f1f7f8; color: #3a5968; border-color: var(--reception-line); }
 .portal-reception .portal-sidebar { padding: 18px 12px; background: #102b3d; border-right: 1px solid #17394d; box-shadow: none; scrollbar-width: thin; scrollbar-color: #3b6071 transparent; }
@@ -28,7 +28,7 @@
 .portal-reception .portal-sidebar-nav a svg:first-child { color: #91b4c1; }
 .portal-reception .portal-sidebar-nav a:hover { background: #1a4255; color: #fff; transform: none; }
 .portal-reception .portal-sidebar-nav a.active { background: #e9f6f4; border-color: #d7edeb; color: #086e77; box-shadow: inset 3px 0 0 #0a9294; }
-.portal-reception .portal-sidebar-nav a.active svg:first-child { color: #087f86; }
+.portal-reception .portal-sidebar-nav a.active svg:first-child { color: var(--accessible-accent); }
 .portal-reception .portal-sidebar-nav a.active .portal-nav-arrow { color: #0a8c91; }
 .portal-reception .portal-sidebar-preferences { border-color: rgba(230, 245, 249, .14); }
 .portal-reception .portal-sidebar-language .platform-preference-title, .portal-reception .portal-security-note b { color: #e7f4f7; }
@@ -59,7 +59,7 @@
 .portal-reception .reception-command-overview { gap: 18px; }
 .portal-reception .reception-command-metrics { gap: 13px; }
 .portal-reception .reception-command-metrics .metric { display: grid; align-content: start; gap: 7px; min-width: 0; padding: 18px; border: 1px solid var(--reception-line); border-radius: 12px; background: #fff; box-shadow: var(--reception-shadow); }
-.portal-reception .reception-command-metrics .metric svg { position: static; transform: none; width: 34px; height: 34px; padding: 8px; border-radius: 9px; color: #087f86; background: #eaf7f5; }
+.portal-reception .reception-command-metrics .metric svg { position: static; transform: none; width: 34px; height: 34px; padding: 8px; border-radius: 9px; color: var(--accessible-accent); background: #eaf7f5; }
 .portal-reception .reception-command-metrics .metric b { color: var(--reception-ink); font-size: clamp(1.45rem,2vw,1.9rem); line-height: 1; }
 .portal-reception .reception-command-metrics .metric span { color: var(--reception-muted); font-size: .74rem; font-weight: 690; }
 .portal-reception .reception-command-card { min-height: 0; padding: 20px; }
@@ -68,7 +68,7 @@
 .portal-reception .reception-pressure-row b, .portal-reception .reception-doctor-capacity-list b { color: var(--reception-ink); font-size: .78rem; }
 .portal-reception .reception-action-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 .portal-reception .reception-action-grid button { min-height: 60px; color: #2b5362; background: #f8fbfb; border-color: #e0ebee; font-size: .76rem; border-radius: 9px; }
-.portal-reception .reception-action-grid button:hover { color: #087f86; background: #eff9f7; border-color: #b7dcda; }
+.portal-reception .reception-action-grid button:hover { color: var(--accessible-accent); background: #eff9f7; border-color: #b7dcda; }
 .portal-reception .reception-shift-summary { flex-wrap: wrap; }
 .portal-reception .reception-shift-stats { justify-content: flex-start; }
 .portal-reception .reception-shift-stats span { font-size: .72rem; border-color: #e1ebee; }
@@ -81,7 +81,7 @@
 .portal-reception .reception-day-list > div > span:nth-child(2), .portal-reception .reception-day-list > div > span:first-child:not(.reception-time) { display: grid; gap: 3px; min-width: 0; flex: 1; }
 .portal-reception .reception-day-list b { color: var(--reception-ink); font-size: .8rem; }
 .portal-reception .reception-day-list small { color: var(--reception-muted); font-size: .72rem; }
-.portal-reception .reception-day-list .reception-time { min-width: 55px; padding: 7px 8px; border-radius: 8px; color: #087f86; background: #ecf7f5; font-size: .78rem; font-weight: 800; text-align: center; }
+.portal-reception .reception-day-list .reception-time { min-width: 55px; padding: 7px 8px; border-radius: 8px; color: var(--accessible-accent); background: #ecf7f5; font-size: .78rem; font-weight: 800; text-align: center; }
 .portal-reception .reception-day-list > p { margin: 9px 0; color: var(--reception-muted); font-size: .83rem; }
 .portal-reception .reception-workspace-grid { grid-template-columns: minmax(0,1fr) minmax(360px,.8fr); align-items: start; }
 .portal-reception .reception-workspace-grid:has(> :only-child) { grid-template-columns: minmax(0,1fr); max-width: 990px; }
@@ -92,14 +92,14 @@
 .portal-reception .reception-selection-actions, .portal-reception .reception-inline-hint { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px; border: 1px solid #c9e7e2; border-radius: 9px; background: #f0f9f7; color: #285662; font-size: .79rem; }
 .portal-reception .reception-selection-actions { margin-top: 15px; justify-content: space-between; }
 .portal-reception .reception-selection-actions > span, .portal-reception .reception-selection-actions > div { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
-.portal-reception .reception-selection-actions svg, .portal-reception .reception-inline-hint svg { color: #087f86; }
+.portal-reception .reception-selection-actions svg, .portal-reception .reception-inline-hint svg { color: var(--accessible-accent); }
 .portal-reception .reception-inline-hint { margin: 14px 0; }
 .portal-reception .reception-inline-hint span { flex: 1; }
 .portal-reception .reception-empty-state { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; padding: 22px; border: 1px dashed #cbdee2; border-radius: 9px; color: var(--reception-muted); background: #fafcfc; font-size: .8rem; }
 .portal-reception .reception-empty-state p { margin: 0; }
 .portal-reception .reception-register-card { max-width: 990px; }
 .portal-reception .reception-selected-patient { background: #eff8f6; border-color: #c8e7e1; border-radius: 9px; }
-.portal-reception .reception-selected-patient small { color: #087f86; }
+.portal-reception .reception-selected-patient small { color: var(--accessible-accent); }
 .portal-reception .reception-token-card { top: 24px; }
 .portal-reception .reception-token-slip { background: #f2faf8; border-color: #c8e5e0; }
 .portal-reception .reception-appointment-card, .portal-reception .reception-live-queue-card, .portal-reception .reception-prescription-desk { margin-top: 0; }
@@ -118,7 +118,7 @@
 .portal-reception .reception-payment-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
 .portal-reception .reception-payment-metrics > .card { min-width: 0; padding: 19px; display: grid; gap: 9px; }
 .portal-reception .reception-payment-metrics .card > span { display: flex; align-items: center; gap: 8px; color: var(--reception-muted); font-size: .75rem; font-weight: 760; }
-.portal-reception .reception-payment-metrics .card > span svg { color: #087f86; }
+.portal-reception .reception-payment-metrics .card > span svg { color: var(--accessible-accent); }
 .portal-reception .reception-payment-metrics .card > strong { color: var(--reception-ink); font-size: 1.7rem; }
 .portal-reception .reception-payment-metrics .card > small { color: var(--reception-muted); }
 .portal-reception .reception-methods { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }

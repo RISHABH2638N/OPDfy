@@ -21,6 +21,8 @@ import PrivacyRequest from "../../src/models/PrivacyRequest.js";
 import SuperAdmin from "../../src/models/SuperAdmin.js";
 import { io as connectSocket } from "socket.io-client";
 import { runWithTenant } from "../../src/services/tenantExecutionContext.js";
+import { requestPatientCode } from "../../src/services/patientCredentials.js";
+import { hashPatientPassword } from "../../src/utils/patientPasswords.js";
 import { checkInAppointment, hospitalToday } from "../../src/services/appointmentCheckIn.js";
 
 // This suite always creates its own disposable replica set. It never reads
@@ -338,15 +340,20 @@ test("missed appointment cannot be checked in", async () => {
   await runWithTenant(clinic._id, async () => { appointment.status = "missed"; appointment.slotKey = undefined; await appointment.save(); });
   await assert.rejects(runWithTenant(clinic._id, () => checkInAppointment({ appointmentId: appointment._id, actorId: doctor._id, payment: { method: "cash", paidAmount: 100 } })), (error) => error.status === 409);
 });
-test("concurrent OTP replay creates only one session", async () => {
+test("concurrent OTP replay creates only one credential setup grant", async () => {
   const email = "otp-race@example.invalid";
-  const otp = "314159";
-  await GlobalPatientOtp.create({ email, otpHash: crypto.createHmac("sha256", process.env.JWT_SECRET).update(otp).digest("hex"), expiresAt: new Date(Date.now() + 60000), attempts: 0 });
+  let otp;
+  await requestPatientCode(email, "register", async message => { otp = message.text.match(/code is (\d{6})/)[1]; });
+  await new Promise(resolve => setImmediate(resolve));
   const url = `http://127.0.0.1:${app.server.address().port}/api/patient-auth/verify-otp`;
-  const send = () => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, otp }) });
+  const send = () => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, otp, purpose: "register" }) });
   const responses = await Promise.all([send(), send()]);
-  assert.equal(responses.filter((response) => response.status === 200).length, 1);
-  assert.equal(await GlobalPatientOtp.countDocuments({ email }), 0);
+  assert.equal(responses.filter(response => response.status === 200).length, 1);
+  const granted = await responses.find(response => response.status === 200).json();
+  assert.ok(granted.setupToken);
+  assert.equal(granted.token, undefined);
+  assert.ok((await GlobalPatientOtp.findOne({ email })).verifiedAt);
+  assert.equal(await GlobalPatient.countDocuments({ email }), 0);
 });
 test("revoked patient token is denied by the clinic API", async () => {
   const account = await GlobalPatient.create({ email: "revoked@example.invalid", status: "active", tokenVersion: 2 });
@@ -358,24 +365,19 @@ test("revoked patient token is denied by the clinic API", async () => {
 
 test("remembered patient session rotates refresh credentials and logout revokes them", async () => {
   const email = `remember-${crypto.randomBytes(5).toString("hex")}@example.invalid`;
-  const otp = "271828";
-  await GlobalPatientOtp.create({
-    email,
-    otpHash: crypto.createHmac("sha256", process.env.JWT_SECRET).update(otp).digest("hex"),
-    expiresAt: new Date(Date.now() + 60000),
-    attempts: 0,
-  });
-
+  const password = "A remembered patient passphrase 2026!";
+  await GlobalPatient.create({ email, username: `remember_${crypto.randomBytes(5).toString("hex")}`,
+    passwordHash: await hashPatientPassword(password), credentialsSetAt: new Date() });
   const base = `http://127.0.0.1:${app.server.address().port}/api/patient-auth`;
-  const verified = await fetch(`${base}/verify-otp`, {
+  const verified = await fetch(`${base}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, otp, rememberDevice: true }),
+    body: JSON.stringify({ identifier: email, password, rememberDevice: true }),
   });
   assert.equal(verified.status, 200);
   const verifiedData = await verified.json();
   assert.ok(verifiedData.token);
-  // OTP verification clears the previous cookie, then issues the new one.
+  // Password login clears the previous cookie, then issues the new one.
   // A browser keeps the last Set-Cookie value for the same name and path.
   const firstSetCookie = verified.headers.getSetCookie().at(-1) || "";
   const firstCookie = firstSetCookie.split(";", 1)[0];

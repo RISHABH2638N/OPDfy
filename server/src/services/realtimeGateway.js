@@ -6,7 +6,6 @@ import Patient from "../models/Patient.js";
 import { verifySessionToken } from "../utils/sessionTokens.js";
 import { runWithTenant } from "./tenantExecutionContext.js";
 import { resolvePatientMembership, assertVerifiedMembership } from "./patientMembershipService.js";
-import { createSocketAdmission } from "../utils/socketAdmission.js";
 
 export function tenantIsAvailable(tenant, now = Date.now()) {
   return Boolean(tenant && tenant.status === "active" &&
@@ -14,28 +13,28 @@ export function tenantIsAvailable(tenant, now = Date.now()) {
 }
 
 export function installRealtimeGateway(io) {
-  const admission = createSocketAdmission();
+  const cache = new Map();
+  const cached = (key, load, ttl = 1000) => {
+    const existing = cache.get(key);
+    if (existing && existing.until > Date.now()) return existing.promise;
+    if (cache.size > 4000) cache.clear();
+    const entry = { until: Date.now() + ttl, promise: Promise.resolve().then(load) };
+    cache.set(key, entry);
+    entry.promise.catch(() => { if (cache.get(key) === entry) cache.delete(key); });
+    return entry.promise;
+  };
   io.use(async (socket, next) => {
-    let release;
-    const cleanup = () => { release?.(); socket.conn?.off("close", cleanup); };
     try {
-      release = admission.acquire(socket.request);
-      socket.data.releaseAdmission = cleanup;
-      socket.conn?.once("close", cleanup);
       const slug = String(socket.handshake.auth?.clinicSlug || "").trim().toLowerCase();
       if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 80) throw new Error();
-      const tenant = await Tenant.findOne({ slug }).select("_id status subscription.endsAt").lean();
+      const tenant = await cached(`slug:${slug}`, () => Tenant.findOne({ slug }).select("_id status subscription.endsAt").lean());
       if (!tenantIsAvailable(tenant)) throw new Error();
       socket.data.tenantId = String(tenant._id);
       Object.assign(socket.data, await authenticate(socket, socket.handshake.auth || {}));
-      if (socket.conn?.readyState && socket.conn.readyState !== "open") throw new Error();
       next();
-    } catch (error) {
-      cleanup();
-      delete socket.data.releaseAdmission;
-      const failure = new Error(error.code === "SOCKET_LIMIT" ? error.message : "Clinic or session is unavailable.");
-      if (error.code === "SOCKET_LIMIT") failure.data = { code: error.code, retryAfter: error.retryAfter };
-      next(failure);
+    } catch {
+      next(new Error("Clinic or session is unavailable."));
+      const close = setTimeout(() => socket.conn.close(true), 50); close.unref?.();
     }
   });
 
@@ -94,8 +93,8 @@ export function installRealtimeGateway(io) {
     socket.join(`public:${tenantId}`);
     joinPrivateRooms(socket);
     runWithTenant(tenantId, async () => {
-      const queue = await Token.find({ isArchived: { $ne: true } })
-        .select("tokenNumber department status urgency -_id").sort({ department: 1, tokenNumber: 1 }).lean();
+      const queue = await cached(`queue:${tenantId}`, () => Token.find({ isArchived: { $ne: true } })
+        .select("tokenNumber department status urgency -_id").sort({ department: 1, tokenNumber: 1 }).lean(), 100);
       socket.emit("queue:updated", queue);
     }).catch(() => socket.disconnect(true));
 
@@ -104,7 +103,7 @@ export function installRealtimeGateway(io) {
       if (checking) return;
       checking = true;
       try {
-        const tenant = await Tenant.findById(tenantId).select("status subscription.endsAt").lean();
+        const tenant = await cached(`tenant:${tenantId}`, () => Tenant.findById(tenantId).select("status subscription.endsAt").lean());
         if (!tenantIsAvailable(tenant)) return expire(socket);
         const session = socket.data.session;
         if (!session) return;
@@ -123,6 +122,14 @@ export function installRealtimeGateway(io) {
     }, 15000);
     timer.unref?.();
 
+    let eventWindow = Date.now(), events = 0, authEvents = 0;
+    socket.use(([event], next) => {
+      if (Date.now() - eventWindow >= 60000) { eventWindow = Date.now(); events = 0; authEvents = 0; }
+      if (++events > 120 || (event === "patient:authenticate" && ++authEvents > 6)) {
+        socket.disconnect(true); return;
+      }
+      next();
+    });
     let authenticating = false;
     let lastAuth = 0;
     socket.on("patient:authenticate", async (token) => {
@@ -132,7 +139,6 @@ export function installRealtimeGateway(io) {
       clearPrivateRooms(socket);
       const generation = socket.data.authGeneration;
       try {
-        admission.checkAttempt(socket.request);
         if (typeof token !== "string" || !token || token.length > 8192) throw new Error();
         const identity = await authenticate(socket, { patientToken: token });
         if (!socket.connected || socket.data.authGeneration !== generation) return;
@@ -146,6 +152,7 @@ export function installRealtimeGateway(io) {
       } finally { authenticating = false; }
     });
     socket.on("patient:logout", () => clearPrivateRooms(socket));
-    socket.on("disconnect", () => { socket.data.releaseAdmission?.(); clearInterval(timer); clearPrivateRooms(socket); });
+    socket.on("disconnect", () => { clearInterval(timer); clearPrivateRooms(socket); });
   });
+  return () => cache.clear();
 }

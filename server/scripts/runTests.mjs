@@ -1,0 +1,8 @@
+import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';import {spawn} from 'node:child_process';
+const root=fileURLToPath(new URL('../',import.meta.url)),mode=process.argv[2]||'all';if(!['all','unit','integration','security'].includes(mode))throw Error('Unknown isolated test group.');
+const files=dir=>fs.readdirSync(path.join(root,dir)).filter(n=>/\.test\.(js|mjs)$/.test(n)).sort().map(n=>dir+'/'+n);
+let selected=mode==='unit'?files('test'):mode==='integration'?files('test/integration'):[...files('test'),...files('test/integration')];
+if(mode==='security')selected=selected.filter(n=>/security|hardening|qaContracts|qaRelease|patient|staffPassword|privacy|clinicalConsent|healthConditions|realtime|httpAudit|database/i.test(n));
+const args=['--import='+fileURLToPath(new URL('../../scripts/mongo-test-environment.mjs',import.meta.url)),'--experimental-vm-modules','--test','--test-concurrency=1'];
+if(process.argv.includes('--coverage')){if(!process.env.QA_ARTIFACTS_DIR)throw Error('Set QA_ARTIFACTS_DIR for coverage output.');fs.mkdirSync(process.env.QA_ARTIFACTS_DIR,{recursive:true});args.push('--experimental-test-coverage','--test-coverage-include=src/**','--test-reporter=spec','--test-reporter-destination=stdout','--test-reporter=lcov','--test-reporter-destination='+path.join(process.env.QA_ARTIFACTS_DIR,'backend.lcov'));}
+const child=spawn(process.execPath,[...args,...selected],{cwd:root,stdio:'inherit',env:{...process.env,NODE_ENV:'test',MONGO_URI:'',PRIVACY_RESTORE_URI:'',BACKUP_SCHEDULE_ENABLED:'false',MONGOMS_VERSION:process.env.MONGOMS_VERSION||'7.0.24'}});child.once('exit',code=>{process.exitCode=code??1;});

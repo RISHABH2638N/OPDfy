@@ -7,26 +7,22 @@ import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 import mongoose from "mongoose";
 import GlobalPatient from "../models/GlobalPatient.js";
-import GlobalPatientOtp from "../models/GlobalPatientOtp.js";
 import PatientSession from "../models/PatientSession.js";
-import { sendOtpEmail } from "../utils/sendEmail.js";
 import { protectGlobalPatient } from "../middleware/globalPatientAuth.js";
 import { logSecurityEvent } from "../utils/securityEvents.js";
 import { createRateLimitStore } from "../utils/rateLimitStore.js";
+import { boundedPassword, normalizeUsername, verifyPatientPassword } from "../utils/patientPasswords.js";
+import { PATIENT_CODE_MESSAGE, normalizePatientEmail, validPatientEmail, validPatientPurpose,
+  requestPatientCode, verifyPatientCode, finishPatientCredentials, queuePatientCredentialMail,
+} from "../services/patientCredentials.js";
 
 const router = asyncRouter();
-const OTP_EXPIRY_MINUTES = 5;
-const MAX_OTP_ATTEMPTS = 5;
 const REMEMBER_DEVICE_DAYS = Math.min(30, Math.max(1, Number(process.env.PATIENT_REMEMBER_DAYS || 30)));
 const MAX_REMEMBERED_DEVICES = Math.min(10, Math.max(1, Number(process.env.PATIENT_MAX_REMEMBERED_DEVICES || 5)));
 const PATIENT_REFRESH_COOKIE = process.env.NODE_ENV === "production"
   ? "__Secure-opdfy_patient_refresh"
   : "opdfy_patient_refresh";
 
-const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const generateOtp = () => crypto.randomInt(100000, 1000000).toString();
-const hashOtp = (otp) => crypto.createHmac("sha256", process.env.JWT_SECRET).update(otp).digest("hex");
 const normalizeList = (value) => {
   if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
   if (typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
@@ -133,6 +129,7 @@ function publicGlobalPatient(patient) {
     id: patient._id,
     name: patient.name || "",
     email: patient.email,
+    username: patient.username || "",
     phone: patient.phone || "",
     dateOfBirth: patient.dateOfBirth || null,
     gender: patient.gender || "",
@@ -160,7 +157,7 @@ const otpSendIpLimiter = rateLimit({
 });
 const otpSendEmailLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, max: 3, store: createRateLimitStore("patient-otp-send-email"), standardHeaders: true, legacyHeaders: false,
-  keyGenerator: (req) => normalizeEmail(req.body?.email) || "invalid-email",
+  keyGenerator: (req) => crypto.createHash("sha256").update(normalizePatientEmail(req.body?.email) || "invalid-email").digest("hex"),
   message: { message: "Too many OTP requests for this email. Please wait before requesting another code." },
 });
 const otpVerifyIpLimiter = rateLimit({
@@ -169,7 +166,7 @@ const otpVerifyIpLimiter = rateLimit({
 });
 const otpVerifyEmailLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, max: 10, store: createRateLimitStore("patient-otp-verify-email"), standardHeaders: true, legacyHeaders: false,
-  keyGenerator: (req) => normalizeEmail(req.body?.email) || "invalid-email",
+  keyGenerator: (req) => crypto.createHash("sha256").update(normalizePatientEmail(req.body?.email) || "invalid-email").digest("hex"),
   message: { message: "Too many OTP verification attempts for this email. Please try again later." },
 });
 const rememberedRefreshLimiter = rateLimit({
@@ -177,112 +174,105 @@ const rememberedRefreshLimiter = rateLimit({
   message: { message: "Too many remembered-session refresh attempts. Please try again later." },
 });
 
-router.post("/send-otp", otpSendIpLimiter, otpSendEmailLimiter, async (req, res) => {
-  try {
-    const email = normalizeEmail(req.body?.email);
-    if (!isValidEmail(email)) return res.status(400).json({ message: "Please enter a valid email address." });
+// Apply to errors and throttled responses as well as successful authentication.
+router.use((_req, res, next) => { setAuthNoStore(res); next(); });
 
-    const otp = generateOtp();
-    const issued = await GlobalPatientOtp.findOneAndUpdate({ email }, { $set: {
-      email,
-      otpHash: hashOtp(otp),
-      expiresAt: new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000),
-      attempts: 0,
-    } }, { upsert: true, new: true });
+const loginIpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 30, store: createRateLimitStore("patient-password-login-ip"),
+  standardHeaders: true, legacyHeaders: false,
+  message: { message: "Too many login attempts. Please try again later." },
+});
+const loginAccountLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 10, store: createRateLimitStore("patient-password-login-account"),
+  standardHeaders: true, legacyHeaders: false,
+  // Both the email and username aliases share the same account budget.
+  keyGenerator: req => crypto.createHash("sha256").update(String(req.loginPatient?._id || req.loginIdentifier || "invalid")).digest("hex"),
+  message: { message: "Too many login attempts. Please try again later." },
+});
+const credentialFinishLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, max: 15, store: createRateLimitStore("patient-password-finish-ip"),
+  standardHeaders: true, legacyHeaders: false,
+  message: { message: "Too many password setup attempts. Please try again later." },
+});
 
-    try {
-      await sendOtpEmail(email, otp);
-    } catch (mailError) {
-      await GlobalPatientOtp.deleteOne({ _id: issued._id, otpHash: issued.otpHash });
-      throw mailError;
-    }
-    return res.json({
-      message: "Verification code sent to your email.",
-      expiresIn: OTP_EXPIRY_MINUTES * 60,
-      scope: "global-patient",
-    });
-  } catch (error) {
-    console.error("Global patient OTP send error:", safeDiagnostic(error));
-    const smtpCode = String(error?.responseCode || error?.code || "").trim();
-    const devHint = process.env.NODE_ENV !== "production" && smtpCode
-      ? ` SMTP error: ${smtpCode}. Check server terminal and SMTP/Brevo settings.`
-      : "";
-    return res.status(500).json({ message: `Unable to send verification code.${devHint}` });
+router.post("/login", loginIpLimiter, async (req, res, next) => {
+  const identifier = typeof req.body?.identifier === "string" ? req.body.identifier.trim().toLowerCase() : "";
+  if (!identifier || identifier.length > 200 || !boundedPassword(req.body?.password)) {
+    return res.status(400).json({ message: "Enter your username or email and password." });
   }
+  req.loginIdentifier = identifier;
+  req.loginPatient = await GlobalPatient.findOne(identifier.includes("@") ? { email: identifier } : { username: normalizeUsername(identifier) })
+    .select("+passwordHash +tokenVersion");
+  next();
+}, loginAccountLimiter, async (req, res) => {
+  const patient = req.loginPatient;
+  const matches = await verifyPatientPassword(req.body.password, patient?.passwordHash);
+  if (!matches || !patient || patient.status !== "active") {
+    logSecurityEvent(req, { event: "patient_password_login", outcome: "failure" });
+    return res.status(401).json({ message: "Incorrect username/email or password. Existing patients can use Set up / Forgot password." });
+  }
+  // Reject a login whose account was reset/closed while hashing was in flight.
+  const version = Number(patient.tokenVersion || 0);
+  const changed = await GlobalPatient.updateOne({ _id: patient._id, status: "active", passwordHash: patient.passwordHash,
+    $or: [{ tokenVersion: version }, ...(version === 0 ? [{ tokenVersion: { $exists: false } }] : [])],
+  }, { $set: { lastLoginAt: new Date() } });
+  if (changed.matchedCount !== 1) return res.status(401).json({ message: "Account changed. Please sign in again." });
+  const token = jwt.sign({ id: String(patient._id), role: "patient-global", ver: version },
+    process.env.JWT_SECRET, { expiresIn: process.env.NODE_ENV === "production" ? "30m" : "7d" });
+  await revokePresentedRememberedSession(req, res);
+  const rememberedUntil = req.body?.rememberDevice === true ? await createRememberedSession(req, res, patient) : null;
+  logSecurityEvent(req, { event: "patient_password_login", outcome: "success", actorType: "patient", actorId: patient._id });
+  return res.json({ token, rememberedUntil, patient: publicGlobalPatient(patient) });
+});
+
+router.post("/send-otp", otpSendIpLimiter, otpSendEmailLimiter, async (req, res) => {
+  const email = normalizePatientEmail(req.body?.email);
+  const purpose = req.body?.purpose;
+  if (!validPatientEmail(email)) return res.status(400).json({ message: "Please enter a valid email address." });
+  if (!validPatientPurpose(purpose)) return res.status(400).json({ message: "Choose registration or password recovery." });
+  await requestPatientCode(email, purpose);
+  return res.json({ message: PATIENT_CODE_MESSAGE, expiresIn: 300 });
 });
 
 router.post("/verify-otp", otpVerifyIpLimiter, otpVerifyEmailLimiter, async (req, res) => {
   try {
-    const email = normalizeEmail(req.body?.email);
-    const otp = String(req.body?.otp || "").trim();
-    const rememberDevice = req.body?.rememberDevice === true;
-    if (!isValidEmail(email)) return res.status(400).json({ message: "Invalid email address." });
-    if (!/^\d{6}$/.test(otp)) return res.status(400).json({ message: "OTP must contain 6 digits." });
-
-    // Claim an attempt atomically; concurrent guesses cannot undercount attempts.
-    const otpRecord = await GlobalPatientOtp.findOneAndUpdate(
-      { email, expiresAt: { $gt: new Date() }, attempts: { $lt: MAX_OTP_ATTEMPTS } },
-      { $inc: { attempts: 1 } }, { new: true }
-    );
-    if (!otpRecord) return res.status(400).json({ message: "OTP expired, unavailable, or attempt limit reached. Request a new code." });
-    const suppliedHash = Buffer.from(hashOtp(otp), "hex");
-    const storedHash = Buffer.from(otpRecord.otpHash, "hex");
-    if (suppliedHash.length !== storedHash.length || !crypto.timingSafeEqual(suppliedHash, storedHash)) {
-      logSecurityEvent(req, { event: "patient_otp_login", outcome: "failure", metadata: { email, attempts: otpRecord.attempts } });
-      return res.status(401).json({ message: "Incorrect OTP.", attemptsRemaining: MAX_OTP_ATTEMPTS - otpRecord.attempts });
-    }
-    // Exactly one successful verification may consume a given code.
-    const consumed = await GlobalPatientOtp.findOneAndDelete({ _id: otpRecord._id, otpHash: otpRecord.otpHash, expiresAt: { $gt: new Date() } });
-    if (!consumed) return res.status(400).json({ message: "OTP already used or expired. Request a new code." });
-
-    let patient = await GlobalPatient.findOne({ email }).select("+tokenVersion");
-    let isNewPatient = false;
-    if (!patient) {
-      try {
-        patient = await GlobalPatient.create({ email, status: "active", lastLoginAt: new Date() });
-        isNewPatient = true;
-      } catch (error) {
-        if (error?.code !== 11000) throw error;
-        patient = await GlobalPatient.findOne({ email }).select("+tokenVersion");
-      }
-    }
-    if (patient.status !== "active") return res.status(403).json({ message: "Patient account is disabled." });
-    await migrateLegacyProfileIfNeeded(patient);
-    patient.lastLoginAt = new Date();
-    await patient.save();
-
-    const token = jwt.sign(
-      { id: String(patient._id), role: "patient-global", ver: Number(patient.tokenVersion || 0) },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.NODE_ENV === "production" ? "30m" : "7d" }
-    );
-
-    let rememberedUntil = null;
-    if (rememberDevice) {
-      // Replace a previously presented device credential only after the fresh OTP
-      // succeeds. This prevents a stale cookie from silently extending itself.
-      await revokePresentedRememberedSession(req, res);
-      rememberedUntil = await createRememberedSession(req, res, patient);
-    } else {
-      // An explicit unchecked choice means this browser must not stay remembered.
-      await revokePresentedRememberedSession(req, res);
-    }
-
-    setAuthNoStore(res);
-    logSecurityEvent(req, { event: "patient_otp_login", outcome: "success", actorType: "patient", actorId: patient._id, metadata: { email, rememberDevice } });
-    return res.json({
-      message: "Global patient authentication successful.",
-      token,
-      isNewPatient,
-      rememberedUntil,
-      patient: publicGlobalPatient(patient),
-    });
+    const grant = await verifyPatientCode(normalizePatientEmail(req.body?.email), req.body?.purpose, req.body?.otp);
+    return res.json({ message: "Email verified. Choose your password to continue.", ...grant });
   } catch (error) {
-    logSecurityEvent(req, { event: "patient_otp_login", outcome: "failure", metadata: { email: normalizeEmail(req.body?.email) } });
-    console.error("Global patient OTP verification error:", safeDiagnostic(error));
-    return res.status(500).json({ message: "Unable to verify OTP." });
+    logSecurityEvent(req, { event: "patient_credential_verification", outcome: "failure" });
+    if (!error.status) console.error("Patient credential verification failed:", safeDiagnostic(error));
+    return res.status(error.status || 500).json({ message: publicErrorMessage(error, "Unable to verify code.") });
   }
 });
+
+function completeCredentials(purpose) {
+  return async (req, res) => {
+    try {
+      const result = await finishPatientCredentials({ ...req.body, purpose });
+      clearPatientRefreshCookie(res);
+      // Access/remembered tokens are already invalidated transactionally; socket
+      // revocation follows the commit and must never roll back a saved password.
+      if (purpose === "reset") {
+        try { revokeSocketSessions(req.app.get("io"), "patient", result.patientId); }
+        catch (error) { console.warn("Patient reset socket disconnect failed:", safeDiagnostic(error)); }
+      }
+      logSecurityEvent(req, { event: purpose === "register" ? "patient_registration" : "patient_password_reset",
+        outcome: "success", actorType: "patient", actorId: result.patientId });
+      if (purpose === "reset") queuePatientCredentialMail({ to: result.email,
+        subject: "OPDfy — patient password changed",
+        text: "Your OPDfy patient password has been changed. Existing sessions and remembered devices have been signed out. If you did not make this change, reset your password immediately and contact OPDfy support. Your password is never included in email.",
+      });
+      // Password setup/reset does not automatically grant a logged-in session.
+      return res.status(purpose === "register" ? 201 : 200).json({ username: result.username,
+        message: "Password saved. Sign in with your username or email and new password." });
+    } catch (error) {
+      if (!error.status) console.error("Patient password setup failed:", safeDiagnostic(error));
+      return res.status(error.status || 500).json({ message: publicErrorMessage(error, "Unable to save password.") });
+    }
+  };
+}
+router.post("/complete-registration", credentialFinishLimiter, completeCredentials("register"));
+router.post("/reset-password", credentialFinishLimiter, completeCredentials("reset"));
 
 router.post("/refresh", rememberedRefreshLimiter, requireTrustedRememberClient, async (req, res) => {
   try {

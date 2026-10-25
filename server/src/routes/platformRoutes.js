@@ -1,5 +1,6 @@
-import { safeDiagnostic } from "../utils/privacySafeLog.js";
 import crypto from "node:crypto";
+import { issueOwnerChallenge, ownerSession } from "../services/platformMfa.js";
+import { safeDiagnostic } from "../utils/privacySafeLog.js";
 import { revokeSocketSessions } from "../utils/sessionTokens.js";
 import { asyncRouter, publicErrorMessage } from "../utils/httpSafety.js";
 import express from "express";
@@ -12,12 +13,14 @@ import PlatformSetting from "../models/PlatformSetting.js";
 import Tenant from "../models/Tenant.js";
 import { protectSuperAdmin } from "../middleware/platformAuth.js";
 import { addSubscriptionMonths, expireDueSubscriptions, subscriptionView } from "../services/subscriptionService.js";
+import { securityAuditHealth } from "../utils/securityEvents.js";
 import { logSecurityEvent } from "../utils/securityEvents.js";
 import { createRateLimitStore } from "../utils/rateLimitStore.js";
 import { effectiveVerificationStatus } from "../utils/legalVerification.js";
 import { validateImageDataUrl } from "../utils/imageValidation.js";
 
 const router = asyncRouter();
+const dummyPasswordHash = bcrypt.hash("OPDfy non-account timing padding", 12);
 const verificationReviewLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 15, store: createRateLimitStore("platform-clinic-verification"), keyGenerator: req => `owner:${req.superAdmin?.id || req.ip}`, standardHeaders: true, legacyHeaders: false });
 const brandingUpdateLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, store: createRateLimitStore("platform-branding-update"), keyGenerator: req => `owner:${req.superAdmin?.id || req.ip}`, standardHeaders: true, legacyHeaders: false });
 
@@ -47,16 +50,10 @@ const loginLimiter = rateLimit({
   message: { message: "Too many failed platform login attempts. Please try again later." },
 });
 
-// Shared Mongo-backed account counters also cover attempts from rotating IPs.
-const loginAccountLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  store: createRateLimitStore("platform-login-account"),
-  keyGenerator: req => crypto.createHash("sha256").update(String(req.body?.email || "").trim().toLowerCase()).digest("hex"),
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true,
-  message: { message: "Too many failed platform login attempts. Please try again later." },
+const loginAccountLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10,
+  store: createRateLimitStore("platform-login-account"), standardHeaders: true, legacyHeaders: false,
+  keyGenerator: req => crypto.createHash("sha256").update(typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "invalid").digest("hex"),
+  message: { message: "Too many platform login attempts. Please try again later." },
 });
 
 // Public branding contains no tenant, account, or clinical information. It is
@@ -72,12 +69,13 @@ router.get("/branding/public", async (req, res) => {
 
 router.post("/auth/login", loginLimiter, loginAccountLimiter, async (req, res) => {
   try {
-    const email = String(req.body?.email || "").trim().toLowerCase();
-    const password = String(req.body?.password || "");
-    if (!email || !password) return res.status(400).json({ message: "Email and password are required." });
+    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    const password = typeof req.body?.password === "string" ? req.body.password : "";
+    if (!email || email.length > 200 || !password || Buffer.byteLength(password) > 72) return res.status(400).json({ message: "Email and password are required." });
 
-    const account = await SuperAdmin.findOne({ email, status: "active" }).select("+passwordHash +tokenVersion");
-    if (!account || !(await bcrypt.compare(password, account.passwordHash))) {
+    const account = await SuperAdmin.findOne({ email, status: "active" }).select("+passwordHash +tokenVersion +mfa");
+    const passwordMatches = await bcrypt.compare(password, account?.passwordHash || await dummyPasswordHash);
+    if (!account || !passwordMatches) {
       logSecurityEvent(req, { event: "platform_login", outcome: "failure", metadata: { email } });
       return res.status(401).json({ message: "Invalid platform credentials." });
     }
@@ -86,22 +84,16 @@ router.post("/auth/login", loginLimiter, loginAccountLimiter, async (req, res) =
       return res.status(503).json({ message: "Platform authentication is not configured." });
     }
 
-    const token = jwt.sign(
-      { id: String(account._id), role: "superadmin", ver: Number(account.tokenVersion || 0) },
-      process.env.SUPER_ADMIN_JWT_SECRET,
-      { expiresIn: process.env.NODE_ENV === "production" ? "30m" : "4h" }
-    );
-
+    if (account.mfaEnabled) return res.json(await issueOwnerChallenge(account));
     logSecurityEvent(req, { event: "platform_login", outcome: "success", actorType: "superadmin", actorId: account._id });
-    return res.json({
-      token,
-      user: { id: account._id, name: account.name, email: account.email, role: "superadmin" },
-    });
+    return res.json(ownerSession(account));
   } catch (error) {
     console.error("Platform login error:", safeDiagnostic(error));
     return res.status(500).json({ message: "Unable to sign in to platform console." });
   }
 });
+
+router.get("/security/audit-health", protectSuperAdmin, (req, res) => res.json({ audit: securityAuditHealth(), realtime: req.app.get("realtimeAdmission")?.snapshot() || null }));
 
 router.get("/me", protectSuperAdmin, (req, res) => res.json({ user: req.superAdmin }));
 

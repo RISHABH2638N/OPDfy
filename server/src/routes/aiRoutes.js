@@ -1,5 +1,5 @@
 import { hasExternalAiConsent } from "../services/privacyConsentService.js";
-import { asyncRouter, publicErrorMessage, requestAbortSignal } from "../utils/httpSafety.js";
+import { asyncRouter, publicErrorMessage } from "../utils/httpSafety.js";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import Token from "../models/Token.js";
@@ -390,14 +390,13 @@ async function buildPatientQueueAnswer({ message, activeToken, tokens }) {
     : `Your active token is ${department} #${activeToken.tokenNumber}. ${current ? `Token #${current.tokenNumber} is currently being served` : "No token is currently being served"}. There are ${eta.patientsAhead} patients ahead of you.`;
 }
 
-async function createPatientReservation(patient, doctor, department, tenantId, urgency = "normal", signal) {
+async function createPatientReservation(patient, doctor, department, tenantId, urgency = "normal") {
   return createOnlineQueueReservation({
     tenantId,
     patient,
     doctor,
     department,
     urgency,
-    signal,
   });
 }
 
@@ -489,7 +488,7 @@ router.post("/chat", protectPatient, aiLimiter, async (req, res) => {
         .lean();
 
       const bookableDoctors = availableDoctors.filter(
-        (doctor) => getDoctorAvailability(doctor).isAvailable
+        (doctor) => getDoctorAvailability(doctor, new Date(), req.tenant?.timezone).isAvailable
       );
 
       if (!bookableDoctors.length) {
@@ -527,7 +526,7 @@ router.post("/chat", protectPatient, aiLimiter, async (req, res) => {
         });
       }
 
-      const selectedAvailability = getDoctorAvailability(selectedDoctor);
+      const selectedAvailability = getDoctorAvailability(selectedDoctor, new Date(), req.tenant?.timezone);
       if (!selectedAvailability.isAvailable) {
         return res.status(409).json({
           message: selectedAvailability.reason,
@@ -545,8 +544,7 @@ router.post("/chat", protectPatient, aiLimiter, async (req, res) => {
           selectedDoctor,
           department,
           req.tenantId,
-          urgency,
-          requestAbortSignal(req, res)
+          urgency
         );
         const hindi = isHindiLike(message);
         return aiReply(res,{
@@ -666,7 +664,6 @@ router.post("/chat", protectPatient, aiLimiter, async (req, res) => {
     });
   } catch (e) {
     console.error("AI assistant unavailable:", e?.code || e?.name || "ERROR");
-    if (e.retryAfter) res.set("Retry-After", String(e.retryAfter));
     aiReply(res.status(e.status || 500), { message: e.status ? e.message : "AI assistant unavailable." });
   }
 });

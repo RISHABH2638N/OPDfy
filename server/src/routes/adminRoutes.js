@@ -1,5 +1,6 @@
 import { conditionInsights } from "../services/healthConditions.js";
 import { getConditionInsights } from "./healthConditionHandlers.js";
+import mongoose from "mongoose";
 import { safeDiagnostic } from "../utils/privacySafeLog.js";
 import { csvCell } from "../utils/httpSafety.js";
 import { asyncRouter, publicErrorMessage } from "../utils/httpSafety.js";
@@ -18,8 +19,6 @@ import ActivityLog from "../models/ActivityLog.js";
 import Tenant from "../models/Tenant.js";
 import Feedback from "../models/Feedback.js";
 import QueueReservation from "../models/QueueReservation.js";
-import { onlineReservationLimit, validateDoctorOnlineLimit } from "../utils/onlineReservationPolicy.js";
-import { hospitalDate } from "../services/queueReservationService.js";
 import FollowUpPlan from "../models/FollowUpPlan.js";
 import { getClinicOperations, getClinicOperationsSnapshot, hospitalLocalDateTime, validateClinicOperationsInput } from "../utils/clinicOperations.js";
 import { cleanDoctorBillingProfile, getClinicBilling, validateClinicBillingInput } from "../utils/billing.js";
@@ -198,52 +197,6 @@ router.put("/billing-settings", async (req, res) => {
     return res.json({ message: "OPD billing rules saved.", settings: getClinicBilling(tenant) });
   } catch (error) {
     return res.status(400).json({ message: publicErrorMessage(error, "Unable to save OPD billing settings.") });
-  }
-});
-
-// Doctor-wise ONLINE capacity; no numeric restriction is added to walk-in tokens.
-// GET uses clinic timezone and includes checked_in, which still consumes an online place.
-router.get("/online-reservation-usage", async (req, res) => {
-  try {
-    const tenant = await Tenant.findById(req.tenantId).select("timezone").lean();
-    if (!tenant) return res.status(404).json({ message: "Clinic not found." });
-    const date = hospitalDate(new Date(), tenant.timezone || undefined);
-    const [doctors, counts] = await Promise.all([
-      User.find({ role: "doctor" }).select("_id name department onlineReservationLimit").lean(),
-      QueueReservation.aggregate([
-        { $match: { reservationDate: date, status: { $in: ["reserved", "checked_in"] } } },
-        { $group: { _id: "$doctor", count: { $sum: 1 } } },
-      ]),
-    ]);
-    const countsByDoctor = new Map(counts.map((row) => [String(row._id), row.count]));
-    return res.json({ date, doctors: doctors.map((doctor) => ({
-      doctorId: doctor._id,
-      onlineReservationLimit: onlineReservationLimit(doctor),
-      booked: countsByDoctor.get(String(doctor._id)) || 0,
-      walkInLimit: null,
-    })) });
-  } catch (error) {
-    return res.status(500).json({ message: publicErrorMessage(error, "Unable to load online reservation usage.") });
-  }
-});
-
-router.patch("/users/:id/online-reservation-limit", async (req, res) => {
-  try {
-    const limit = validateDoctorOnlineLimit(req.body?.onlineReservationLimit);
-    const doctor = await User.findOneAndUpdate(
-      { _id: req.params.id, role: "doctor" },
-      { $set: { onlineReservationLimit: limit } },
-      { new: true, runValidators: true }
-    ).select("_id name department onlineReservationLimit");
-    if (!doctor) return res.status(404).json({ message: "Doctor account not found." });
-    // Lowering the cap DOES NOT touch any existing reservations.
-    emitOperationalUpdate(req.app.get("io"), ["staff", "reservations", "settings"]);
-    return res.json({
-      message: `Online token limit saved for Dr. ${doctor.name}. Existing reservations remain valid.`,
-      doctor: { _id: doctor._id, onlineReservationLimit: doctor.onlineReservationLimit },
-    });
-  } catch (error) {
-    return res.status(error.status || 500).json({ message: publicErrorMessage(error, "Unable to update doctor online reservation limit.") });
   }
 });
 
@@ -787,6 +740,19 @@ router.post("/users", async (req, res) => {
    UPDATE DOCTOR SCHEDULE / AVAILABILITY
    PATCH /api/admin/users/:id/schedule
 ========================================================= */
+router.patch("/users/:id/reservation-capacity", async (req, res) => {
+  if (!mongoose.isObjectIdOrHexString(req.params.id)) return res.status(400).json({ message: "Invalid doctor identifier." });
+  const capacity = req.body?.capacity;
+  if (capacity !== null && (!Number.isInteger(capacity) || capacity < 0 || capacity > 100000)) {
+    return res.status(400).json({ message: "Capacity must be a whole number from 0 to 100000, or null to use the default." });
+  }
+  const doctor = await User.findOneAndUpdate({ _id: req.params.id, role: "doctor" },
+    { $set: { onlineReservationCapacity: capacity }, $inc: { reservationCapacityRevision: 1 } }, { new: true, runValidators: true });
+  if (!doctor) return res.status(404).json({ message: "Doctor account not found." });
+  emitOperationalUpdate(req.app.get("io"), ["staff", "reservations"]);
+  return res.json({ message: "Online reservation capacity saved. Existing bookings are retained.", doctor: { _id: doctor._id, onlineReservationCapacity: doctor.onlineReservationCapacity } });
+});
+
 router.patch("/users/:id/schedule", async (req, res) => {
   try {
     const doctor = await User.findById(req.params.id);

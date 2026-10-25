@@ -84,7 +84,7 @@ test("Public header keeps patient access visible and moves secondary actions int
   assert.match(app, /className="patient-portal-link"/);
   assert.match(app, /className="public-menu-toggle"/);
   assert.match(app, /id="public-mobile-navigation"/);
-  assert.match(app, /role="dialog" aria-modal="true"/);
+  assert.match(app, /role="dialog"\s+aria-modal="true"/);
   assert.match(app, /<LanguageSwitcher\s*\/>/);
   assert.match(app, /<ThemeToggle\s*\/>/);
   assert.match(app, /Register Clinic/);

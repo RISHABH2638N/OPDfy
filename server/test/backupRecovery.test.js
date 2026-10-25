@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import mongoose from "mongoose";
+import SystemAdmission from "../src/models/SystemAdmission.js";
+import { mock } from "node:test";
 import BackupRecord from "../src/models/BackupRecord.js";
 import RestoreDrillRecord from "../src/models/RestoreDrillRecord.js";
 import { backupStorageConfig, deleteBackupObject, downloadBackupObject, uploadBackupObject } from "../src/services/backupStorageService.js";
@@ -74,6 +77,8 @@ test("simultaneous backup submissions create one queued job in a single server p
  const saved = Object.fromEntries(names.map(name => [name, process.env[name]]));
  const exists = BackupRecord.exists, create = BackupRecord.create;
  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'opd-admission-test-'));
+ const guard=mock.method(SystemAdmission,"updateOne",async()=>({modifiedCount:1}));
+ const transaction=mock.method(mongoose.connection,"transaction",async work=>work());
  let queued = false, creations = 0;
  try {
   Object.assign(process.env, { NODE_ENV:'test',BACKUP_STORAGE_PROVIDER:'local',BACKUP_STORAGE_DIR:root,BACKUP_DATABASE_NAME:'audit_test',BACKUP_ENCRYPTION_KEY:Buffer.alloc(32, 1).toString('base64') });
@@ -86,6 +91,7 @@ test("simultaneous backup submissions create one queued job in a single server p
   queued = false;
   assert.ok(await queueBackup({trigger:'manual'}));
  } finally {
+  guard.mock.restore();transaction.mock.restore();
   BackupRecord.exists = exists; BackupRecord.create = create;
   for (const [name,value] of Object.entries(saved)) if(value===undefined)delete process.env[name];else process.env[name]=value;
   fs.rmSync(root,{recursive:true,force:true});

@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-const allowedMetadata = new Set(["requestId", "caseId", "incidentId", "policyId", "clinicId", "status", "type", "kind", "purpose", "decision", "version", "attempts", "code", "audience", "key", "retainedClinicCount", "count", "role", "severity"]);
+const allowedMetadata = new Set(["resourceId", "resourceType", "requestId", "caseId", "incidentId", "policyId", "clinicId", "status", "type", "kind", "purpose", "decision", "version", "attempts", "code", "audience", "key", "retainedClinicCount", "count", "role", "severity"]);
 export function safeRoute(value) {
   return String(value || "").split(/[?#]/, 1)[0]
     .replace(/\/[a-f0-9]{24}(?=\/|$)/gi, "/:id")

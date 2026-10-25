@@ -13,8 +13,8 @@ test("Phase 3 patient, clinic and platform APIs use their own credential class",
 });
 test("Phase 3 portal routes retain their existing role guards",()=>{
  const app=read("src/App.jsx");
- assert.match(app,/path="\/platform\/privacy\/governance" element=\{<PlatformProtectedRoute><PrivacyPhase3Governance/);
- assert.match(app,/path="\/admin\/privacy\/reviews" element=\{<StaffProtectedRoute allowedRoles=\{\["admin"\]\}><PrivacyPhase3Clinic/);
+ assert.match(app,/path="\/platform\/privacy\/governance"\s+element=\{\s*<PlatformProtectedRoute>\s*<PrivacyPhase3Governance/);
+ assert.match(app,/path="\/admin\/privacy\/reviews"\s+element=\{\s*<StaffProtectedRoute\s+allowedRoles=\{\["admin"\]\}>\s*<PrivacyPhase3Clinic/);
  assert.match(read("src/PatientPrivacyCenter.jsx"),/<PrivacyGuardianControls \/>/);
  assert.match(read("src/PatientPrivacyCenter.jsx"),/<PrivacyCorrectionControls onCreated=\{load\} \/>/);
 });

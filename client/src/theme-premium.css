@@ -1,7 +1,9 @@
 /* OPDfy 2.1 — shared clinical workspace theme. Existing component classes
    and visibility rules stay in styles.css; this file owns the visual system. */
 :root {
-  --primary: #087e8b;
+  --accessible-muted: #526975;
+  --accessible-accent: #066c73;
+  --primary: var(--accessible-accent);
   --primary-hover: #066570;
   --primary-light: #edf9fa;
   --primary-border: #b3e1e5;
@@ -9,7 +11,7 @@
   --text: #182f3e;
   --text-2: #415c6b;
   --muted: #59717e;
-  --soft: #6e8591;
+  --soft: var(--accessible-muted);
   --bg: #f3f6f8;
   --surface: #fff;
   --surface-2: #f7fafb;
@@ -34,7 +36,7 @@ input:focus, select:focus, textarea:focus { border-color: #087e8b !important; bo
 input[type="checkbox"], input[type="radio"] { min-height: 20px; accent-color: #087e8b; }
 img, video, canvas { max-width: 100%; }
 button svg, a svg { flex-shrink: 0; }
-.skip-link { position: fixed; top: -100px; left: 20px; z-index: 5000; padding: 12px 20px; background: #fff; color: #087e8b; border: 2px solid; border-radius: 8px; }
+.skip-link { position: fixed; top: -100px; left: 20px; z-index: 5000; padding: 12px 20px; background: #fff; color: var(--accessible-accent); border: 2px solid; border-radius: 8px; }
 .skip-link:focus { top: 12px; }
 
 /* Consistent, quiet controls; semantic colors still identify destructive actions. */
@@ -60,7 +62,7 @@ button svg, a svg { flex-shrink: 0; }
 .premium-header:not(.portal-topbar) { min-height: 76px; background: #fff; box-shadow: none; border-bottom: 1px solid var(--border); }
 .premium-header:not(.portal-topbar) .header-inner { width: min(1400px, calc(100% - 64px)); gap: 24px; }
 .premium-brand strong { color: #14384a; letter-spacing: -.03em; }
-.premium-header:not(.portal-topbar) .brand-mark { color: #087e8b; background: #e9f7f8; border-radius: 11px; box-shadow: none; }
+.premium-header:not(.portal-topbar) .brand-mark { color: var(--accessible-accent); background: #e9f7f8; border-radius: 11px; box-shadow: none; }
 .premium-header:not(.portal-topbar) .premium-nav a { font-size: .875rem; }
 .premium-header:not(.portal-topbar) .header-actions a { min-height: 42px; font-size: .875rem; border-radius: 8px; white-space: nowrap; }
 .login-page, .login.premium-login {
@@ -70,20 +72,20 @@ button svg, a svg { flex-shrink: 0; }
 }
 .login-page::before, .login-page::after, .premium-login::before, .premium-login::after { content: none !important; }
 .signin-context { color: #13384a; max-width: 580px; align-self: stretch; display: flex; flex-direction: column; justify-content: center; padding: 44px 38px; border-left: 3px solid #087e8b; background: #edf5f7; border-radius: 0 20px 20px 0; }
-.signin-symbol { width: 60px; height: 60px; border-radius: 16px; display: grid; place-items: center; background: #d5ecef; color: #087e8b; margin-bottom: 32px; }
+.signin-symbol { width: 60px; height: 60px; border-radius: 16px; display: grid; place-items: center; background: #d5ecef; color: var(--accessible-accent); margin-bottom: 32px; }
 .signin-context .eyebrow { margin: 0 0 16px; color: #33707d; font-size: .75rem; }
 .signin-context h2 { margin: 0 0 24px; font-size: clamp(2.5rem, 4.3vw, 4.4rem); letter-spacing: -.055em; line-height: 1.07; font-weight: 650; }
 .signin-context > p:not(.eyebrow) { max-width: 390px; margin: 0; color: #4c6b79; font-size: 1rem; line-height: 1.7; }
 .signin-steps { padding: 0; margin: 32px 0; list-style: none; display: grid; gap: 18px; }
 .signin-steps li { display: flex; align-items: center; gap: 16px; font-size: .875rem; font-weight: 550; }
-.signin-steps li > span { color: #087e8b; font-size: .75rem; font-variant-numeric: tabular-nums; padding-bottom: 3px; border-bottom: 1px solid #9acbd0; }
+.signin-steps li > span { color: var(--accessible-accent); font-size: .75rem; font-variant-numeric: tabular-nums; padding-bottom: 3px; border-bottom: 1px solid #9acbd0; }
 .signin-foot { display: flex; gap: 10px; align-items: center; padding-top: 24px; border-top: 1px solid #d2e5e9; color: #527581; font-size: .8125rem; }
 .login-card, .premium-login .loginbox {
   width: 100%; max-width: 470px; margin: 0; padding: 36px; text-align: left; border: 1px solid #dce5ea;
   border-radius: 18px; background: #fff; box-shadow: 0 8px 36px #1c4a5e09;
 }
 .login-card::before, .premium-login .loginbox::before { content: none; }
-.login-logo, .premium-login .logo { margin: 0 0 24px; width: 48px; height: 48px; border-radius: 12px; color: #087e8b; background: #edf9fa; box-shadow: none; }
+.login-logo, .premium-login .logo { margin: 0 0 24px; width: 48px; height: 48px; border-radius: 12px; color: var(--accessible-accent); background: #edf9fa; box-shadow: none; }
 .login-card h1, .premium-login .loginbox h1 { font-size: 2rem; line-height: 1.2; letter-spacing: -.04em; color: #163748; margin-bottom: 14px; }
 .login-card .eyebrow, .premium-login .loginbox .eyebrow { font-size: .75rem; line-height: 1.5; }
 .login-sub, .premium-login .loginbox > .muted { font-size: 1rem; line-height: 1.65; margin-bottom: 28px; }
@@ -98,7 +100,7 @@ button svg, a svg { flex-shrink: 0; }
 .portal-mode .portal-topbar { min-height: 72px; background: #fff; border-bottom: 1px solid #dce5ea; box-shadow: none; }
 .portal-mode .portal-brand strong, .portal-mode .portal-topbar-context b { color: #163748; }
 .portal-mode .portal-brand small, .portal-mode .portal-topbar-context > span { color: #59717e; }
-.portal-mode .portal-topbar .brand-mark { color: #087e8b; background: #e9f7f8; border: 1px solid #d1e9ec; }
+.portal-mode .portal-topbar .brand-mark { color: var(--accessible-accent); background: #e9f7f8; border: 1px solid #d1e9ec; }
 .portal-mode .portal-role-chip { background: #f3f6f8; color: #4b6675; border: 1px solid #dce5ea; font-size: .8125rem; }
 .portal-mode .system-status { color: #246b56; background: #eff8f3; border-color: #d3e9dc; font-size: .75rem; }
 .portal-mode .system-status.offline { color: #875513; background: #fff7e9; border-color: #eddcbf; }
@@ -225,3 +227,10 @@ tbody tr:hover { background: #f5fafb; }
 .booking-doctor-rating span { font-size: 14px; }
 .booking-doctor-rating b { color: #805400; font-size: 14px; }
 .booking-doctor-rating small { color: #526875; font-size: 12px; }
+
+/* Secondary brand text must not be faded below readable contrast. */
+.portal-mode .portal-brand small { opacity: 1; }
+html[data-theme="dark"] {
+  --accessible-muted: #c1d0d8;
+  --accessible-accent: #73dce2;
+}

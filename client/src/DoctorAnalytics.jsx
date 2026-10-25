@@ -41,7 +41,7 @@ export default function DoctorAnalytics() {
       const response = await api.get("/doctor/analytics", { params });
       if (!response.data?.period || !response.data?.overview) throw new Error("Unable to load your analytics.");
       if (id === requestId.current) setData(response.data);
-    } catch (requestError) { if (id === requestId.current) setError(requestError.response?.data?.message || "Unable to load your analytics."); }
+    } catch (requestError) { if (id === requestId.current) setError(requestError.userMessage || requestError.response?.data?.message || "Unable to load your analytics."); }
     finally { if (id === requestId.current) setLoading(false); }
   }, [range, from, to, refreshKey]);
   useEffect(() => { refresh(); }, [refresh]);

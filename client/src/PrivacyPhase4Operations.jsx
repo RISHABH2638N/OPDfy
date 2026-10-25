@@ -14,7 +14,7 @@ const CHECKS = [
   ["privacy_rights", "Privacy rights"], ["legal_signoff", "Legal sign-off"],
   ["vendor_review", "Vendor review"], ["monitoring", "Monitoring"],
 ];
-const messageOf = error => error.response?.data?.message || "Request failed. Please try again.";
+const messageOf = error => error.userMessage || error.response?.data?.message || "Request failed. Please try again.";
 const toIso = value => value ? new Date(value).toISOString() : null;
 const initialReview = { key: "backup_restore", status: "passed", note: "", evidenceReference: "", expiresAt: "", password: "" };
 const initialNotice = { audience: "board", status: "required", dueAt: "", deliveredAt: "", evidenceReference: "", legalBasis: "", note: "", password: "" };
