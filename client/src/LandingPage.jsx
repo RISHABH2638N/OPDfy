@@ -1,17 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ArrowRight, BarChart3, Bell, CalendarCheck2, Check, ChevronDown, ChevronRight,
   ClipboardCheck, FileText, HeartPulse, LayoutDashboard, LockKeyhole, Monitor,
-  Pause, Play, QrCode, Search, Settings, ShieldCheck, Stethoscope, Ticket, Users, X,
+  Pause, Play, QrCode, Settings, ShieldCheck, Stethoscope, Ticket, Users, X,
 } from "lucide-react";
 import { useLanguage } from "./LanguageContext.jsx";
-import { getPatientToken } from "./publicSession.js";
 
 const clinicFeatures = [
   [Ticket, "Automated Queue Management", "One doctor-wise queue for appointments and walk-ins. Call, hold, skip and complete each visit with connected updates."],
   [FileText, "Instant Digital Prescriptions", "Document consultations, generate prescriptions and keep follow-up plans connected to the visit."],
   [ClipboardCheck, "Paperless Patient Profiles", "Find visit history and doctor-reviewed health conditions in the patient workspace, with the right access controls."],
+];
+const patientJourney = [
+  [CalendarCheck2, "Reserve your visit", "Choose a clinic and doctor."],
+  [QrCode, "Check in at reception", "Show your QR on arrival."],
+  [Users, "Follow your live queue", "Your token appears after check-in."],
+];
+const patientDashboardFeatures = [
+  [FileText, "Prescriptions"],
+  [CalendarCheck2, "My Appointments"],
+  [HeartPulse, "Health Conditions"],
+  [ClipboardCheck, "OPD Visit History"],
 ];
 const workflow = [
   [CalendarCheck2, "Book or walk in", "Patients book ahead, or reception registers their arrival."],
@@ -107,30 +117,11 @@ function GuidedDemo({ open, onClose }) {
   </dialog>;
 }
 
-// Preserve the secure patient flow; a token alone never identifies a patient.
-export function queueDestination(query) {
-  const value = query.trim().toLowerCase();
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) || value.length > 80) return null;
-  return /^[a-z]?\d{1,6}$/.test(value) ? "/patient" : `/patient/clinics?q=${encodeURIComponent(value)}`;
-}
-
 export default function LandingPage() {
   const { t } = useLanguage();
-  const navigate = useNavigate();
   const [demoOpen, setDemoOpen] = useState(false);
-  const [queueQuery, setQueueQuery] = useState("");
-  const [queueError, setQueueError] = useState("");
   const [billingCycle, setBillingCycle] = useState("monthly");
   const yearlyBilling = billingCycle === "yearly";
-  const openQueue = event => {
-    event.preventDefault();
-    const destination = queueDestination(queueQuery);
-    if (!destination) {
-      setQueueError("Enter a clinic code or token number. For a clinic name, use Find your clinic."); return;
-    }
-    setQueueError("");
-    navigate(getPatientToken() ? destination : `/patient-login?returnTo=${encodeURIComponent(destination)}`);
-  };
   return <main className="opdfy-landing" id="landing-content">
     <section className="op-hero" aria-labelledby="landing-title"><div className="op-container op-hero-grid">
       <div className="op-hero-copy"><span className="op-hero-label">{t("CLINIC OPERATIONS SOFTWARE")}</span>
@@ -144,10 +135,14 @@ export default function LandingPage() {
     <div className="op-visit-rail" aria-label={t("A connected clinic visit")}><ol>{visitSteps.map(([Icon, title, detail], i) => <li key={title}><span className="op-visit-icon"><Icon size={28} aria-hidden="true" /></span><div><strong>{i + 1}. {t(title)}</strong><span>{t(detail)}</span></div>{i < visitSteps.length - 1 && <ChevronRight className="op-visit-arrow" size={20} aria-hidden="true" />}</li>)}</ol></div>
 
     <section className="op-section op-platform" id="platform" aria-labelledby="op-platform-title"><div className="op-container"><div className="op-section-heading op-platform-heading"><div><span className="op-kicker">{t("A SIMPLER WAY TO RUN YOUR CLINIC")}</span><h2 id="op-platform-title">{t("Everything in one place.")}<br />{t("A smoother visit for everyone.")}</h2></div><p>{t("From the first registration to the final follow-up, OPDfy Clinic Edition brings your daily operations together so patients move smoothly and your team can focus on care.")}</p></div>
-      <div className="op-persona-grid" id="features"><div className="op-clinic-features"><span className="op-persona-label"><Stethoscope size={17} aria-hidden="true" />{t("FOR CLINICS")}</span>{clinicFeatures.map(([Icon, title, detail]) => <article className="op-feature-row" key={title}><span className="op-feature-icon"><Icon size={23} aria-hidden="true" /></span><div><h3>{t(title)}</h3><p>{t(detail)}</p></div></article>)}<Link className="op-text-link" to="/clinic/register">{t("Create your clinic workspace")}<ArrowRight size={17} aria-hidden="true" /></Link></div>
-        <aside className="op-patient-card" aria-labelledby="op-patient-title"><span className="op-patient-icon"><HeartPulse size={28} aria-hidden="true" /></span><h3 id="op-patient-title">{t("Are you a patient?")}</h3><p>{t("See your token, queue position and upcoming visits in your patient portal.")}</p>
-          <form onSubmit={openQueue}><label htmlFor="op-queue-code">{t("Token number or clinic code")}</label><div className="op-queue-input"><Search size={18} aria-hidden="true" /><input id="op-queue-code" type="text" maxLength={80} required autoComplete="off" placeholder={t("Enter Token or Clinic Code")} value={queueQuery} onChange={event => { setQueueQuery(event.target.value); setQueueError(""); }} aria-describedby={`op-queue-help${queueError ? " op-queue-error" : ""}`} aria-invalid={Boolean(queueError)} /><button type="submit" aria-label={t("Check My Queue Status")}><ArrowRight size={21} aria-hidden="true" /></button></div>{queueError && <p className="op-form-error" id="op-queue-error" role="alert">{t(queueError)}</p>}<small id="op-queue-help">{t("Sign in to view your own queue. Token numbers are clinic-specific.")}</small></form>
-          <Link className="op-button op-button-patient" to="/patient-login">{t("Open patient portal")}<ArrowRight size={17} aria-hidden="true" /></Link><Link className="op-patient-find" to="/patient/clinics">{t("Find your clinic")}<ChevronRight size={15} aria-hidden="true" /></Link>
+      <div className="op-clinic-section" id="features"><div className="op-clinic-features"><span className="op-persona-label"><Stethoscope size={17} aria-hidden="true" />{t("FOR CLINICS")}</span>{clinicFeatures.map(([Icon, title, detail]) => <article className="op-feature-row" key={title}><span className="op-feature-icon"><Icon size={23} aria-hidden="true" /></span><div><h3>{t(title)}</h3><p>{t(detail)}</p></div></article>)}<Link className="op-text-link" to="/clinic/register">{t("Create your clinic workspace")}<ArrowRight size={17} aria-hidden="true" /></Link></div>
+        <aside className="op-patient-overview" aria-labelledby="op-patient-overview-title">
+          <div className="op-patient-overview-brand"><span><Users size={20} aria-hidden="true" /><strong>{t("Patient Portal")}</strong></span><span>{t("Overview")}</span></div>
+          <h3 id="op-patient-overview-title">{t("Your clinic visit, in one view.")}</h3>
+          <p>{t("Reserve a visit, check in at reception and follow your queue from your patient portal.")}</p>
+          <ol className="op-patient-journey">{patientJourney.map(([Icon, title, detail]) => <li key={title}><span className="op-patient-journey-icon"><Icon size={20} aria-hidden="true" /></span><div><h4>{t(title)}</h4><p>{t(detail)}</p></div></li>)}</ol>
+          <ul className="op-patient-dashboard-features" aria-label={t("Patient dashboard features")}>{patientDashboardFeatures.map(([Icon, label]) => <li key={label}><Icon size={17} aria-hidden="true" /><span>{t(label)}</span></li>)}</ul>
+          <Link className="op-text-link" to="/patient-login">{t("Open patient portal")}<ArrowRight size={17} aria-hidden="true" /></Link>
         </aside>
       </div>
     </div></section>

@@ -7,20 +7,20 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import { build } from "esbuild";
 
-test("landing renders accessible bilingual content and real portal links; patient hand-off validates input without bypassing login", async () => {
+test("landing renders bilingual patient dashboard guidance and portal links without the lookup form", async () => {
   const temporary = await mkdtemp(path.join(tmpdir(), "opdfy-landing-"));
   try {
     const result = await build({
       stdin: { resolveDir: fileURLToPath(new URL("..", import.meta.url)), loader: "jsx", contents: `
         import React from 'react'; import {renderToStaticMarkup} from 'react-dom/server';
         import {MemoryRouter} from 'react-router-dom'; import assert from 'node:assert/strict';
-        import LandingPage,{queueDestination} from './src/LandingPage.jsx';
+        import LandingPage from './src/LandingPage.jsx';
         import {LanguageProvider} from './src/LanguageContext.jsx';
         for(const language of ['en','hi']) {
           globalThis.localStorage={getItem:()=>language};
           const html=renderToStaticMarkup(<LanguageProvider><MemoryRouter><LandingPage/></MemoryRouter></LanguageProvider>);
           for(const route of ['/patient-login','/clinic/register','/login','/platform/login','/support','/privacy','/terms']) assert.ok(html.includes('href="'+route+'"'),route);
-          assert.match(html,/id="op-queue-code"/); assert.match(html,/aria-labelledby="op-demo-title"/);
+          assert.doesNotMatch(html,/op-patient-card|op-queue-code/); assert.match(html,/aria-labelledby="op-patient-overview-title"/); assert.match(html,/aria-labelledby="op-demo-title"/);
           for(const amount of ['₹1,299','₹1,899','₹3,499','₹1,999']) assert.ok(html.includes(amount),amount);
           assert.match(html,/aria-pressed="true"[^>]*>[^<]*(?:Monthly|मासिक)/);
           assert.ok(html.includes(language==='hi'?'3–5 डॉक्टर':'3–5 doctors'));
@@ -32,11 +32,7 @@ test("landing renders accessible bilingual content and real portal links; patien
           assert.ok(html.includes(language==='hi'?'यह केवल उदाहरण है।':'Illustrative preview.'));
           assert.doesNotMatch(html,/HIPAA|End-to-End Encrypted|500\\+|10\\+ hours|No credit card required/);
         }
-        assert.equal(queueDestination(' DEMO-clinic '),'/patient/clinics?q=demo-clinic');
-        assert.equal(queueDestination('A014'),'/patient'); assert.equal(queueDestination('24'),'/patient');
-        for(const input of ['', 'https://attacker.invalid', '../patient','demo clinic','demo?token=secret','a'.repeat(81),'demo\\nclinic']) assert.equal(queueDestination(input),null,input);
       ` }, bundle:true, platform:"node", format:"cjs", write:false,
-      plugins:[{name:"no-network",setup(builder){builder.onResolve({filter:/^\.\/api\.js$/},args=>args.importer.endsWith('LandingPage.jsx')?{path:'mock-api',namespace:'test'}:undefined);builder.onLoad({filter:/.*/,namespace:'test'},()=>({contents:'export const getPatientToken=()=>null;'}));}}],
     });
     const filename=path.join(temporary,"render.cjs"); await writeFile(filename,result.outputFiles[0].contents);
     createRequire(import.meta.url)(filename);

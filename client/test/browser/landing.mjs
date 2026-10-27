@@ -44,6 +44,7 @@ try{
   assert.ok(await p.evaluate(()=>document.fonts.check('700 60px "OPDfy Clinic Sans"')));
   const filename=width===1440?'desktop.png':width===390?'mobile.png':'user-'+width+'.png';
   await p.screenshot({path:path.join(out,filename),fullPage:true,animations:'disabled'});
+  if(width===1440)await p.locator('.op-platform').screenshot({path:path.join(out,'features-desktop.png'),animations:'disabled'});
   if(width===1536){await p.screenshot({path:path.join(out,'comp-size.png'),animations:'disabled'});fs.writeFileSync(path.join(out,'geometry.json'),JSON.stringify(await p.locator('.premium-header,.op-hero,h1,.op-hero-description,.op-hero .op-actions,.op-hero .op-preview,.op-visit-rail,.op-platform-heading').evaluateAll(es=>es.map(e=>({class:e.className,rect:e.getBoundingClientRect().toJSON(),font:getComputedStyle(e).font,letterSpacing:getComputedStyle(e).letterSpacing}))),null,2));}
   if(width===390||width===1440)await axe(p,'rest-'+width);
   await c.close();
@@ -77,12 +78,23 @@ try{
   await axe(p,'hi-demo');await p.screenshot({path:path.join(out,'mobile-demo.png'),animations:'disabled'});
   await p.keyboard.press('Escape');await c.close();
  });
- await check('Patient lookup validation and sign-in return destination',async()=>{
-  const {c,p}=await context(390);await p.locator('#op-queue-code').fill('invalid !!!');await p.getByRole('button',{name:'Check My Queue Status'}).click();
-  await p.getByRole('alert').waitFor();assert.equal(await p.locator('#op-queue-code').getAttribute('aria-invalid'),'true');await axe(p,'lookup-error');
-  await p.locator('#op-queue-code').fill('A014');await p.getByRole('button',{name:'Check My Queue Status'}).click();await p.waitForURL('**/patient-login?returnTo=%2Fpatient');
+ await check('Patient dashboard overview replaces lookup and preserves portal access',async()=>{
+  const {c,p}=await context(390);
+  assert.equal(await p.locator('.op-patient-card,#op-queue-code').count(),0);
+  assert.equal(await p.locator('#features .op-feature-row').count(),3);
+  const overview=p.locator('.op-patient-overview');
+  assert.equal(await overview.count(),1);
+  assert.equal(await overview.locator('.op-patient-journey li').count(),3);
+  assert.equal(await overview.locator('.op-patient-dashboard-features li').count(),4);
+  assert.equal(await overview.getByRole('link',{name:'Open patient portal',exact:true}).getAttribute('href'),'/patient-login');
+  const access=p.locator('.public-desktop-actions').getByRole('link',{name:'Patient Portal',exact:true});
+  assert.equal(await access.getAttribute('href'),'/patient-login');
+  assert.equal(await p.locator('.op-footer').getByRole('link',{name:'Patient Portal',exact:true}).getAttribute('href'),'/patient-login');
+  assert.equal(await p.locator('.op-clinic-features > .op-text-link').getAttribute('href'),'/clinic/register');
+  await axe(p,'patient-access');
+  await overview.screenshot({path:path.join(out,'patient-overview-mobile.png'),animations:'disabled'});
+  await access.click();await p.waitForURL('**/patient-login');
   await c.close();
-  const second=await context(390);await second.p.locator('#op-queue-code').fill('demo-clinic');await second.p.getByRole('button',{name:'Check My Queue Status'}).click();await second.p.waitForURL('**/patient-login?returnTo=%2Fpatient%2Fclinics%3Fq%3Ddemo-clinic');await second.c.close();
  });
  await check('Public rendering has no JavaScript errors',async()=>assert.deepEqual(errors,[]));
  if(process.argv.includes('--update-snapshot')&&results.every(r=>r.status==='passed')){

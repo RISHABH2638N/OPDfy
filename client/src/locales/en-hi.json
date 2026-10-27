@@ -2920,5 +2920,14 @@
   "Dashboard": "डैशबोर्ड",
   "Registration": "पंजीकरण",
   "Follow-ups": "फ़ॉलो-अप",
-  "Reports": "रिपोर्ट"
+  "Reports": "रिपोर्ट",
+  "Your clinic visit, in one view.": "आपकी क्लिनिक विज़िट की जानकारी, एक ही जगह।",
+  "Reserve a visit, check in at reception and follow your queue from your patient portal.": "रोगी पोर्टल से विज़िट आरक्षित करें, रिसेप्शन पर चेक-इन करें और अपनी कतार की जानकारी देखें।",
+  "Reserve your visit": "अपनी विज़िट आरक्षित करें",
+  "Choose a clinic and doctor.": "क्लिनिक और डॉक्टर चुनें।",
+  "Check in at reception": "रिसेप्शन पर चेक-इन करें",
+  "Show your QR on arrival.": "पहुँचने पर अपना QR दिखाएँ।",
+  "Follow your live queue": "अपनी लाइव कतार देखें",
+  "Your token appears after check-in.": "चेक-इन के बाद आपका टोकन दिखाई देता है।",
+  "Patient dashboard features": "रोगी डैशबोर्ड की सुविधाएँ"
 }
