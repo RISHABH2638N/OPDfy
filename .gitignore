@@ -7,6 +7,12 @@
 !/scripts/
 !/server/
 
+# Local design references and handoff notes
+/.impeccable/
+/PRODUCT.md
+/DESIGN.md
+/LANDING_REDESIGN.md
+
 # Dependencies
 node_modules/
 

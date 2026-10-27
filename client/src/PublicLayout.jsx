@@ -110,13 +110,13 @@ export default function PublicLayout({children}) {
       <a href="#main-content" className="skip-link"><Trans text={"Skip to content"} /></a>
       <header ref={topbarRef} className="premium-header">
         <div className="header-inner">
-          <Link to="/" className={`premium-brand ${platformBranding.logoUrl ? `uses-platform-logo platform-logo-${platformLogoShape}` : ""}`}>
+          <Link to="/" aria-label={`${platformBranding.productName || "OPDfy"} · ${t("Home")}`} className={`premium-brand ${platformBranding.logoUrl ? `uses-platform-logo platform-logo-${platformLogoShape}` : ""}`}>
             <span aria-hidden="true" className={`brand-mark ${platformBranding.logoUrl ? "has-clinic-logo" : ""}`}>
               {platformBranding.logoUrl ? <img src={platformBranding.logoUrl} alt="" width="38" height="38" decoding="async" /> : <HeartPulse size={20} strokeWidth={2.5} />}
             </span>
             <span>
               <strong>{platformBranding.productName || "OPDfy"}</strong>
-              <small><Trans text={"Precision Queue & EHR"} /></small>
+              <small><Trans text={location.pathname === "/" ? "Clinic Edition" : "Precision Queue & EHR"} /></small>
             </span>
           </Link>
 
@@ -169,7 +169,7 @@ export default function PublicLayout({children}) {
           <aside ref={publicMenuPanelRef} id="public-mobile-navigation" className="public-menu-panel" role="dialog" aria-modal="true" aria-labelledby="public-menu-title">
             <div className="public-menu-head">
               <div>
-                <span><Trans text="OPDfy access" /></span>
+                {location.pathname !== "/" && <span><Trans text="OPDfy access" /></span>}
                 <strong id="public-menu-title"><Trans text="Menu & preferences" /></strong>
               </div>
               <button ref={publicMenuCloseRef} type="button" className="public-menu-close" onClick={() => setIsPublicMenuOpen(false)} aria-label={t("Close navigation menu")}>

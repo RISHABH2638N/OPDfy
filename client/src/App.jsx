@@ -6403,6 +6403,22 @@ function PatientDashboard() {
           </div>
           {patientWorkspaceTab === "overview" && <PatientReferrals hideWhenEmpty />}
 
+          <button
+            type="button"
+            className="patient-ai-widget-launcher"
+            onClick={() => setIsAiChatOpen((open) => !open)}
+            aria-label={t("Care Assistant")}
+            title={t("Care Assistant")}
+            aria-expanded={isAiChatOpen}
+            aria-controls={isAiChatOpen ? "patient-care-assistant" : undefined}
+          >
+            {isAiChatOpen ? (
+              <X size={24} aria-hidden="true" />
+            ) : (
+              <Bot size={26} aria-hidden="true" />
+            )}
+          </button>
+
           {isAiChatOpen && (
             <section
               id="patient-care-assistant"

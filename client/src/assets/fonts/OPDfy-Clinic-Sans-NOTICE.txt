@@ -1,0 +1,1 @@
+OPDfy Clinic Sans is a Latin subset of Encode Sans by The Encode Project Authors. Width axis fixed at 100; weight axis retained. Internal names changed to respect the original reserved font name. Outlines and metrics are otherwise unchanged. Licensed under SIL OFL 1.1; see Encode-Sans-OFL.txt. Source: https://github.com/google/fonts/tree/main/ofl/encodesans

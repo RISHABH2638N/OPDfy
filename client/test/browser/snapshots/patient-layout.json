@@ -122,7 +122,17 @@
     },
     {
       "selector": ".patient-ai-widget-launcher",
-      "present": false
+      "present": true,
+      "visible": true,
+      "box": {
+        "x": 992,
+        "y": 616,
+        "width": 58,
+        "height": 58
+      },
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(6, 108, 115)",
+      "fontSize": "13px"
     }
   ]
 }

@@ -14,6 +14,7 @@
     "test:e2e": "node test/browser/release.mjs",
     "test:visual:update": "node test/browser/updateSnapshots.mjs",
     "test:seo": "node test/browser/seo.mjs",
+    "test:landing": "node test/browser/landing.mjs",
     "test:patient-ux": "node test/browser/patientUx.mjs"
   },
   "dependencies": {
