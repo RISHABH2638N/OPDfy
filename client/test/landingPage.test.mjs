@@ -28,7 +28,8 @@ test("landing renders bilingual patient dashboard guidance and portal links with
           assert.ok(html.includes(language==='hi'?'हर महीने भुगतान':'Billed monthly'));
           assert.ok(html.includes(language==='hi'?'सभी योजनाओं में क्लिनिक संस्करण':'All plans include the core Clinic Edition'));
           assert.doesNotMatch(html,/₹999–₹1,199|₹1,499–₹1,799|3–6 doctors|Custom scope &amp; pricing/);
-          assert.ok(html.includes(language==='hi'?'क्लिनिक का काम डिजिटल करें।':'Run a Paperless Clinic.'));
+          assert.ok(html.includes(language==='hi'?'क्लिनिक का दिन अब बेहतर।':'A clearer clinic day.'));
+          assert.ok(html.includes(language==='hi'?'चेक-इन से फॉलो-अप तक।':'From check-in to follow-up.'));
           assert.ok(html.includes(language==='hi'?'यह केवल उदाहरण है।':'Illustrative preview.'));
           assert.doesNotMatch(html,/HIPAA|End-to-End Encrypted|500\\+|10\\+ hours|No credit card required/);
         }
