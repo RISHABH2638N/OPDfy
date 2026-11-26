@@ -1,6 +1,6 @@
 // One explicit public URL inventory drives prerendering, metadata and crawl files.
 export const publicPages = {
-  '/': {title:'OPDfy | Clinic Management & Smart OPD Queue Software', description:'Connect clinic registration, appointments, live OPD queues, digital prescriptions and follow-ups with OPDfy Clinic Edition.'},
+  '/': {title:'OPDfy | Clinic Management & Live OPD Queue Software', description:'Bring appointments, live OPD queues, digital prescriptions and patient follow-ups into one connected clinic workspace with OPDfy.'},
   '/faqs': {title:'OPDfy FAQs | Patient Visits & Clinic Workflows', description:'Answers about OPDfy bookings, clinic visits, queues, prescriptions, patient accounts and help for clinic teams.'},
   '/support': {title:'Contact & Support | OPDfy Clinic Edition', description:'Contact OPDfy support for product help, clinic onboarding and account assistance. Find guidance for sharing support requests safely.'},
   '/privacy': {title:'Privacy Policy | OPDfy Clinic Edition', description:'Read how OPDfy processes account and clinic information, supports privacy requests and explains patient and clinic responsibilities.'},

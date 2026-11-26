@@ -124,12 +124,13 @@ export default function LandingPage() {
   const yearlyBilling = billingCycle === "yearly";
   return <main className="opdfy-landing" id="landing-content">
     <section className="op-hero" aria-labelledby="landing-title"><div className="op-container op-hero-grid">
-      <div className="op-hero-copy"><span className="op-hero-label">{t("CLINIC OPERATIONS SOFTWARE")}</span>
-        <h1 id="landing-title">{t("Run a Paperless Clinic.")}<span>{t("Make Waiting More Predictable.")}</span></h1>
-        <p className="op-hero-description">{t("Connect registration, digital prescriptions and live queue updates. Keep your team focused on care, not coordination.")}</p>
+      <div className="op-hero-copy"><span className="op-hero-label"><span className="op-hero-label-dot" aria-hidden="true" />{t("CLINIC OPERATIONS SOFTWARE")}</span>
+        <h1 id="landing-title">{t("A clearer clinic day.")}<span>{t("From check-in to follow-up.")}</span></h1>
+        <p className="op-hero-description">{t("Bring appointments, live queues and patient follow-ups into one calm, connected workspace—so your team can spend less time coordinating and more time caring.")}</p>
         <div className="op-actions"><Link className="op-button op-button-primary" to="/support">{t("Start 14-Day Free Pilot")}<ArrowRight size={18} aria-hidden="true" /></Link><button className="op-button op-button-ghost" type="button" onClick={() => setDemoOpen(true)}><span className="op-play-icon"><Play size={14} fill="currentColor" aria-hidden="true" /></span>{t("Watch 2-Min Demo")}</button></div>
+        <div className="op-hero-proof" aria-label={t("One connected clinic workflow")}><span><Check size={15} aria-hidden="true" />{t("For independent clinics")}</span><span><ShieldCheck size={15} aria-hidden="true" />{t("Role-aware access")}</span></div>
       </div>
-      <div className="op-hero-visual"><DashboardPreview /></div>
+      <div className="op-hero-visual"><div className="op-hero-photo"><img src="/images/clinic-arrival.png" alt={t("A receptionist welcoming a patient at a bright outpatient clinic")}/><span className="op-photo-caption">{t("A more connected visit")}</span></div><div className="op-dashboard-float"><DashboardPreview /></div></div>
     </div></section>
 
     <div className="op-visit-rail" aria-label={t("A connected clinic visit")}><ol>{visitSteps.map(([Icon, title, detail], i) => <li key={title}><span className="op-visit-icon"><Icon size={28} aria-hidden="true" /></span><div><strong>{i + 1}. {t(title)}</strong><span>{t(detail)}</span></div>{i < visitSteps.length - 1 && <ChevronRight className="op-visit-arrow" size={20} aria-hidden="true" />}</li>)}</ol></div>
